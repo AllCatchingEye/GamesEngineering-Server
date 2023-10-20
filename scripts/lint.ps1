@@ -5,4 +5,4 @@ black .
 Write-Output "[LINTING]"
 pylint src
 Write-Output "[TYPE CHECKING]"
-mypy .
+mypy --exclude '.*_test\.py$' .

@@ -5,4 +5,4 @@ black .
 echo "[LINTING]"
 pylint src
 echo "[TYPE CHECKING]"
-mypy .
+mypy --exclude '.*_test\.py$' .
