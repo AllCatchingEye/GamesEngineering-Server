@@ -22,3 +22,8 @@ Schafkopf Game Server
 
 * Windows: `.\scripts\lint.ps1`
 * Linux/Mac: `./scripts/lint.sh`
+
+### Testing
+
+* Windows: `.\scripts\test.ps1`
+* Linux/Mac: `./scripts/test.sh`
