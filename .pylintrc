@@ -1,0 +1,3 @@
+[MASTER]
+disable=missing-docstring, # Might be useful to reactivate later
+        too-few-public-methods # Classes with only one method can be useful
