@@ -31,25 +31,19 @@ class Hand():
         for rank in ranks:
             self.__show_rank(rank)
 
-    def get_suits(self, suit: Suit) -> list[Card]:
-        suits: list[Card] = []
-        for card in self.cards:
+    def get_suits(self, suit: Suit) -> list[tuple[int, Card]]:
+        suits: list[tuple[int, Card]] = []
+        for (index, card) in enumerate(self.cards):
             if card.get_suit() == suit:
-                suits.append(card)
+                suits.append(( index, card ))
         return suits
 
-    def get_ranks(self, ranks: list[Rank]) -> list[Card]:
-        cards: list[Card] = []
-        for rank in ranks:
-            cards += self.__get_rank(rank)
-        return cards
-
-    def __get_rank(self, rank: Rank) -> list[Card]:
-        ranks: list[Card] = []
-        for card in self.cards:
-            if card.get_rank() == rank:
-                ranks.append(card)
-        return ranks
+    def get_trumps(self, trumps: list[Card]) -> list[tuple[int, Card]]:
+        available_trumps: list[tuple[int, Card]] = []
+        for (index, card) in enumerate(self.cards):
+            if card in trumps:
+                available_trumps.append(( index, card ))
+        return available_trumps
 
     def __show_rank(self, rank: Rank):
         for index, card in enumerate(self.cards):

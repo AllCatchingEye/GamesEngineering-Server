@@ -1,10 +1,10 @@
 from enum import Enum
 
 class Suit(Enum):
-    Eichel = 4
-    Gras = 3
+    Eichel = 0
+    Gras = 1
     Herz = 2
-    Schellen = 1
+    Schellen = 3
 
     def __str__(self) -> str:
         return self.name

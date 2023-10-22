@@ -25,23 +25,27 @@ class PlayedCard:
         return self.player
 
 class Stack:
-    def __init__(self, card: PlayedCard):
-        self.suit = card.get_suit()
-        self.played_cards: list[PlayedCard] = [card]
-        self.strongest_card: PlayedCard = card
-        self.value = card.get_value()
+    def __init__(self, suit: Suit):
+        self.suit = suit
+        self.played_cards: list[PlayedCard] = []
+        self.strongest_card: PlayedCard 
+        self.value = 0
+
+    def add_card(self, card: Card, player: Player):
+        played_card = PlayedCard(card, player)
+        if self.is_empty():
+            self.strongest_card = played_card
+        else:
+            self.__determine_stitch(played_card)
+
+        self.value += get_value_of(card.get_rank())
+        self.played_cards.append(played_card)
 
     def is_empty(self) -> bool:
         return len(self.played_cards) == 0
 
-    def add_card(self, card: Card, player: Player):
-        played_card = PlayedCard(card, player)
-        self.played_cards.append(played_card)
-        self.value += get_value_of(card.get_rank())
-        self.__determine_stitch(played_card)
-
     def __determine_stitch(self, card: PlayedCard):
-        if self.__same_suit( card):
+        if self.__same_suit(card):
             # Neue Karte hat selbe farbe aber höheren rang
             if self.strongest_card.get_rank() < card.get_rank():
                 self.strongest_card = card
@@ -55,6 +59,9 @@ class Stack:
             # Trumpf wird geschlagen von stärkerer karte gleicher Farbe
             if self.strongest_card.get_rank() < card.get_rank():
                 self.strongest_card = card
+            # Different color but no trump
+        elif self.strongest_card.get_suit() < card.get_suit():
+            self.strongest_card = card
 
         print("The strongest card currently is:")
         print(f"{self.strongest_card.get_card()}, by player {self.strongest_card.get_player().get_id()}")
