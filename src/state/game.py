@@ -21,24 +21,15 @@ class Game:
         self.played_cards: list[Card] = []
 
     def __create_players(self) -> list[Player]:
+        """Create a list of players for the game."""
         players: list[Player] = []
         for i in range(PLAYER_COUNT):
             players.append(Player(i))
         return players
 
-    # def __get_suits_prio(self) -> list[Suit]:
-    #     # For basic implementation return always Farbsolo prio
-    #     return [Suit.Eichel, Suit.Gras, Suit.Herz, Suit.Schellen]
-
-    def __get_trump_cards(self) -> list[Card]:
-        # For basic implementation return always Farbsolo prio
-        trump_ober = self.deck.get_ranks_of(Rank.Ober)
-        trump_unter = self.deck.get_ranks_of(Rank.Unter)
-
-        trump_cards: list[Card] = trump_ober + trump_unter
-        return trump_cards
-
     def run(self):
+        """Start the game."""
+
         while True:
             suit_chosen: Suit = self.determine_gametype()
             self.__new_game(suit_chosen)
@@ -46,6 +37,7 @@ class Game:
     #TODO: For now this method only checks if anyone wants to play and which suit he chooses,
     # change it later so that it determines the gametype and returns it
     def determine_gametype(self) -> Suit:
+        """Determine the game type based on player choices."""
         self.__distribute_cards()
         suit_chosen = self.__call_game()
         if suit_chosen is None:
@@ -55,13 +47,15 @@ class Game:
             return suit_chosen
 
     def __distribute_cards(self):
-        deck: list[Card] = self.deck.get_deck()
+        """Distribute cards to players."""
+        deck: list[Card] = self.deck.get_full_deck()
         random.shuffle(deck)
 
         for player in self.players:
             deck = self.__distribute_hand(player, deck)
 
     def __distribute_hand(self, player: Player, deck: list[Card]) -> list[Card]:
+        """Distribute cards for a player's hand."""
         hand: Hand = Hand(deck[:HAND_SIZE])
         player.set_hand(hand)
 
@@ -70,17 +64,18 @@ class Game:
 
     #TODO: Return gametype instead of bool
     def __call_game(self) -> Suit | None:
+        """Call the game type based on player choices."""
         chosen_suit = None
         game_called = False
         for player in self.players:
-            game_called = player.plays()
+            game_called = player.wants_to_play()
             if game_called and chosen_suit is None:
-                chosen_suit = player.get_suit_for_game()
+                chosen_suit = player.decide_suit_for_game()
 
         return chosen_suit
 
-
     def __new_game(self, suit_chosen: Suit):
+        """Start a new game with the specified suit as the game type."""
         #TODO: Determine trump cards and suit priority based on gametype
         trump_cards = self.__get_trump_cards()
         for _ in range(ROUNDS):
@@ -90,7 +85,52 @@ class Game:
         game_winner = self.__get_game_winner()
         print(f"The winner of this game is player {game_winner.get_id()} with {game_winner.get_points()}!")
 
+    def __get_trump_cards(self) -> list[Card]:
+        """Get all trump cards for the game."""
+        # For basic implementation return always Farbsolo prio
+        trump_ober = self.deck.get_cards_by_rank(Rank.Ober)
+        trump_unter = self.deck.get_cards_by_rank(Rank.Unter)
+
+        trump_cards: list[Card] = trump_ober + trump_unter
+        return trump_cards
+
+    #TODO: Maybe move round into its own class?
+    def start_round(self, suit_chosen: Suit, trump_cards: list[Card]):
+        """Start a new round."""
+        stack = self.__play_cards(suit_chosen, trump_cards)
+        self.__finish_round(stack)
+        return
+
+    def __play_cards(self, suit: Suit, trump_cards: list[Card]) -> Stack:
+        """Play cards in the current round."""
+        print("=============================================================")
+        stack = Stack(suit)
+        for player in self.players:
+            print("=============================================================")
+            card: Card = player.lay_card(suit, trump_cards)
+            stack.add_card(card, player)
+        return stack
+
+    def __finish_round(self, stack: Stack):
+        """Finish the current round and determine the winner."""
+        winner = stack.get_winner()
+        stack_value = stack.get_value()
+        winner.add_points(stack_value)
+        self.__show_winner(winner)
+        self.__change_player_order(winner)
+
+    def __show_winner(self, winner: Player):
+        """Display the winner of the round."""
+        print(f"Player {winner.get_id()}, you are the winner of this round!")
+        print(f"You got {winner.get_points()} points.")
+
+    def __change_player_order(self, winner: Player):
+        """Change the order of players based on the round winner."""
+        winner_index = self.__get_winner_index(winner)
+        self.__swap_players(winner_index)
+
     def __get_game_winner(self):
+        """Determine the winner of the entire game."""
         game_winner = self.players[0]
         for player in self.players[0:]:
             if player.get_points() > game_winner.get_points():
@@ -98,40 +138,8 @@ class Game:
 
         return game_winner
 
-
-    #TODO: Maybe move round into its own class?
-    def start_round(self, suit_chosen: Suit, trump_cards: list[Card]):
-        stack = self.__play_cards(suit_chosen, trump_cards)
-        self.__finish_round(stack)
-        return
-
-    def __play_cards(self, suit: Suit, trump_cards: list[Card]) -> Stack:
-        print("=============================================================")
-        stack = Stack(suit)
-        for player in self.players:
-            print("=============================================================")
-            card: Card = player.lay_card(suit, trump_cards)
-            stack.add_card(card, player)
-
-        return stack
-
-    def __finish_round(self, stack: Stack):
-        winner = stack.get_winner()
-        stack_value = stack.get_value()
-        winner.add_points(stack_value)
-        self.__show_winner(winner)
-        self.__change_player_order(winner)
-
-
-    def __show_winner(self, winner: Player):
-        print(f"Player {winner.get_id()}, you are the winner of this round!")
-        print(f"You got {winner.get_points()} points.")
-
-    def __change_player_order(self, winner: Player):
-        winner_index = self.__get_winner_index(winner)
-        self.__swap_players(winner_index)
-
     def __get_winner_index(self, winner: Player) -> int:
+        """Find the index of the player who won"""
         winner_index = 0
         for index, player in enumerate(self.players):
             if player.get_id() == winner.get_id():

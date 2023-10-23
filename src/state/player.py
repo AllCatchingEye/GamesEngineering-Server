@@ -24,10 +24,12 @@ class Player:
         self.hand: Hand = hand
 
     def show_hand(self):
+        """Display the player's hand."""
         print(f'Player {self.id}, your cards are:')
-        self.hand.show()
+        self.hand.show_all_cards()
 
     def lay_card(self, suit: Suit, trump_cards: list[Card]) -> Card:
+        """Player lays a card on the table."""
         layable_cards: list[tuple[int, Card]] = self.__get_layable_cards(suit, trump_cards)
         self.show_hand()
         self.__show_layable_cards(layable_cards)
@@ -37,11 +39,12 @@ class Player:
         return chosen_card
 
     def __get_layable_cards(self, suit:Suit, trump_cards: list[Card]) -> list[tuple[int, Card]]:
-        available_suits: list[tuple[int, Card]] = self.hand.get_suits(suit)
+        """Get all layable cards for the given suit or trumps."""
+        available_suits: list[tuple[int, Card]] = self.hand.get_all_cards_for_suit(suit)
         if len(available_suits) != 0:
             return available_suits
 
-        available_trumps: list[tuple[int, Card]] = self.hand.get_trumps(trump_cards)
+        available_trumps: list[tuple[int, Card]] = self.hand.get_all_trumps_in_deck(trump_cards)
         if len(available_trumps) != 0:
             return available_trumps
 
@@ -49,53 +52,40 @@ class Player:
         
 
     def __show_layable_cards(self, layable_cards: list[tuple[int, Card]]):
+        """Display the cards that can be layed."""
         if len(layable_cards) == 0:
             self.show_hand()
         else:
             print(f"Player {self.id}, you can lay the following cards: ")
-            for card in layable_cards:
-                index = card[0]
-                card = card[1]
+            for index, card in layable_cards:
                 print(f"{index}, {card}")
 
     def __ask_for_card(self) -> Card:
+        """Ask the player to choose a card."""
         print("Enter the index of the card you want to play: ")
         index = int(input())
-        chosen_card: Card = self.hand.get_card(index)
-        return chosen_card
+        return self.hand.get_card(index)
 
-    def decide_first_card(self) -> Card:
-        print(f"Player {self.id}, you are first. Place the first card.")
-        self.show_hand()
-        first_card = self.__ask_for_card()
-        self.hand.remove_card(first_card)
-        self.played_cards.append(first_card)
-        return first_card
-
-    def plays(self) -> bool:
+    def wants_to_play(self) -> bool:
+        """Ask if the player wants to play."""
         self.show_hand()
         print(f"Player {self.id}, do you want to play?")
         print("Enter 'y' for yes, any other key for no.")
-        answer = input()
-        if answer == 'y':
-            return True
-        else:
-            return False
+        return input().lower() == 'y'
 
-    def get_suit_for_game(self) -> Suit:
+    def decide_suit_for_game(self) -> Suit:
+        """Ask the player to choose a suit."""
         print(f"Player {self.id}, which suit do you want to set?")
         self.__print_suits()
-        return self.__ask_for_suit()
-
-    def __ask_for_suit(self) -> Suit:
         print("Enter the number of the suit you want to set: ")
         number = int(input())
-        if number >= 0 and number <= 3:
+        if 0 <= number <= 3:
             return get_all_suits()[number]
         else:
-            self.__ask_for_suit()
+            return self.decide_suit_for_game()
 
     def __print_suits(self):
-        all_suits: list[Suit] = get_all_suits()
-        for suit in all_suits:
-            print(f"{suit.value}: {suit.name}")
+        """Print all available suits."""
+        all_suits = get_all_suits()
+        for index, suit in enumerate(all_suits):
+            print(f"{index}: {suit.name.capitalize()}")

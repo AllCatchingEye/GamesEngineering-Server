@@ -27,10 +27,11 @@ class Rank(Enum):
         return self.name
 
 def get_all_ranks() -> list[Rank]:
-    ranks: list[Rank] = [rank for rank in Rank]
-    return ranks
+    """Returns a list of all Rank enum values."""
+    return list(Rank)
 
 def get_value_of(rank: Rank) -> int:
+    """Returns the value associated with the given rank."""
     values = {
         Rank.Ass : 11,
         Rank.Zehn : 10,
@@ -41,9 +42,4 @@ def get_value_of(rank: Rank) -> int:
         Rank.Acht : 0,
         Rank.Sieben : 0,
     }
-    value: int | None = values.get(rank)
-
-    if value is None:
-        return 0
-
-    return value
+    return values.get(rank, 0)

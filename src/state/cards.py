@@ -6,15 +6,16 @@ class Card:
     def __init__(self, rank: Rank, suit: Suit):
         self.suit = suit
         self.rank = rank
-
-    def get_value(self):
-        return get_value_of(self.rank)
+        self.value = get_value_of(self.rank)
 
     def get_suit(self) -> Suit:
         return self.suit
 
     def get_rank(self) -> Rank:
         return self.rank
+
+    def get_value(self):
+        return self.value
 
     def __eq__(self, object: object) -> bool:
         if isinstance(object, Card):

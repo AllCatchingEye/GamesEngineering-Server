@@ -23,5 +23,5 @@ class Suit(Enum):
         return False
 
 def get_all_suits() -> list[Suit]:
-    suits: list[Suit] = [suit for suit in Suit]
-    return suits
+    """Returns a list of all Suit enum values."""
+    return list(Suit)
