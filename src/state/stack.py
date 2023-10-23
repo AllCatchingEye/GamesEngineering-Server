@@ -1,4 +1,4 @@
-from state.cards import Card
+from state.card import Card
 from state.player import Player
 from state.ranks import Rank, get_value_of
 from state.suits import Suit

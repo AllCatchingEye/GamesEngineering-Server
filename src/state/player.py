@@ -1,4 +1,4 @@
-from state.cards import Card
+from state.card import Card
 from state.hand import Hand
 from state.suits import Suit, get_all_suits
 

@@ -1,7 +1,7 @@
 # from typing import Dict
 import random
 
-from state.cards import Card
+from state.card import Card
 from state.deck import Deck
 from state.hand import Hand
 from state.player import Player
