@@ -1,11 +1,10 @@
-from cards import Card
-from hand import Hand
-from suits import get_all_suits
-from suits import Suit
+from state.cards import Card
+from state.hand import Hand
+from state.suits import Suit, get_all_suits
 
-#TODO: Refactor this spaghetti
+
 class Player:
-    def __init__(self, id: int):
+    def __init__(self, id: int) -> None:
         self.id = id
         self.points = 0
         self.hand: Hand
@@ -14,23 +13,25 @@ class Player:
     def get_id(self) -> int:
         return self.id
 
-    def add_points(self, points: int):
+    def add_points(self, points: int) -> None:
         self.points += points
 
     def get_points(self) -> int:
         return self.points
 
-    def set_hand(self, hand: Hand):
+    def set_hand(self, hand: Hand) -> None:
         self.hand: Hand = hand
 
-    def show_hand(self):
+    def show_hand(self) -> None:
         """Display the player's hand."""
-        print(f'Player {self.id}, your cards are:')
+        print(f"Player {self.id}, your cards are:")
         self.hand.show_all_cards()
 
     def lay_card(self, suit: Suit, trump_cards: list[Card]) -> Card:
         """Player lays a card on the table."""
-        layable_cards: list[tuple[int, Card]] = self.__get_layable_cards(suit, trump_cards)
+        layable_cards: list[tuple[int, Card]] = self.__get_layable_cards(
+            suit, trump_cards
+        )
         self.show_hand()
         self.__show_layable_cards(layable_cards)
         chosen_card = self.__ask_for_card()
@@ -38,20 +39,23 @@ class Player:
         self.played_cards.append(chosen_card)
         return chosen_card
 
-    def __get_layable_cards(self, suit:Suit, trump_cards: list[Card]) -> list[tuple[int, Card]]:
+    def __get_layable_cards(
+        self, suit: Suit, trump_cards: list[Card]
+    ) -> list[tuple[int, Card]]:
         """Get all layable cards for the given suit or trumps."""
         available_suits: list[tuple[int, Card]] = self.hand.get_all_cards_for_suit(suit)
         if len(available_suits) != 0:
             return available_suits
 
-        available_trumps: list[tuple[int, Card]] = self.hand.get_all_trumps_in_deck(trump_cards)
+        available_trumps: list[tuple[int, Card]] = self.hand.get_all_trumps_in_deck(
+            trump_cards
+        )
         if len(available_trumps) != 0:
             return available_trumps
 
         return []
-        
 
-    def __show_layable_cards(self, layable_cards: list[tuple[int, Card]]):
+    def __show_layable_cards(self, layable_cards: list[tuple[int, Card]]) -> None:
         """Display the cards that can be layed."""
         if len(layable_cards) == 0:
             self.show_hand()
@@ -71,7 +75,7 @@ class Player:
         self.show_hand()
         print(f"Player {self.id}, do you want to play?")
         print("Enter 'y' for yes, any other key for no.")
-        return input().lower() == 'y'
+        return input().lower() == "y"
 
     def decide_suit_for_game(self) -> Suit:
         """Ask the player to choose a suit."""
@@ -81,10 +85,9 @@ class Player:
         number = int(input())
         if 0 <= number <= 3:
             return get_all_suits()[number]
-        else:
-            return self.decide_suit_for_game()
+        return self.decide_suit_for_game()
 
-    def __print_suits(self):
+    def __print_suits(self) -> None:
         """Print all available suits."""
         all_suits = get_all_suits()
         for index, suit in enumerate(all_suits):

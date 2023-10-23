@@ -1,8 +1,9 @@
-from cards import Card
-import suits
-import ranks
+from state.cards import Card
+from state.ranks import Rank, get_all_ranks
+from state.suits import Suit, get_all_suits
 
-class Deck():
+
+class Deck:
     def __init__(self) -> None:
         self.deck: list[Card] = self.__create_full_deck()
 
@@ -10,9 +11,9 @@ class Deck():
         """Creates a full deck of cards for the game
 
         Returns:
-            A full deck of cards, unshuffled 
+            A full deck of cards, unshuffled
         """
-        all_suits: list[suits.Suit] = suits.get_all_suits()
+        all_suits: list[Suit] = get_all_suits()
         deck: list[Card] = []
         for suit in all_suits:
             full_suit: list[Card] = self.__create_cards_for_suit(suit)
@@ -20,7 +21,7 @@ class Deck():
 
         return deck
 
-    def __create_cards_for_suit(self, suit: suits.Suit) -> list[Card]:
+    def __create_cards_for_suit(self, suit: Suit) -> list[Card]:
         """Creates all cards for a given suit
 
         Args:
@@ -29,7 +30,7 @@ class Deck():
         Returns:
             A list of cards for the given suit
         """
-        all_ranks: list[ranks.Rank] = ranks.get_all_ranks()
+        all_ranks: list[Rank] = get_all_ranks()
         full_suit: list[Card] = []
         for rank in all_ranks:
             card = Card(rank, suit)
@@ -37,7 +38,7 @@ class Deck():
 
         return full_suit
 
-    def get_cards_by_rank(self, rank: ranks.Rank) -> list[Card]:
+    def get_cards_by_rank(self, rank: Rank) -> list[Card]:
         """Returns all cards of a specific rank
 
         Args:
@@ -53,7 +54,7 @@ class Deck():
 
         return rank_cards
 
-    def get_cards_by_suit(self, suit: suits.Suit) -> list[Card]:
+    def get_cards_by_suit(self, suit: Suit) -> list[Card]:
         """Returns all cards of a specific suit
 
         Args:
@@ -76,5 +77,3 @@ class Deck():
             A full deck, unshuffled
         """
         return self.deck.copy()
-
-

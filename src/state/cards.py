@@ -1,9 +1,9 @@
-from ranks import Rank
-from ranks import get_value_of
-from suits import Suit
+from state.ranks import Rank, get_value_of
+from state.suits import Suit
+
 
 class Card:
-    def __init__(self, rank: Rank, suit: Suit):
+    def __init__(self, rank: Rank, suit: Suit) -> None:
         self.suit = suit
         self.rank = rank
         self.value = get_value_of(self.rank)
@@ -14,15 +14,10 @@ class Card:
     def get_rank(self) -> Rank:
         return self.rank
 
-    def get_value(self):
+    def get_value(self) -> int:
         return self.value
 
-    def __eq__(self, object: object) -> bool:
-        if isinstance(object, Card):
-            return self.suit == object.suit and self.rank == object.rank
-        return False
-
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.suit, self.rank))
 
     def __str__(self) -> str:
