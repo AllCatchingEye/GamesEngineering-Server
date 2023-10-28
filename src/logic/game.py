@@ -1,6 +1,6 @@
 import random
-from controller.player_controller import PlayerController
 
+from controller.player_controller import PlayerController
 from state.card import Card
 from state.deck import Deck
 from state.gametypes import Gametype
@@ -72,22 +72,21 @@ class Game:
 
         chosen_types: list[Gametype | None] = [None, None, None, None]
         for i, wants_to_play in enumerate(decisions):
-            if wants_to_play:
+            if wants_to_play is True:
                 chosen_types[i] = self.controllers[i].select_gametype([Gametype.SOLO])
-
-        if all(type is None for type in chosen_types):
-            return None
 
         for i, game_type in enumerate(chosen_types):
             if game_type is not None:
                 return game_type
 
-    def __new_game(self, type: Gametype) -> None:
+        return None
+
+    def __new_game(self, game_type: Gametype) -> None:
         """Start a new game with the specified suit as the game type."""
         trump_cards = self.__get_trump_cards()
         for _ in range(ROUNDS):
-            print(f"The suit for this game is: {type.name}")
-            self.start_round(type, trump_cards)
+            print(f"The suit for this game is: {game_type.name}")
+            self.start_round(trump_cards)
 
         game_winner = self.__get_game_winner()
         print(f"The winner of this game is player {game_winner.id}!")
@@ -102,7 +101,7 @@ class Game:
         trump_cards: list[Card] = trump_ober + trump_unter
         return trump_cards
 
-    def start_round(self, type: Gametype, trump_cards: list[Card]) -> None:
+    def start_round(self, trump_cards: list[Card]) -> None:
         """Start a new round."""
         stack = self.__play_cards(trump_cards)
         self.__finish_round(stack)

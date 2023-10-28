@@ -16,7 +16,10 @@ class PlayerController(ABC):
 
     @abstractmethod
     def select_gametype(self, choosable_gametypes: list[Gametype]) -> Gametype:
-        """Ask the player what game type to be played. This is only called if the player wants to play."""
+        """
+        Ask the player what game type to be played.
+        This is only called if the player wants to play.
+        """
         # TODO: What have the players before said chosen?
 
     @abstractmethod
