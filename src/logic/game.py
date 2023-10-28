@@ -3,6 +3,16 @@ import random
 from controller.player_controller import PlayerController
 from state.card import Card
 from state.deck import Deck
+from state.event import (
+    CardPlayedEvent,
+    Event,
+    GameStartEvent,
+    GametypeDeterminedEvent,
+    GametypeWishedEvent,
+    PlayDecisionEvent,
+    RoundResultEvent,
+    GameEndEvent,
+)
 from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
@@ -59,6 +69,8 @@ class Game:
         player.hand = hand
 
         deck = deck[HAND_SIZE:]
+
+        self.controllers[player.id].on_game_event(GameStartEvent(hand))
         return deck
 
     def __call_game(self) -> Gametype | None:
@@ -67,18 +79,23 @@ class Game:
         for player in self.players:
             i = player.id
             wants_to_play = self.controllers[i].wants_to_play(decisions)
+            self.__broadcast(PlayDecisionEvent(player, wants_to_play))
             decisions[i] = wants_to_play
 
         chosen_types: list[Gametype | None] = [None, None, None, None]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
-                chosen_types[i] = self.controllers[i].select_gametype([Gametype.SOLO])
+                game_type = self.controllers[i].select_gametype([Gametype.SOLO])
+                chosen_types[i] = game_type
+                self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
+        # TODO: Fix gametype determination
         for i, game_type in enumerate(chosen_types):
             if game_type is not None:
+                self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
                 return game_type
 
-        return None
+        return None  # TODO: Ramsch gametype
 
     def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
@@ -109,6 +126,7 @@ class Game:
             # TODO: Actually determine the playable cards for the player
             card: Card = self.controllers[player.id].play_card(stack, trump_cards)
             stack.add_card(card, player)
+            self.__broadcast(CardPlayedEvent(player, card, stack))
         return stack
 
     def __finish_round(self, stack: Stack) -> None:
@@ -116,6 +134,7 @@ class Game:
         winner = stack.get_winner()
         stack_value = stack.get_value()
         winner.points += stack_value
+        self.__broadcast(RoundResultEvent(winner, stack_value, stack))
         self.__change_player_order(winner)
 
     def __change_player_order(self, winner: Player) -> None:
@@ -130,6 +149,7 @@ class Game:
             if player.points > game_winner.points:
                 game_winner = player
 
+        self.__broadcast(GameEndEvent(game_winner, game_winner.points))
         return game_winner
 
     def __get_winner_index(self, winner: Player) -> int:
@@ -144,3 +164,8 @@ class Game:
         first: list[Player] = self.players[winner_index:]
         last: list[Player] = self.players[:winner_index]
         self.players = first + last
+
+    def __broadcast(self, event: Event) -> None:
+        """Broadcast an event to all players."""
+        for controller in self.controllers:
+            controller.on_game_event(event)

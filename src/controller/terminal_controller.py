@@ -1,5 +1,6 @@
 from controller.player_controller import PlayerController
 from state.card import Card
+from state.event import Event
 from state.gametypes import Gametype
 from state.stack import Stack
 
@@ -20,9 +21,6 @@ class TerminalController(PlayerController):
         gametype_index = int(input())
         return choosable_gametypes[gametype_index]
 
-    def announce_gametype(self, gametype: Gametype) -> None:
-        print(f"The gametype for this game is {gametype}")
-
     def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
         print("The stack is:")
         print(stack)
@@ -32,8 +30,5 @@ class TerminalController(PlayerController):
         card_index = int(input())
         return playable_cards[card_index]
 
-    def announce_round_result(self) -> None:
-        print("Round ended")
-
-    def announce_game_result(self) -> None:
-        print("Game ended")
+    def on_game_event(self, event: Event):
+        print(event)
