@@ -98,10 +98,6 @@ class Stack:
         elif self.strongest_card.get_suit().value < card.get_suit().value:
             self.strongest_card = card
 
-        print("The strongest card currently is:")
-        print(f"{self.strongest_card.get_card()}")
-        print(f"It was played by player {self.strongest_card.get_player().id}")
-
     def __card_is_trump(self, card: PlayedCard) -> bool:
         return card.get_rank() in [Rank.OBER, Rank.UNTER]
 

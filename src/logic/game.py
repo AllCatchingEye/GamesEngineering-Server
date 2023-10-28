@@ -34,15 +34,14 @@ class Game:
         """Start the game."""
 
         while True:
-            suit_chosen = self.determine_gametype()
-            self.__new_game(suit_chosen)
+            self.determine_gametype()
+            self.__new_game()
 
     def determine_gametype(self) -> Gametype:
         """Determine the game type based on player choices."""
         self.__distribute_cards()
         suit_chosen = self.__call_game()
         if suit_chosen is None:
-            print("=============================================================")
             return self.determine_gametype()
         return suit_chosen
 
@@ -81,16 +80,13 @@ class Game:
 
         return None
 
-    def __new_game(self, game_type: Gametype) -> None:
+    def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
         trump_cards = self.__get_trump_cards()
         for _ in range(ROUNDS):
-            print(f"The suit for this game is: {game_type.name}")
             self.start_round(trump_cards)
 
-        game_winner = self.__get_game_winner()
-        print(f"The winner of this game is player {game_winner.id}!")
-        print(f"He won {game_winner.points} points!")
+        self.__get_game_winner()
 
     def __get_trump_cards(self) -> list[Card]:
         """Get all trump cards for the game."""
@@ -108,10 +104,9 @@ class Game:
 
     def __play_cards(self, trump_cards: list[Card]) -> Stack:
         """Play cards in the current round."""
-        print("=============================================================")
         stack = Stack()
         for player in self.players:
-            print("=============================================================")
+            # TODO: Actually determine the playable cards for the player
             card: Card = self.controllers[player.id].play_card(stack, trump_cards)
             stack.add_card(card, player)
         return stack
@@ -121,13 +116,7 @@ class Game:
         winner = stack.get_winner()
         stack_value = stack.get_value()
         winner.points += stack_value
-        self.__show_winner(winner)
         self.__change_player_order(winner)
-
-    def __show_winner(self, winner: Player) -> None:
-        """Display the winner of the round."""
-        print(f"Player {winner.id}, you are the winner of this round!")
-        print(f"You got {winner.id} points.")
 
     def __change_player_order(self, winner: Player) -> None:
         """Change the order of players based on the round winner."""
