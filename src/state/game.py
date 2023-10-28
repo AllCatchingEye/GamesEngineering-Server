@@ -1,12 +1,9 @@
-# from typing import Dict
 import random
 
 from state.card import Card
 from state.deck import Deck
 from state.hand import Hand
 from state.player import Player
-
-# from suits import Suit
 from state.ranks import Rank
 from state.stack import Stack
 from state.suits import Suit
