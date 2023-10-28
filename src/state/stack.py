@@ -33,6 +33,12 @@ class PlayedCard:
     def get_player(self) -> Player:
         return self.player
 
+    def __str__(self) -> str:
+        return f"{self.card} by player {self.player.id}"
+    
+    def __repr__(self) -> str:
+        return str(self)
+
 
 class Stack:
     """Represents a stack of cards played during a round."""
@@ -114,3 +120,6 @@ class Stack:
 
     def get_played_cards(self) -> list[PlayedCard]:
         return self.played_cards
+
+    def __str__(self) -> str:
+        return f"Stack: {self.played_cards}"

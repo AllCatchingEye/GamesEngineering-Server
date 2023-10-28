@@ -74,3 +74,6 @@ class Hand:
         """Prints all cards in the hand."""
         for index, card in enumerate(self.cards):
             print(f"{index}: {card}")
+
+    def __str__(self) -> str:
+        return str(self.cards)
