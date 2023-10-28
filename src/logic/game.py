@@ -33,13 +33,15 @@ PLAYER_COUNT = 4
 
 class Game:
     controllers: list[PlayerController]
+    rng: random.Random
     gamemode: GameMode
 
-    def __init__(self) -> None:
+    def __init__(self, rng: random.Random = random.Random()) -> None:
         self.players = self.__create_players()
         self.deck: Deck = Deck()
         self.played_cards: list[Card] = []
         self.controllers = []
+        self.rng = rng
 
     def __create_players(self) -> list[Player]:
         """Create a list of players for the game."""
@@ -63,7 +65,7 @@ class Game:
     def __distribute_cards(self) -> None:
         """Distribute cards to players."""
         deck: list[Card] = self.deck.get_full_deck()
-        random.shuffle(deck)
+        self.rng.shuffle(deck)
 
         for player in self.players:
             deck = self.__distribute_hand(player, deck)
