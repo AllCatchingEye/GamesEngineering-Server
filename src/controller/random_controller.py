@@ -1,4 +1,5 @@
 import random
+
 from controller.player_controller import PlayerController
 from state.card import Card
 from state.event import Event
@@ -21,5 +22,5 @@ class RandomController(PlayerController):
     def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
         return self.rng.choice(playable_cards)
 
-    def on_game_event(self, event: Event):
+    def on_game_event(self, event: Event) -> None:
         pass

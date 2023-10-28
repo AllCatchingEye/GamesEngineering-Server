@@ -6,12 +6,12 @@ from state.deck import Deck
 from state.event import (
     CardPlayedEvent,
     Event,
+    GameEndEvent,
     GameStartEvent,
     GametypeDeterminedEvent,
     GametypeWishedEvent,
     PlayDecisionEvent,
     RoundResultEvent,
-    GameEndEvent,
 )
 from state.gametypes import Gametype
 from state.hand import Hand

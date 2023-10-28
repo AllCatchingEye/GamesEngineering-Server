@@ -1,14 +1,11 @@
 from abc import ABC
 from dataclasses import dataclass
-from enum import Enum
-from state import player
 
 from state.card import Card
 from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
 from state.stack import Stack
-
 
 # class EventType(Enum):
 #     # Phase 1: Game start
