@@ -4,8 +4,8 @@ from state.suits import Suit, get_all_suits
 
 
 class Player:
-    def __init__(self, id: int) -> None:
-        self.id = id
+    def __init__(self, player_id: int) -> None:
+        self.id = player_id
         self.points = 0
         self.hand: Hand
         self.played_cards: list[Card] = []
@@ -20,7 +20,7 @@ class Player:
         return self.points
 
     def set_hand(self, hand: Hand) -> None:
-        self.hand: Hand = hand
+        self.hand = hand
 
     def show_hand(self) -> None:
         """Display the player's hand."""
