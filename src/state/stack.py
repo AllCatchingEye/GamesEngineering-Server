@@ -37,14 +37,10 @@ class PlayedCard:
 class Stack:
     """Represents a stack of cards played during a round."""
 
-    def __init__(self, suit: Suit) -> None:
+    def __init__(self) -> None:
         """
         Initialize a Stack instance.
-
-        Args:
-            suit (Suit): The suit of the cards in the stack.
         """
-        self.suit = suit
         self.played_cards: list[PlayedCard] = []
         self.strongest_card: PlayedCard
         self.value = 0
@@ -98,7 +94,7 @@ class Stack:
 
         print("The strongest card currently is:")
         print(f"{self.strongest_card.get_card()}")
-        print(f"It was played by player {self.strongest_card.get_player().get_id()}")
+        print(f"It was played by player {self.strongest_card.get_player().id}")
 
     def __card_is_trump(self, card: PlayedCard) -> bool:
         return card.get_rank() in [Rank.OBER, Rank.UNTER]
@@ -108,9 +104,6 @@ class Stack:
 
     def get_value(self) -> int:
         return self.value
-
-    def get_suit(self) -> Suit:
-        return self.suit
 
     def get_top_card(self) -> Card:
         top_card: PlayedCard = self.played_cards[-1]
