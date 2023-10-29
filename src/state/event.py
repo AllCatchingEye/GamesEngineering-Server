@@ -32,6 +32,9 @@ class Event(ABC):
     def event_type(self) -> EventType:
         """Return the type of the event"""
 
+    def splurge(self) -> dict[str, object]:
+        return self.__dict__
+
 @dataclass
 class GameStartEvent(Event):
     hand: Hand
