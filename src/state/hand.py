@@ -16,12 +16,6 @@ class Hand:
     def remove_card(self, card: Card) -> None:
         self.cards.remove(card)
 
-    def show_cards_for_suit(self, suit: Suit) -> None:
-        """Prints all cards currently in the hand for a given suit"""
-        for index, card in enumerate(self.cards):
-            if card.get_suit() == suit:
-                print(f"{index}: {card}")
-
     def has_card_for_suit(self, suit: Suit) -> bool:
         """Checks if the hand has a card of the given suit in it"""
         for card in self.cards:
@@ -36,17 +30,6 @@ class Hand:
             if card.get_suit() == suit:
                 suits.append((index, card))
         return suits
-
-    def show_cards_for_ranks(self, ranks: list[Rank]) -> None:
-        """Prints all cards in the hand whose rank matches the given list of ranks"""
-        for rank in ranks:
-            self.__show_rank(rank)
-
-    def __show_rank(self, rank: Rank) -> None:
-        """Prints all cards in the hand for a given rank"""
-        for index, card in enumerate(self.cards):
-            if card.get_rank() == rank:
-                print(f"{index}: {card}")
 
     def has_cards_for_ranks(self, ranks: list[Rank]) -> bool:
         """Checks if the hand has a card of the given rank in it."""
@@ -70,7 +53,8 @@ class Hand:
                 available_trumps.append((index, card))
         return available_trumps
 
-    def show_all_cards(self) -> None:
-        """Prints all cards in the hand."""
-        for index, card in enumerate(self.cards):
-            print(f"{index}: {card}")
+    def __str__(self) -> str:
+        return str(self.cards)
+
+    def __repr__(self) -> str:
+        return str(self)

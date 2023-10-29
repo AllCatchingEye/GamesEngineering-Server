@@ -22,3 +22,6 @@ class Card:
 
     def __str__(self) -> str:
         return f"{self.suit} {self.rank}"
+
+    def __repr__(self) -> str:
+        return str(self)
