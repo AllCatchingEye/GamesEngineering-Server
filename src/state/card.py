@@ -26,5 +26,7 @@ class Card:
     def __repr__(self) -> str:
         return str(self)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return NotImplemented
         return self.rank == other.rank and self.suit == other.suit

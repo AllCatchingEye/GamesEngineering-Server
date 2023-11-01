@@ -37,6 +37,11 @@ class GametypeDeterminedEvent(Event):
     gametype: Gametype
 
 
+@dataclass # TODO: Where to broadcast?
+class PlayerTurnEvent(Event):
+    layable_cards: list[Card]   
+
+
 @dataclass
 class CardPlayedEvent(Event):
     player: Player
@@ -54,4 +59,4 @@ class RoundResultEvent(Event):
 @dataclass
 class GameEndEvent(Event):
     winner: Player  # TODO: Teams?
-    points: int  # TODO: Scoreboard?
+    points: int  # TODO: Scoreboard? 
