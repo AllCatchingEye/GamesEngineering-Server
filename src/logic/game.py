@@ -32,6 +32,7 @@ class Game:
         self.deck: Deck = Deck()
         self.played_cards: list[Card] = []
         self.controllers = []
+        self.gamemode = GamemodeInterface()
 
     def __create_players(self) -> list[Player]:
         """Create a list of players for the game."""
@@ -93,26 +94,31 @@ class Game:
         for i, game_type in enumerate(chosen_types):
             if game_type is not None:
                 self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
+                match (game_type):
+                    case Gametype.SOLO:
+                        self.gamemode = GamemodeSolo(chosen_suit)
+                    case Gametype.WENZ:
+                        self.gamemode = GamemodeWenz()
+                    case Gametype.GEIER:
+                        self.gamemode = GamemodeGeier()
+                    case Gametype.FARBWENZ:
+                        self.gamemode = GamemmodeFarbwenz(chosen_suit)
+                    case Gametype.FARBGEIER:
+                        self.gamemode = GamemmodeFarbgeier(chosen_suit)
+                    case Gametype.SAUSPIEL:
+                        self.gamemode = GamemodeSauspiel(chosen_suit)
                 return game_type
 
+        self.gamemode = GamemodeRamsch()
         return None  # TODO: Ramsch gametype
 
     def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
-        trump_cards = self.__get_trump_cards()
+        trump_cards = self.gamemode.get_trump_cards()
         for _ in range(ROUNDS):
             self.start_round(trump_cards)
 
         self.__get_game_winner()
-
-    def __get_trump_cards(self) -> list[Card]:
-        """Get all trump cards for the game."""
-        # For basic implementation return always Farbsolo prio
-        trump_ober = self.deck.get_cards_by_rank(Rank.OBER)
-        trump_unter = self.deck.get_cards_by_rank(Rank.UNTER)
-
-        trump_cards: list[Card] = trump_ober + trump_unter
-        return trump_cards
 
     def start_round(self, trump_cards: list[Card]) -> None:
         """Start a new round."""
