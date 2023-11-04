@@ -1,6 +1,13 @@
 import random
 
 from controller.player_controller import PlayerController
+from logic.gamemodes import gamemode_wenz
+from logic.gamemodes.gamemode import GameMode
+from logic.gamemodes.gamemode_geier import GameModeGeier
+from logic.gamemodes.gamemode_ramsch import GameModeRamsch
+from logic.gamemodes.gamemode_sauspiel import GameModeSauspiel
+from logic.gamemodes.gamemode_solo import GameModeSolo
+from logic.gamemodes.gamemode_wenz import GameModeWenz
 from state.card import Card
 from state.deck import Deck
 from state.event import (
@@ -16,8 +23,8 @@ from state.event import (
 from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
-from state.ranks import Rank
 from state.stack import Stack
+from state.suits import Suit
 
 HAND_SIZE = 8
 ROUNDS = 8
@@ -26,13 +33,13 @@ PLAYER_COUNT = 4
 
 class Game:
     controllers: list[PlayerController]
+    gamemode: GameMode
 
     def __init__(self) -> None:
         self.players = self.__create_players()
         self.deck: Deck = Deck()
         self.played_cards: list[Card] = []
         self.controllers = []
-        self.gamemode = GamemodeInterface()
 
     def __create_players(self) -> list[Player]:
         """Create a list of players for the game."""
@@ -96,21 +103,22 @@ class Game:
                 self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
                 match (game_type):
                     case Gametype.SOLO:
-                        self.gamemode = GamemodeSolo(chosen_suit)
+                        self.gamemode = GameModeSolo(Suit.EICHEL)  # TODO: Fix suit
                     case Gametype.WENZ:
-                        self.gamemode = GamemodeWenz()
+                        self.gamemode = GameModeWenz(None)
                     case Gametype.GEIER:
-                        self.gamemode = GamemodeGeier()
+                        self.gamemode = GameModeGeier(None)
                     case Gametype.FARBWENZ:
-                        self.gamemode = GamemmodeFarbwenz(chosen_suit)
+                        self.gamemode = GameModeWenz(Suit.EICHEL)
                     case Gametype.FARBGEIER:
-                        self.gamemode = GamemmodeFarbgeier(chosen_suit)
+                        self.gamemode = GameModeGeier(Suit.EICHEL)
                     case Gametype.SAUSPIEL:
-                        self.gamemode = GamemodeSauspiel(chosen_suit)
+                        self.gamemode = GameModeSauspiel(Suit.EICHEL)
                 return game_type
 
-        self.gamemode = GamemodeRamsch()
-        return None  # TODO: Ramsch gametype
+        self.gamemode = GameModeRamsch()
+
+        return Gametype.RAMSCH
 
     def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
@@ -137,7 +145,7 @@ class Game:
 
     def __finish_round(self, stack: Stack) -> None:
         """Finish the current round and determine the winner."""
-        winner = stack.get_winner()
+        winner = self.gamemode.determine_stitch_winner(stack)
         stack_value = stack.get_value()
         winner.points += stack_value
         self.__broadcast(RoundResultEvent(winner, stack_value, stack))

@@ -23,12 +23,12 @@ class Hand:
                 return True
         return False
 
-    def get_all_cards_for_suit(self, suit: Suit) -> list[tuple[int, Card]]:
+    def get_all_cards_for_suit(self, suit: Suit) -> list[Card]:
         """Returns all cards in the hand for the given suit"""
-        suits: list[tuple[int, Card]] = []
-        for index, card in enumerate(self.cards):
+        suits: list[Card] = []
+        for card in self.cards:
             if card.get_suit() == suit:
-                suits.append((index, card))
+                suits.append(card)
         return suits
 
     def has_cards_for_ranks(self, ranks: list[Rank]) -> bool:
@@ -45,12 +45,12 @@ class Hand:
                 return True
         return False
 
-    def get_all_trumps_in_deck(self, trumps: list[Card]) -> list[tuple[int, Card]]:
+    def get_all_trumps_in_deck(self, trumps: list[Card]) -> list[Card]:
         """Returns all trumps in the hand that match the given trumps list."""
-        available_trumps: list[tuple[int, Card]] = []
-        for index, card in enumerate(self.cards):
+        available_trumps: list[Card] = []
+        for card in self.cards:
             if card in trumps:
-                available_trumps.append((index, card))
+                available_trumps.append(card)
         return available_trumps
 
     def __str__(self) -> str:
