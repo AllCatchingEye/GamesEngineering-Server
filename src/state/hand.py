@@ -16,18 +16,18 @@ class Hand:
     def remove_card(self, card: Card) -> None:
         self.cards.remove(card)
 
-    def has_card_for_suit(self, suit: Suit) -> bool:
-        """Checks if the hand has a card of the given suit in it"""
+    def has_card_for_suit(self, suit: Suit, trumps: list[Card]) -> bool:
+        """Checks if the hand has a card of the given suit in it that is not a trump"""
         for card in self.cards:
-            if suit == card.get_suit():
+            if suit == card.get_suit() and card not in trumps:
                 return True
         return False
 
-    def get_all_cards_for_suit(self, suit: Suit) -> list[Card]:
-        """Returns all cards in the hand for the given suit"""
+    def get_all_cards_for_suit(self, suit: Suit, trumps: list[Card]) -> list[Card]:
+        """Returns all cards in the hand for the given suit that are not trumps"""
         suits: list[Card] = []
         for card in self.cards:
-            if card.get_suit() == suit:
+            if card.get_suit() == suit and card not in trumps:
                 suits.append(card)
         return suits
 
@@ -44,6 +44,19 @@ class Hand:
             if rank == card.get_rank():
                 return True
         return False
+
+    def has_card_of_rank_and_suit(self, suit: Suit, rank: Rank) -> bool:
+        """Checks if the hand has a card of the given suit and rank in it"""
+        for card in self.cards:
+            if suit == card.get_suit() and rank == card.get_rank():
+                return True
+        return False
+
+    def get_card_of_rank_and_suit(self, suit: Suit, rank: Rank) -> Card | None:
+        """Returns the card of the given suit and rank in it or else None"""
+        for card in self.cards:
+            if suit == card.get_suit() and rank == card.get_rank():
+                return card
 
     def get_all_trumps_in_deck(self, trumps: list[Card]) -> list[Card]:
         """Returns all trumps in the hand that match the given trumps list."""
