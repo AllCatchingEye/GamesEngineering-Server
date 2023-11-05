@@ -90,14 +90,16 @@ class Game:
         chosen_types: list[Gametype | None] = [None, None, None, None]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
-                game_type = self.controllers[i].select_gametype([Gametype.SOLO]) # TODO: Other game types
+                game_type = self.controllers[i].select_gametype(
+                    [Gametype.SOLO]
+                )  # TODO: Other game types
                 chosen_types[i] = game_type
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
             if game_type is None:
                 continue
-            
+
             self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
             match (game_type):
                 case Gametype.SOLO:
