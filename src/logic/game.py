@@ -68,16 +68,17 @@ class Game:
         self.rng.shuffle(deck)
 
         for player in self.players:
-            distributed_cards = self.__distribute_hand(player, deck)
-            deck = [item for item in deck if item not in distributed_cards]
+            deck = self.__distribute_hand(player, deck)
 
     def __distribute_hand(self, player: Player, deck: list[Card]) -> list[Card]:
         """Distribute cards for a player's hand."""
         hand: Hand = Hand(deck[:HAND_SIZE])
         player.hand = hand
 
+        deck = deck[HAND_SIZE:]
+
         self.controllers[player.id].on_game_event(GameStartEvent(hand))
-        return hand.cards
+        return deck
 
     def __call_game(self) -> Gametype:
         """Call the game type based on player choices."""
@@ -196,9 +197,3 @@ class Game:
         """Broadcast an event to all players."""
         for controller in self.controllers:
             controller.on_game_event(event)
-
-    def __unicast(self, player: Player, event: Event) -> None:
-        """Broadcast an event to the controller of a specific player."""
-        for controller in self.controllers:
-            if controller.player.id == player.id:
-                controller.on_game_event(event)

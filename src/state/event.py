@@ -1,6 +1,5 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Type, TypeVar
 
 from state.card import Card
 from state.gametypes import Gametype
@@ -35,11 +34,6 @@ class GametypeWishedEvent(Event):
 class GametypeDeterminedEvent(Event):
     player: Player | None
     gametype: Gametype
-
-
-@dataclass # TODO: Where to broadcast?
-class PlayerTurnEvent(Event):
-    layable_cards: list[Card]   
 
 
 @dataclass
