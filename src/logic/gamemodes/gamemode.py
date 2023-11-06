@@ -60,9 +60,9 @@ class GameMode(ABC):
             else:
                 # Trump-Card wins over regular card
                 return True
-        elif card_one.get_suit == card_two.get_suit:
+        elif card_one.get_suit() == card_two.get_suit():
             # Compare two cards of the same suit
-            return card_one.get_value() > card_two.get_value()
+            return card_one.get_rank().value > card_two.get_rank().value
         else:
             # Other card does not fulfill the leading suit
             return False
