@@ -2,22 +2,19 @@ from logic.gamemodes.gamemode import GameMode
 from state.card import Card
 from state.deck import DECK
 from state.hand import Hand
-from state.player import Player
 from state.ranks import Rank
 from state.stack import Stack
 from state.suits import Suit
 
 
 class GameModeSolo(GameMode):
-    trumps: list[Card]
-
     def __init__(self, suit: Suit):
         super().__init__(suit)
 
-        self.trumps = []
+        self.trumps = DECK.get_cards_by_rank(Rank.OBER) + DECK.get_cards_by_rank(Rank.UNTER)
 
-        for card in DECK.get_full_deck():
-            if card.rank == Rank.OBER or card.rank == Rank.UNTER or card.suit == suit:
+        for card in DECK.get_cards_by_suit(suit):
+            if card not in self.trumps:
                 self.trumps.append(card)
 
     def get_trump_cards(self) -> list[Card]:
@@ -47,34 +44,3 @@ class GameModeSolo(GameMode):
 
         # Any card - free to choose
         return hand.get_all_cards()
-
-    def determine_stitch_winner(self, stack: Stack) -> Player:
-        strongest_played_card = stack.get_played_cards()[0]
-        for played_card in stack.get_played_cards()[1:]:
-            if self.__card_is_stronger_than(played_card.get_card(), strongest_played_card.get_card()):
-                strongest_played_card = played_card
-        return strongest_played_card.get_player()
-
-    def __card_is_stronger_than(self, card_one: Card, card_two: Card) -> bool:
-        match card_one.rank:
-            case Rank.OBER:
-                match card_two.rank:
-                    case Rank.OBER:
-                        return card_one.get_suit().value < card_two.get_suit().value
-                    case _:
-                        return True
-            case Rank.UNTER:
-                match card_two.rank:
-                    case Rank.OBER:
-                        return False
-                    case Rank.UNTER:
-                        return card_one.get_suit().value < card_two.get_suit().value
-                    case _:
-                        return True
-            case _:
-                if [card_one, card_two] in self.trumps or [card_one, card_two] not in self.trumps:
-                    return card_one.get_value() > card_two.get_value()
-                elif card_one in self.trumps:
-                    return True
-                else:
-                    return False
