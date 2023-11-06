@@ -14,9 +14,29 @@ class GameMode(ABC):
     def __init__(self, suit: Suit | None):
         self.suit = suit
 
-    @abstractmethod
     def get_playable_cards(self, stack: Stack, hand: Hand) -> list[Card]:
         """Determine which cards can be played"""
+        if stack.is_empty():
+            return hand.get_all_cards()
+
+        # is trump round?
+        trump_round = stack.get_first_card() in self.trumps
+
+        if trump_round:
+            # Check trumps
+            playable_trumps = hand.get_all_trumps_in_deck(self.trumps)
+
+            if len(playable_trumps) > 0:
+                return playable_trumps
+        else:
+            # Same color
+            played_suit = stack.get_first_card().get_suit()
+            same_suit = hand.get_all_cards_for_suit(played_suit, self.trumps)
+            if len(same_suit) > 0:
+                return same_suit
+
+        # Any card - free to choose
+        return hand.get_all_cards()
 
     def get_trump_cards(self) -> list[Card]:
         """Returns a list of all trump cards"""
