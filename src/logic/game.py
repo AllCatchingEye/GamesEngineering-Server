@@ -9,7 +9,7 @@ from logic.gamemodes.gamemode_solo import GameModeSolo
 from logic.gamemodes.gamemode_wenz import GameModeWenz
 from logic.playable_gametypes import get_playable_gametypes
 from state.card import Card
-from state.deck import Deck
+from state.deck import Deck, DECK
 from state.event import (
     CardPlayedEvent,
     Event,
@@ -23,12 +23,47 @@ from state.event import (
 from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
+from state.ranks import Rank
 from state.stack import Stack
-from state.suits import Suit
+from state.suits import Suit, get_all_suits
 
 HAND_SIZE = 8
 ROUNDS = 8
 PLAYER_COUNT = 4
+
+
+def get_playable_gametypes(hand: Hand, plays_ahead: int) -> list[(Gametype, Suit | None)]:
+    """Returns all playable gametypes with that hand."""
+    types = []
+    # Gametypes Solo
+    for suit in get_all_suits():
+        types.append((Gametype.SOLO, suit))
+    # Gametypes Wenz
+    types += __get_practical_gametypes_wenz_geier(hand, Rank.UNTER, Gametype.FARBWENZ, Gametype.WENZ)
+    # Gametypes Geier
+    types += __get_practical_gametypes_wenz_geier(hand, Rank.OBER, Gametype.FARBGEIER, Gametype.GEIER)
+    # Gametypes Sauspiel
+    if plays_ahead == 0:
+        sauspiel_suits = get_all_suits()
+        sauspiel_suits.remove(Suit.HERZ)
+        for suit in sauspiel_suits:
+            suit_cards = hand.get_all_cards_for_suit(suit,
+                                                     DECK.get_cards_by_rank(Rank.OBER) + DECK.get_cards_by_rank(
+                                                         Rank.UNTER))
+            if len(suit_cards) > 0 and Card(Rank.ASS, suit) not in suit_cards:
+                types.append((Gametype.SAUSPIEL, suit))
+        return types
+
+
+def __get_practical_gametypes_wenz_geier(hand: Hand, rank: Rank, game_type_suit: Gametype,
+                                         game_type_no_suit: Gametype) -> list[(Gametype, Suit | None)]:
+    practical_types = []
+    if len(hand.get_all_trumps_in_deck(DECK.get_cards_by_rank(rank))) > 0:
+        practical_types.append((game_type_no_suit, None))
+        for suit in get_all_suits():
+            if len(hand.get_all_cards_for_suit(suit, DECK.get_cards_by_rank(Rank.OBER))) > 0:
+                practical_types.append((game_type_suit, suit))
+    return practical_types
 
 
 class Game:
@@ -90,35 +125,32 @@ class Game:
             decisions[i] = wants_to_play
 
         # TODO: Game types that have suits?
-        chosen_types: list[Gametype | None] = [None, None, None, None]
+        chosen_types: list[(Gametype | None, Suit | None)] = [(None, None), (None, None), (None, None), (None, None)]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
                 game_type = self.controllers[i].select_gametype(
-                    get_playable_gametypes(
-                        self.players[i].hand,
-                        GameModeSauspiel(Suit.EICHEL).get_trump_cards(),
-                    )
-                )  # TODO: Other game types
+                    get_playable_gametypes(self.players[i].hand, decisions[0:i].count(True))
+                )
                 chosen_types[i] = game_type
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
-            if game_type is None:
+            if game_type[0] is None:
                 continue
 
-            match (game_type):
+            match (game_type[0]):
                 case Gametype.SOLO:
-                    self.gamemode = GameModeSolo(Suit.EICHEL)  # TODO: Fix suit
+                    self.gamemode = GameModeSolo(game_type[1])
                 case Gametype.WENZ:
                     self.gamemode = GameModeWenz(None)
                 case Gametype.GEIER:
                     self.gamemode = GameModeGeier(None)
                 case Gametype.FARBWENZ:
-                    self.gamemode = GameModeWenz(Suit.EICHEL)
+                    self.gamemode = GameModeWenz(game_type[1])
                 case Gametype.FARBGEIER:
-                    self.gamemode = GameModeGeier(Suit.EICHEL)
+                    self.gamemode = GameModeGeier(game_type[1])
                 case Gametype.SAUSPIEL:
-                    self.gamemode = GameModeSauspiel(Suit.EICHEL)
+                    self.gamemode = GameModeSauspiel(game_type[1])
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
                     raise ValueError("Ramsch cannot be chosen as a gametype")
