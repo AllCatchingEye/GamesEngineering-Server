@@ -1,6 +1,7 @@
 from logic.gamemodes.gamemode import GameMode
 from logic.gamemodes.gamemode_solo import GameModeSolo
 from state.card import Card
+from state.deck import DECK
 from state.hand import Hand
 from state.player import Player
 from state.ranks import Rank
@@ -10,12 +11,13 @@ from state.suits import Suit
 
 class GameModeSauspiel(GameMode):
     def __init__(self, suit: Suit | None):
-        super().__init__(suit)
-        self.heart_solo = GameModeSolo(Suit.HERZ)
-        self.trumps = self.heart_solo.trumps
-
-    def get_trump_cards(self) -> list[Card]:
-        return self.heart_solo.get_trump_cards()
+        if suit == Suit.HERZ:
+            raise ValueError("Herz Ass cannot be searching during sauspiel")
+        trumps_init = DECK.get_cards_by_rank(Rank.OBER) + DECK.get_cards_by_rank(Rank.UNTER)
+        for card in DECK.get_cards_by_suit(Suit.HERZ):
+            if card not in trumps_init:
+                trumps_init.append(card)
+        super().__init__(suit, trumps_init)
 
     def get_playable_cards(self, stack: Stack, hand: Hand) -> list[Card]:
 
@@ -27,11 +29,9 @@ class GameModeSauspiel(GameMode):
                 # played ass is being searched
                 return [hand.get_card_of_rank_and_suit(self.suit, Rank.ASS)]
             else:
-                playable_cards = self.heart_solo.get_playable_cards(stack, hand)
+                playable_cards = super().get_playable_cards(stack, hand)
                 playable_cards.remove(hand.get_card_of_rank_and_suit(self.suit, Rank.ASS))
                 return playable_cards
         else:
-            return self.heart_solo.get_playable_cards(stack, hand)
+            return super().get_playable_cards(stack, hand)
 
-    def determine_stitch_winner(self, stack: Stack) -> Player:
-        return self.heart_solo.determine_stitch_winner(stack)
