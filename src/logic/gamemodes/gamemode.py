@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from state.card import Card
 from state.hand import Hand
@@ -11,8 +11,9 @@ class GameMode(ABC):
     suit: Suit | None
     trumps: [Card]
 
-    def __init__(self, suit: Suit | None):
+    def __init__(self, suit: Suit | None, trumps: [Card]):
         self.suit = suit
+        self.trumps = trumps
 
     def get_playable_cards(self, stack: Stack, hand: Hand) -> list[Card]:
         """Determine which cards can be played"""
@@ -43,6 +44,7 @@ class GameMode(ABC):
         return self.trumps
 
     def determine_stitch_winner(self, stack: Stack) -> Player:
+        """Returns the player who won the current stitch"""
         strongest_played_card = stack.get_played_cards()[0]
         for played_card in stack.get_played_cards()[1:]:
             if self.__card_is_stronger_than(played_card.get_card(), strongest_played_card.get_card()):
@@ -50,13 +52,17 @@ class GameMode(ABC):
         return strongest_played_card.get_player()
 
     def __card_is_stronger_than(self, card_one: Card, card_two: Card) -> bool:
+        """Helping-Method to determine which of two cards is stronger"""
         if card_one in self.trumps:
             if card_two in self.trumps:
-                # Trumpf-Vergleich
+                # Compare two trump-cards
                 return self.trumps.index(card_one) < self.trumps.index(card_two)
             else:
+                # Trump-Card wins over regular card
                 return True
         elif card_one.get_suit == card_two.get_suit:
+            # Compare two cards of the same suit
             return card_one.get_value() > card_two.get_value()
         else:
+            # Other card does not fulfill the leading suit
             return False
