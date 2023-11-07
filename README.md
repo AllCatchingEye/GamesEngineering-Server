@@ -34,6 +34,6 @@ Schafkopf Game Server
 2. Start first client with command `python src/sample_client.py start`
 3. You will receive a key for joining the game. This key can be given to other clients,
    so that they can join your running game
-4. Start second client with command `python src/sample_client.py join <key>`. <key> is the join key,
+4. Start second client with command `python src/sample_client.py join <key>`. `<key>` is the join key,
    which the first client gets when starting a game, which you need to provide to enter the game
 5. Both clients should now be in the game
