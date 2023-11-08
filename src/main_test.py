@@ -36,7 +36,6 @@ class TestClass(unittest.TestCase):
         cls.player2 = cls.game.players[2]
         cls.player3 = cls.game.players[3]
 
-        cls.sut_player = cls.player0
         cls.sut = TestController(cls.player0, rng=cls.rng)
 
         cls.game.controllers = [
@@ -56,7 +55,7 @@ class TestClass(unittest.TestCase):
         play_decisions = self.sut.event_history.get_events_of_type(PlayDecisionEvent)
         self.assertEqual(len(play_decisions), 4)
 
-        self.assertEqual(play_decisions[0].player, self.sut_player)
+        self.assertEqual(play_decisions[0].player, self.player0)
         self.assertEqual(play_decisions[0].wants_to_play, False)
 
         self.assertEqual(play_decisions[1].player, self.player1)
@@ -87,7 +86,7 @@ class TestClass(unittest.TestCase):
         self.assertEqual(len(end_events), 1)
 
         self.assertEqual(end_events[0].winner, self.player0)
-        self.assertEqual(end_events[0].points, 120)
+        self.assertEqual(end_events[0].points, 40)
 
     def test_all_rounds(self):
         self.assertEqual(
@@ -98,9 +97,10 @@ class TestClass(unittest.TestCase):
         )
 
     def test_round_1(self):
-        playable_cards, stack = self.sut.player_turns[0]
-        cards_played = self.sut.event_history.get_events_of_type(CardPlayedEvent)[0:4]
-        round_result = self.sut.event_history.get_events_of_type(RoundResultEvent)[0]
+        r = 1
+        playable_cards, stack = self.sut.player_turns[r-1]
+        cards_played = self.sut.event_history.get_events_of_type(CardPlayedEvent)[4*(r-1):4*(r-1) + 4]
+        round_result = self.sut.event_history.get_events_of_type(RoundResultEvent)[r-1]
 
         # player had first turn
         self.assertEqual(len(playable_cards), 8)
@@ -108,34 +108,72 @@ class TestClass(unittest.TestCase):
 
         # played cards
         self.assertEqual(cards_played[0].player, self.player0)
-        self.assertEqual(cards_played[0].card, Card(Rank.OBER, Suit.GRAS))
+        self.assertEqual(cards_played[0].card, Card(Suit.GRAS, Rank.OBER))
 
         self.assertEqual(cards_played[1].player, self.player1)
-        self.assertEqual(cards_played[1].card, Card(Rank.OBER, Suit.HERZ))
+        self.assertEqual(cards_played[1].card, Card(Suit.HERZ, Rank.OBER))
 
         self.assertEqual(cards_played[2].player, self.player2)
-        self.assertEqual(cards_played[2].card, Card(Rank.ZEHN, Suit.EICHEL))
+        self.assertEqual(cards_played[2].card, Card(Suit.EICHEL, Rank.ZEHN))
 
         self.assertEqual(cards_played[3].player, self.player3)
-        self.assertEqual(cards_played[3].card, Card(Rank.SIEBEN, Suit.EICHEL))
+        self.assertEqual(cards_played[3].card, Card(Suit.EICHEL, Rank.SIEBEN))
 
         # round result
         self.assertEqual(round_result.points, 16)
         self.assertEqual(
-            round_result.stack.get_first_card(), Card(Rank.OBER, Suit.GRAS)
+            round_result.stack.get_first_card(), Card(Suit.GRAS, Rank.OBER)
         )
         self.assertTrue(
             round_result.stack.get_played_cards(),
             [
-                PlayedCard(Card(Rank.OBER, Suit.GRAS), self.player0),
-                PlayedCard(Card(Rank.OBER, Suit.HERZ), self.player1),
-                PlayedCard(Card(Rank.ZEHN, Suit.EICHEL), self.player2),
-                PlayedCard(Card(Rank.SIEBEN, Suit.EICHEL), self.player3),
+                PlayedCard(Card(Suit.GRAS, Rank.OBER), self.player0),
+                PlayedCard(Card(Suit.HERZ, Rank.OBER), self.player1),
+                PlayedCard(Card(Suit.EICHEL, Rank.ZEHN), self.player2),
+                PlayedCard(Card(Suit.EICHEL, Rank.SIEBEN), self.player3),
             ],
         )
-        self.assertEqual(round_result.round_winner, self.player2)
+        self.assertEqual(round_result.round_winner, self.player0)
 
-        print(round_result.points)
+
+    def test_round_2(self):
+        r = 2
+        playable_cards, stack = self.sut.player_turns[r-1]
+        cards_played = self.sut.event_history.get_events_of_type(CardPlayedEvent)[4*(r-1):4*(r-1) + 4]
+        round_result = self.sut.event_history.get_events_of_type(RoundResultEvent)[r-1]
+
+        # player had first turn, order did not change
+        self.assertEqual(len(playable_cards), 7)
+        self.assertEqual(len(stack), 0)
+
+        # played cards
+        self.assertEqual(cards_played[0].player, self.player0)
+        self.assertEqual(cards_played[0].card, Card(Suit.SCHELLEN, Rank.KOENIG, ))
+
+        self.assertEqual(cards_played[1].player, self.player1)
+        self.assertEqual(cards_played[1].card, Card(Suit.SCHELLEN, Rank.ASS))
+
+        self.assertEqual(cards_played[2].player, self.player2)
+        self.assertEqual(cards_played[2].card, Card(Suit.SCHELLEN, Rank.ACHT))
+
+        self.assertEqual(cards_played[3].player, self.player3)
+        self.assertEqual(cards_played[3].card, Card(Suit.SCHELLEN, Rank.SIEBEN))
+
+        # round result
+        self.assertEqual(round_result.points, 15)
+        self.assertEqual(
+            round_result.stack.get_first_card(), Card(Suit.SCHELLEN, Rank.KOENIG)
+        )
+        self.assertTrue(
+            round_result.stack.get_played_cards(),
+            [
+                PlayedCard(Card(Suit.SCHELLEN, Rank.KOENIG), self.player0),
+                PlayedCard(Card(Suit.SCHELLEN, Rank.ASS), self.player1),
+                PlayedCard(Card(Suit.SCHELLEN, Rank.ACHT), self.player2),
+                PlayedCard(Card(Suit.SCHELLEN, Rank.SIEBEN), self.player3),
+            ],
+        )
+        self.assertEqual(round_result.round_winner, self.player1)
 
 
 class TestController(RandomController):
