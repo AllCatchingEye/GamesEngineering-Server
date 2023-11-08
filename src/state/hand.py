@@ -74,7 +74,7 @@ class Hand:
         sauspiel_suits.remove(Suit.HERZ)
         for suit in sauspiel_suits:
             suit_cards = self.get_all_cards_for_suit(suit, trumps)
-            if len(suit_cards) > 0 and Card(Rank.ASS, suit) not in suit_cards:
+            if len(suit_cards) > 0 and Card(suit, Rank.ASS) not in suit_cards:
                 types.append(Gametype.SAUSPIEL)
         # TODO check other gametypes than sauspiel
         return types
@@ -83,4 +83,4 @@ class Hand:
         return str(self.cards)
 
     def __repr__(self) -> str:
-        return str(self)
+        return str(self.cards)

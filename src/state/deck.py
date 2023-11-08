@@ -33,7 +33,7 @@ class Deck:
         all_ranks: list[Rank] = get_all_ranks()
         full_suit: list[Card] = []
         for rank in all_ranks:
-            card = Card(rank, suit)
+            card = Card(suit, rank)
             full_suit.append(card)
 
         return full_suit

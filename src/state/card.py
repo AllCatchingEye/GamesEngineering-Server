@@ -3,7 +3,7 @@ from state.suits import Suit
 
 
 class Card:
-    def __init__(self, rank: Rank, suit: Suit) -> None:
+    def __init__(self, suit: Suit, rank: Rank) -> None:
         self.suit = suit
         self.rank = rank
         self.value = get_value_of(self.rank)
