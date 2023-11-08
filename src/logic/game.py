@@ -7,6 +7,7 @@ from logic.gamemodes.gamemode_ramsch import GameModeRamsch
 from logic.gamemodes.gamemode_sauspiel import GameModeSauspiel
 from logic.gamemodes.gamemode_solo import GameModeSolo
 from logic.gamemodes.gamemode_wenz import GameModeWenz
+from logic.playable_gametypes import get_playable_gametypes
 from state.card import Card
 from state.deck import Deck, DECK
 from state.event import (
