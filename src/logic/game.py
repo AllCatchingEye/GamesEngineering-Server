@@ -91,7 +91,9 @@ class Game:
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
                 game_type = self.controllers[i].select_gametype(
-                    self.players[i].hand.get_playable_gametypes(GameModeSauspiel(Suit.EICHEL).get_trump_cards())
+                    self.players[i].hand.get_playable_gametypes(
+                        GameModeSauspiel(Suit.EICHEL).get_trump_cards()
+                    )
                 )  # TODO: Other game types
                 chosen_types[i] = game_type
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
@@ -100,7 +102,6 @@ class Game:
             if game_type is None:
                 continue
 
-            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
             match (game_type):
                 case Gametype.SOLO:
                     self.gamemode = GameModeSolo(Suit.EICHEL)  # TODO: Fix suit
@@ -117,8 +118,11 @@ class Game:
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
                     raise ValueError("Ramsch cannot be chosen as a gametype")
+
+            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
             return game_type
 
+        self.__broadcast(GametypeDeterminedEvent(None, game_type))
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
