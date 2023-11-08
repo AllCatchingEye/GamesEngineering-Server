@@ -41,7 +41,7 @@ class PlayedCard:
 
     def __eq__(self, __value: object) -> bool:
         if not isinstance(__value, PlayedCard):
-            return NotImplemented
+            return False
         return self.card == __value.card and self.player == __value.player
 
 
