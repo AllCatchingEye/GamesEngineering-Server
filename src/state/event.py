@@ -44,7 +44,7 @@ class GametypeWishedEvent(Event):
 
 @dataclass
 class GametypeDeterminedEvent(Event):
-    player: Player
+    player: Player | None
     gametype: Gametype
 
 

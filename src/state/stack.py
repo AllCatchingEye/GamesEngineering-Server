@@ -48,7 +48,6 @@ class Stack:
         Initialize a Stack instance.
         """
         self.played_cards: list[PlayedCard] = []
-        self.strongest_card: PlayedCard
         self.value = 0
 
     def add_card(self, card: Card, player: Player) -> None:
@@ -60,59 +59,18 @@ class Stack:
             player (Player): The player who played the card.
         """
         played_card = PlayedCard(card, player)
-        if self.is_empty():
-            self.strongest_card = played_card
-        else:
-            self.__determine_stitch(played_card)
-
         self.value += get_value_of(card.get_rank())
         self.played_cards.append(played_card)
 
     def is_empty(self) -> bool:
         return len(self.played_cards) == 0
 
-    def __determine_stitch(self, card: PlayedCard) -> None:
-        """
-        Determine the strongest card in the stack after a new card is played.
-
-        Args:
-            card (PlayedCard): The newly played card.
-        """
-        if self.__card_is_same_suit(card):
-            # Neue Karte hat selbe farbe aber höheren rang
-            if self.strongest_card.get_rank().value < card.get_rank().value:
-                self.strongest_card = card
-        # Neue Karte ist trumpf und momentane karte ist kein trumpf
-        elif self.__card_is_trump(card) and not self.__card_is_trump(
-            self.strongest_card
-        ):
-            self.strongest_card = card
-        elif self.__card_is_trump(card) and self.__card_is_trump(self.strongest_card):
-            # Neue Karte ist trumpf und momentane karte ist trumpf
-            if self.strongest_card.get_suit().value < card.get_suit().value:
-                self.strongest_card = card
-            # Trumpf wird geschlagen von stärkerer karte gleicher Farbe
-            if self.strongest_card.get_rank().value < card.get_rank().value:
-                self.strongest_card = card
-            # Different color but no trump
-        elif self.strongest_card.get_suit().value < card.get_suit().value:
-            self.strongest_card = card
-
-    def __card_is_trump(self, card: PlayedCard) -> bool:
-        return card.get_rank() in [Rank.OBER, Rank.UNTER]
-
-    def __card_is_same_suit(self, card: PlayedCard) -> bool:
-        return self.strongest_card.get_suit() == card.get_suit()
-
     def get_value(self) -> int:
         return self.value
 
-    def get_top_card(self) -> Card:
-        top_card: PlayedCard = self.played_cards[-1]
+    def get_first_card(self) -> Card:
+        top_card: PlayedCard = self.played_cards[0]
         return top_card.get_card()
-
-    def get_winner(self) -> Player:
-        return self.strongest_card.get_player()
 
     def get_played_cards(self) -> list[PlayedCard]:
         return self.played_cards

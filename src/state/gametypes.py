@@ -9,3 +9,4 @@ class Gametype(Enum):
     FARBWENZ = 4
     FARBGEIER = 5
     SAUSPIEL = 6
+    RAMSCH = 7

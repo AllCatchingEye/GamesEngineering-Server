@@ -25,3 +25,6 @@ class Card:
 
     def __repr__(self) -> str:
         return str(self)
+
+    def __eq__(self, other):
+        return self.rank == other.rank and self.suit == other.suit

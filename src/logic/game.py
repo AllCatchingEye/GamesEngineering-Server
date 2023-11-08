@@ -1,6 +1,13 @@
 import random
 
 from controller.player_controller import PlayerController
+from logic.gamemodes.gamemode import GameMode
+from logic.gamemodes.gamemode_geier import GameModeGeier
+from logic.gamemodes.gamemode_ramsch import GameModeRamsch
+from logic.gamemodes.gamemode_sauspiel import GameModeSauspiel
+from logic.gamemodes.gamemode_solo import GameModeSolo
+from logic.gamemodes.gamemode_wenz import GameModeWenz
+from logic.playable_gametypes import get_playable_gametypes
 from state.card import Card
 from state.deck import Deck
 from state.event import (
@@ -16,8 +23,8 @@ from state.event import (
 from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
-from state.ranks import Rank
 from state.stack import Stack
+from state.suits import Suit
 
 HAND_SIZE = 8
 ROUNDS = 8
@@ -26,6 +33,7 @@ PLAYER_COUNT = 4
 
 class Game:
     controllers: list[PlayerController]
+    gamemode: GameMode
 
     def __init__(self) -> None:
         self.players = self.__create_players()
@@ -43,17 +51,14 @@ class Game:
     def run(self) -> None:
         """Start the game."""
 
-        while True:
-            self.determine_gametype()
-            self.__new_game()
+        self.determine_gametype()
+        self.__new_game()
 
     def determine_gametype(self) -> Gametype:
         """Determine the game type based on player choices."""
         self.__distribute_cards()
-        suit_chosen = self.__call_game()
-        if suit_chosen is None:
-            return self.determine_gametype()
-        return suit_chosen
+        game_type = self.__call_game()
+        return game_type
 
     def __distribute_cards(self) -> None:
         """Distribute cards to players."""
@@ -73,7 +78,7 @@ class Game:
         self.controllers[player.id].on_game_event(GameStartEvent(hand))
         return deck
 
-    def __call_game(self) -> Gametype | None:
+    def __call_game(self) -> Gametype:
         """Call the game type based on player choices."""
         decisions: list[bool | None] = [None, None, None, None]
         for player in self.players:
@@ -82,56 +87,77 @@ class Game:
             self.__broadcast(PlayDecisionEvent(player, wants_to_play))
             decisions[i] = wants_to_play
 
+        # TODO: Game types that have suits?
         chosen_types: list[Gametype | None] = [None, None, None, None]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
-                game_type = self.controllers[i].select_gametype([Gametype.SOLO])
+                game_type = self.controllers[i].select_gametype(
+                    get_playable_gametypes(
+                        self.players[i].hand,
+                        GameModeSauspiel(Suit.EICHEL).get_trump_cards(),
+                    )
+                )  # TODO: Other game types
                 chosen_types[i] = game_type
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
-        # TODO: Fix gametype determination
         for i, game_type in enumerate(chosen_types):
-            if game_type is not None:
-                self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
-                return game_type
+            if game_type is None:
+                continue
 
-        return None  # TODO: Ramsch gametype
+            match (game_type):
+                case Gametype.SOLO:
+                    self.gamemode = GameModeSolo(Suit.EICHEL)  # TODO: Fix suit
+                case Gametype.WENZ:
+                    self.gamemode = GameModeWenz(None)
+                case Gametype.GEIER:
+                    self.gamemode = GameModeGeier(None)
+                case Gametype.FARBWENZ:
+                    self.gamemode = GameModeWenz(Suit.EICHEL)
+                case Gametype.FARBGEIER:
+                    self.gamemode = GameModeGeier(Suit.EICHEL)
+                case Gametype.SAUSPIEL:
+                    self.gamemode = GameModeSauspiel(Suit.EICHEL)
+                case Gametype.RAMSCH:
+                    # invalid gamemode, cannot be chosen
+                    raise ValueError("Ramsch cannot be chosen as a gametype")
+
+            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
+            return game_type
+
+        self.__broadcast(GametypeDeterminedEvent(None, game_type))
+        self.gamemode = GameModeRamsch()
+        return Gametype.RAMSCH
 
     def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
-        trump_cards = self.__get_trump_cards()
         for _ in range(ROUNDS):
-            self.start_round(trump_cards)
+            self.start_round()
 
         self.__get_game_winner()
 
-    def __get_trump_cards(self) -> list[Card]:
-        """Get all trump cards for the game."""
-        # For basic implementation return always Farbsolo prio
-        trump_ober = self.deck.get_cards_by_rank(Rank.OBER)
-        trump_unter = self.deck.get_cards_by_rank(Rank.UNTER)
-
-        trump_cards: list[Card] = trump_ober + trump_unter
-        return trump_cards
-
-    def start_round(self, trump_cards: list[Card]) -> None:
+    def start_round(self) -> None:
         """Start a new round."""
-        stack = self.__play_cards(trump_cards)
+        stack = self.__play_cards()
         self.__finish_round(stack)
 
-    def __play_cards(self, trump_cards: list[Card]) -> Stack:
+    def __play_cards(self) -> Stack:
         """Play cards in the current round."""
         stack = Stack()
         for player in self.players:
-            # TODO: Actually determine the playable cards for the player
-            card: Card = self.controllers[player.id].play_card(stack, trump_cards)
+            playable_cards = self.gamemode.get_playable_cards(stack, player.hand)
+            if len(playable_cards) == 0:
+                raise ValueError("No playable cards")
+            card: Card = self.controllers[player.id].play_card(stack, playable_cards)
+            if card not in playable_cards or card not in player.hand.cards:
+                raise ValueError("Illegal card played")
+            player.lay_card(card)
             stack.add_card(card, player)
             self.__broadcast(CardPlayedEvent(player, card, stack))
         return stack
 
     def __finish_round(self, stack: Stack) -> None:
         """Finish the current round and determine the winner."""
-        winner = stack.get_winner()
+        winner = self.gamemode.determine_stitch_winner(stack)
         stack_value = stack.get_value()
         winner.points += stack_value
         self.__broadcast(RoundResultEvent(winner, stack_value, stack))

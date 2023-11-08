@@ -77,3 +77,6 @@ class Deck:
             A full deck, unshuffled
         """
         return self.deck.copy()
+
+
+DECK = Deck()
