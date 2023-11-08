@@ -135,11 +135,7 @@ class Game:
             if game_type[0] is None:
                 continue
 
-            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
-
-            # TODO implement determination of strongest game_type that a player wants to play
-
-            match game_type[0]:
+            match (game_type):
                 case Gametype.SOLO:
                     self.gamemode = GameModeSolo(game_type[1])
                 case Gametype.WENZ:
@@ -155,8 +151,11 @@ class Game:
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
                     raise ValueError("Ramsch cannot be chosen as a gametype")
+
+            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
             return game_type
 
+        self.__broadcast(GametypeDeterminedEvent(None, game_type))
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
