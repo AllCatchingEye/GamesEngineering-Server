@@ -7,6 +7,7 @@ from logic.gamemodes.gamemode_ramsch import GameModeRamsch
 from logic.gamemodes.gamemode_sauspiel import GameModeSauspiel
 from logic.gamemodes.gamemode_solo import GameModeSolo
 from logic.gamemodes.gamemode_wenz import GameModeWenz
+from logic.playable_gametypes import get_playable_gametypes
 from state.card import Card
 from state.deck import Deck
 from state.event import (
@@ -91,8 +92,9 @@ class Game:
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
                 game_type = self.controllers[i].select_gametype(
-                    self.players[i].hand.get_playable_gametypes(
-                        GameModeSauspiel(Suit.EICHEL).get_trump_cards()
+                    get_playable_gametypes(
+                        self.players[i].hand,
+                        GameModeSauspiel(Suit.EICHEL).get_trump_cards(),
                     )
                 )  # TODO: Other game types
                 chosen_types[i] = game_type
