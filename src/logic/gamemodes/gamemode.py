@@ -9,9 +9,9 @@ from state.suits import Suit
 
 class GameMode(ABC):
     suit: Suit | None
-    trumps: [Card]
+    trumps: list[Card]
 
-    def __init__(self, suit: Suit | None, trumps: [Card]):
+    def __init__(self, suit: Suit | None, trumps: list[Card]):
         self.suit = suit
         self.trumps = trumps
 
