@@ -5,7 +5,6 @@ from state.event import Event
 from state.gametypes import Gametype
 from state.player import Player
 from state.stack import Stack
-from state.suits import Suit
 
 
 class PlayerController(ABC):
@@ -21,7 +20,7 @@ class PlayerController(ABC):
         """Decide if the player wants to play or pass on."""
 
     @abstractmethod
-    def select_gametype(self, choosable_gametypes: list[(Gametype, Suit | None)]) -> Gametype:
+    def select_gametype(self, choosable_gametypes: list[Gametype]) -> Gametype:
         """
         Ask the player what game type to be played.
         This is only called if the player wants to play.

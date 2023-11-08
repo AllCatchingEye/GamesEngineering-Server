@@ -1,7 +1,9 @@
 from logic.gamemodes.gamemode import GameMode
+from logic.gamemodes.gamemode_solo import GameModeSolo
 from state.card import Card
 from state.deck import DECK
 from state.hand import Hand
+from state.player import Player
 from state.ranks import Rank
 from state.stack import Stack
 from state.suits import Suit
@@ -32,3 +34,4 @@ class GameModeSauspiel(GameMode):
                 return playable_cards
         else:
             return super().get_playable_cards(stack, hand)
+
