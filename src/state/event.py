@@ -53,4 +53,4 @@ class RoundResultEvent(Event):
 @dataclass
 class GameEndEvent(Event):
     winner: Player  # TODO: Teams?
-    points: int  # TODO: Scoreboard? 
+    points: int  # TODO: Scoreboard?
