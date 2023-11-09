@@ -15,7 +15,9 @@ class TerminalController(PlayerController):
         decision = input("Do you want to play? (y/n) ")
         return decision == "y"
 
-    def select_gametype(self, choosable_gametypes: list[(Gametype, Suit | None)]) -> (Gametype, Suit | None):
+    def select_gametype(
+        self, choosable_gametypes: list[(Gametype, Suit | None)]
+    ) -> (Gametype, Suit | None):
         print("Choose a gamemode:")
         for index, gametype in enumerate(choosable_gametypes):
             print(f"{index}: {gametype}")
