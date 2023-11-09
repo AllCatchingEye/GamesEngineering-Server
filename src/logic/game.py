@@ -9,7 +9,7 @@ from logic.gamemodes.gamemode_solo import GameModeSolo
 from logic.gamemodes.gamemode_wenz import GameModeWenz
 from logic.playable_gametypes import get_playable_gametypes
 from state.card import Card
-from state.deck import Deck, DECK
+from state.deck import Deck
 from state.event import (
     CardPlayedEvent,
     Event,
@@ -23,47 +23,12 @@ from state.event import (
 from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
-from state.ranks import Rank
 from state.stack import Stack
-from state.suits import Suit, get_all_suits
+from state.suits import Suit
 
 HAND_SIZE = 8
 ROUNDS = 8
 PLAYER_COUNT = 4
-
-
-def get_playable_gametypes(hand: Hand, plays_ahead: int) -> list[(Gametype, Suit | None)]:
-    """Returns all playable gametypes with that hand."""
-    types = []
-    # Gametypes Solo
-    for suit in get_all_suits():
-        types.append((Gametype.SOLO, suit))
-    # Gametypes Wenz
-    types += __get_practical_gametypes_wenz_geier(hand, Rank.UNTER, Gametype.FARBWENZ, Gametype.WENZ)
-    # Gametypes Geier
-    types += __get_practical_gametypes_wenz_geier(hand, Rank.OBER, Gametype.FARBGEIER, Gametype.GEIER)
-    # Gametypes Sauspiel
-    if plays_ahead == 0:
-        sauspiel_suits = get_all_suits()
-        sauspiel_suits.remove(Suit.HERZ)
-        for suit in sauspiel_suits:
-            suit_cards = hand.get_all_cards_for_suit(suit,
-                                                     DECK.get_cards_by_rank(Rank.OBER) + DECK.get_cards_by_rank(
-                                                         Rank.UNTER))
-            if len(suit_cards) > 0 and Card(Rank.ASS, suit) not in suit_cards:
-                types.append((Gametype.SAUSPIEL, suit))
-        return types
-
-
-def __get_practical_gametypes_wenz_geier(hand: Hand, rank: Rank, game_type_suit: Gametype,
-                                         game_type_no_suit: Gametype) -> list[(Gametype, Suit | None)]:
-    practical_types = []
-    if len(hand.get_all_trumps_in_deck(DECK.get_cards_by_rank(rank))) > 0:
-        practical_types.append((game_type_no_suit, None))
-        for suit in get_all_suits():
-            if len(hand.get_all_cards_for_suit(suit, DECK.get_cards_by_rank(Rank.OBER))) > 0:
-                practical_types.append((game_type_suit, suit))
-    return practical_types
 
 
 class Game:
@@ -135,8 +100,6 @@ class Game:
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
-            if game_type[0] is None:
-                continue
 
             match (game_type[0]):
                 case Gametype.SOLO:
@@ -154,11 +117,13 @@ class Game:
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
                     raise ValueError("Ramsch cannot be chosen as a gametype")
+                case _:
+                    continue
 
             self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
             return game_type
 
-        self.__broadcast(GametypeDeterminedEvent(None, game_type))
+        self.__broadcast(GametypeDeterminedEvent(None, Gametype.RAMSCH))
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
