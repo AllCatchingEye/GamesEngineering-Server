@@ -11,6 +11,7 @@ from logic.playable_gametypes import get_playable_gametypes
 from state.card import Card
 from state.deck import Deck
 from state.event import (
+    AnnouncePlayPartyEvent,
     CardPlayedEvent,
     Event,
     GameEndEvent,
@@ -19,14 +20,13 @@ from state.event import (
     GametypeWishedEvent,
     PlayDecisionEvent,
     RoundResultEvent,
-    AnnouncePlayPartyEvent,
 )
 from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
+from state.ranks import Rank
 from state.stack import Stack
 from state.suits import Suit
-from state.ranks import Rank
 
 HAND_SIZE = 8
 ROUNDS = 8
@@ -144,14 +144,16 @@ class Game:
                         raise ValueError("Sauspiel gametype chosen without suit")
 
                     # Find Player who has the chosen ace
-                    player_party = self.players[i]
+                    player_party = [self.players[i]]
                     for j, player in enumerate(self.players):
-                        if player.hand.has_card_of_rank_and_suit(Rank.ASS, game_type[1]):
-                            player_party += self.players[j]
+                        if player.hand.has_card_of_rank_and_suit(
+                            game_type[1], Rank.ASS
+                        ):
+                            player_party.append(self.players[j])
                     non_player_party = self.players.copy()
                     non_player_party.remove(player_party[0])
                     non_player_party.remove(player_party[1])
-                    self.play_party = [[player_party], non_player_party]
+                    self.play_party = [player_party, non_player_party]
 
                     self.gamemode = GameModeSauspiel(suit)
                 case Gametype.RAMSCH:
@@ -161,13 +163,24 @@ class Game:
                     continue
 
             self.__broadcast(
-                GametypeDeterminedEvent(self.players[i], game_type[0], game_type[1],
-                                        self.play_party if game_type[0] != Gametype.SAUSPIEL else None)
+                GametypeDeterminedEvent(
+                    self.players[i],
+                    game_type[0],
+                    game_type[1],
+                    self.play_party if game_type[0] != Gametype.SAUSPIEL else None,
+                )
             )
             return game_type[0]
 
-        self.__broadcast(GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party))
-        self.play_party = [self.players[0], self.players[1], self.players[2], self.players[3]]
+        self.__broadcast(
+            GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
+        )
+        self.play_party = [
+            [self.players[0]],
+            [self.players[1]],
+            [self.players[2]],
+            [self.players[3]],
+        ]
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
@@ -176,8 +189,12 @@ class Game:
         for _ in range(ROUNDS):
             self.start_round()
 
-        game_winner, points_distribution = self.gamemode.get_game_winner(self.play_party, self.players)
-        self.__broadcast(GameEndEvent(game_winner, self.play_party, points_distribution))
+        game_winner, points_distribution = self.gamemode.get_game_winner(
+            self.play_party
+        )
+        self.__broadcast(
+            GameEndEvent(game_winner, self.play_party, points_distribution)
+        )
 
     def start_round(self) -> None:
         """Start a new round."""
@@ -199,7 +216,9 @@ class Game:
             self.__broadcast(CardPlayedEvent(player, card, stack))
 
             # Announce that the searched ace had been played and teams are known
-            if isinstance(self.gamemode, GameModeSauspiel) and card == Card(Rank.ASS, self.gamemode.suit):
+            if isinstance(self.gamemode, GameModeSauspiel) and card == Card(
+                self.gamemode.suit, Rank.ASS
+            ):
                 self.__broadcast(AnnouncePlayPartyEvent(self.play_party))
 
         return stack

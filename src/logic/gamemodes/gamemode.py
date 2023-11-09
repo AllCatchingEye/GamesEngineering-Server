@@ -1,5 +1,4 @@
 from abc import ABC
-from typing import Tuple, List, Any
 
 from state.card import Card
 from state.hand import Hand
@@ -49,16 +48,18 @@ class GameMode(ABC):
         strongest_played_card = stack.get_played_cards()[0]
         for played_card in stack.get_played_cards()[1:]:
             if self.__card_is_stronger_than(
-                    played_card.get_card(), strongest_played_card.get_card()
+                played_card.get_card(), strongest_played_card.get_card()
             ):
                 strongest_played_card = played_card
         return strongest_played_card.get_player()
 
-    def get_game_winner(self, play_party: list[list[Player]]) -> tuple[list[Player], list[int]]:
+    def get_game_winner(
+        self, play_party: list[list[Player]]
+    ) -> tuple[list[Player], list[int]]:
         """Determine the winner of the entire game."""
-        party_points = []
+        party_points: list[int] = []
         for i, party in enumerate(play_party):
-            for player in play_party[0]:
+            for player in party:
                 party_points[i] += player.points
 
         game_winner_index = party_points.index(max(party_points))
