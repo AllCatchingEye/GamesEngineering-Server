@@ -101,11 +101,11 @@ class Game:
         ]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
-                game_type = self.controllers[i].select_gametype(
-                    get_playable_gametypes(
-                        self.players[i].hand, decisions[0:i].count(True)
-                    )
+                playable = get_playable_gametypes(
+                    self.players[i].hand, decisions[0:i].count(True)
                 )
+
+                game_type = self.controllers[i].select_gametype(playable)
                 chosen_types[i] = game_type
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
