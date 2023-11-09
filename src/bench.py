@@ -18,5 +18,5 @@ if __name__ == "__main__":
         ]
         game.run()
 
-    print(f"Time for {i} games: {time.time() - now}")
-    print(f"Average time per game: {(time.time() - now) / i}")
+    print(f"Time for {i} games: {time.time() - now} seconds")
+    print(f"Average time per game: {(time.time() - now) / i} seconds")
