@@ -112,9 +112,13 @@ class Game:
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
+            
             match (game_type[0]):
                 case Gametype.SOLO:
-                    self.gamemode = GameModeSolo(game_type[1] if None else Suit.HERZ)
+                    suit = game_type[1]
+                    if suit is None:
+                        raise ValueError("Solo gametype chosen without suit")
+                    self.gamemode = GameModeSolo(suit)
                 case Gametype.WENZ:
                     self.gamemode = GameModeWenz(None)
                 case Gametype.GEIER:
