@@ -120,10 +120,10 @@ class Game:
                 case _:
                     continue
 
-            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
-            return game_type
+            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type[0], game_type[1]))
+            return game_type[0]
 
-        self.__broadcast(GametypeDeterminedEvent(None, Gametype.RAMSCH))
+        self.__broadcast(GametypeDeterminedEvent(None, Gametype.RAMSCH, None))
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
