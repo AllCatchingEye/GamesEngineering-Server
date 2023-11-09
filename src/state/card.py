@@ -1,8 +1,15 @@
+from dataclasses import dataclass
+
 from state.ranks import Rank, get_value_of
 from state.suits import Suit
 
 
+@dataclass
 class Card:
+    suit: Suit
+    rank: Rank
+    value: int
+
     def __init__(self, suit: Suit, rank: Rank) -> None:
         self.suit = suit
         self.rank = rank

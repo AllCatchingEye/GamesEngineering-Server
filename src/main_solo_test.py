@@ -78,6 +78,7 @@ class TestClass(unittest.TestCase):
         )
         self.assertEqual(len(determined_events), 1)
         self.assertEqual(determined_events[0].player, self.player3)
+        self.assertEqual(determined_events[0].suit, Suit.SCHELLEN)
         self.assertEqual(determined_events[0].gametype, Gametype.SOLO)
 
     def test_game_end(self):
@@ -85,8 +86,8 @@ class TestClass(unittest.TestCase):
 
         self.assertEqual(len(end_events), 1)
 
-        self.assertEqual(end_events[0].winner, self.player0)
-        self.assertEqual(end_events[0].points, 40)
+        self.assertEqual(end_events[0].winner, self.player1)
+        self.assertEqual(end_events[0].points, 44)
 
     def test_all_rounds(self):
         self.assertEqual(
@@ -118,13 +119,13 @@ class TestClass(unittest.TestCase):
         self.assertEqual(cards_played[1].card, Card(Suit.HERZ, Rank.OBER))
 
         self.assertEqual(cards_played[2].player, self.player2)
-        self.assertEqual(cards_played[2].card, Card(Suit.EICHEL, Rank.ZEHN))
+        self.assertEqual(cards_played[2].card, Card(Suit.SCHELLEN, Rank.ACHT))
 
         self.assertEqual(cards_played[3].player, self.player3)
-        self.assertEqual(cards_played[3].card, Card(Suit.EICHEL, Rank.SIEBEN))
+        self.assertEqual(cards_played[3].card, Card(Suit.SCHELLEN, Rank.SIEBEN))
 
         # round result
-        self.assertEqual(round_result.points, 16)
+        self.assertEqual(round_result.points, 6)
         self.assertEqual(
             round_result.stack.get_first_card(), Card(Suit.GRAS, Rank.OBER)
         )
@@ -167,13 +168,13 @@ class TestClass(unittest.TestCase):
         self.assertEqual(cards_played[1].card, Card(Suit.SCHELLEN, Rank.ASS))
 
         self.assertEqual(cards_played[2].player, self.player2)
-        self.assertEqual(cards_played[2].card, Card(Suit.SCHELLEN, Rank.ACHT))
+        self.assertEqual(cards_played[2].card, Card(Suit.EICHEL, Rank.OBER))
 
         self.assertEqual(cards_played[3].player, self.player3)
-        self.assertEqual(cards_played[3].card, Card(Suit.SCHELLEN, Rank.SIEBEN))
+        self.assertEqual(cards_played[3].card, Card(Suit.SCHELLEN, Rank.OBER))
 
         # round result
-        self.assertEqual(round_result.points, 15)
+        self.assertEqual(round_result.points, 21)
         self.assertEqual(
             round_result.stack.get_first_card(), Card(Suit.SCHELLEN, Rank.KOENIG)
         )
@@ -186,7 +187,7 @@ class TestClass(unittest.TestCase):
                 PlayedCard(Card(Suit.SCHELLEN, Rank.SIEBEN), self.player3),
             ],
         )
-        self.assertEqual(round_result.round_winner, self.player1)
+        self.assertEqual(round_result.round_winner, self.player2)
 
     def test_round_3(self):
         r = 3
@@ -198,27 +199,27 @@ class TestClass(unittest.TestCase):
             r - 1
         ]
 
-        # player had last turn, order changed
-        self.assertEqual(len(playable_cards), 2)
-        self.assertEqual(len(stack), 3)
+        # player had second last turn, order changed
+        self.assertEqual(len(playable_cards), 1)
+        self.assertEqual(len(stack), 2)
 
         # played cards
-        self.assertEqual(cards_played[0].player, self.player1)
-        self.assertEqual(cards_played[0].card, Card(Suit.GRAS, Rank.UNTER))
+        self.assertEqual(cards_played[0].player, self.player2)
+        self.assertEqual(cards_played[0].card, Card(Suit.HERZ, Rank.KOENIG))
 
-        self.assertEqual(cards_played[1].player, self.player2)
-        self.assertEqual(cards_played[1].card, Card(Suit.EICHEL, Rank.OBER))
+        self.assertEqual(cards_played[1].player, self.player3)
+        self.assertEqual(cards_played[1].card, Card(Suit.HERZ, Rank.SIEBEN))
 
-        self.assertEqual(cards_played[2].player, self.player3)
-        self.assertEqual(cards_played[2].card, Card(Suit.EICHEL, Rank.ASS))
+        self.assertEqual(cards_played[2].player, self.player0)
+        self.assertEqual(cards_played[2].card, Card(Suit.HERZ, Rank.ACHT))
 
-        self.assertEqual(cards_played[3].player, self.player0)
-        self.assertEqual(cards_played[3].card, Card(Suit.EICHEL, Rank.NEUN))
+        self.assertEqual(cards_played[3].player, self.player1)
+        self.assertEqual(cards_played[3].card, Card(Suit.HERZ, Rank.ASS))
 
         # round result
-        self.assertEqual(round_result.points, 16)
+        self.assertEqual(round_result.points, 15)
         self.assertEqual(
-            round_result.stack.get_first_card(), Card(Suit.GRAS, Rank.UNTER)
+            round_result.stack.get_first_card(), Card(Suit.HERZ, Rank.KOENIG)
         )
         self.assertTrue(
             round_result.stack.get_played_cards(),
@@ -229,7 +230,7 @@ class TestClass(unittest.TestCase):
                 PlayedCard(Card(Suit.EICHEL, Rank.SIEBEN), self.player3),
             ],
         )
-        self.assertEqual(round_result.round_winner, self.player2)
+        self.assertEqual(round_result.round_winner, self.player1)
 
 
 class TestController(RandomController):

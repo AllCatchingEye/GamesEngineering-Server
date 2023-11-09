@@ -16,8 +16,8 @@ class TerminalController(PlayerController):
         return decision == "y"
 
     def select_gametype(
-        self, choosable_gametypes: list[(Gametype, Suit | None)]
-    ) -> (Gametype, Suit | None):
+        self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
+    ) -> tuple[Gametype, Suit | None]:
         print("Choose a gamemode:")
         for index, gametype in enumerate(choosable_gametypes):
             print(f"{index}: {gametype}")

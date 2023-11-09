@@ -4,8 +4,10 @@ from state.suits import Suit, get_all_suits
 
 
 class Deck:
+    deck: list[Card]
+
     def __init__(self) -> None:
-        self.deck: list[Card] = self.__create_full_deck()
+        self.deck = self.__create_full_deck()
 
     def __create_full_deck(self) -> list[Card]:
         """Creates a full deck of cards for the game

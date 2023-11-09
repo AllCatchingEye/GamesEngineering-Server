@@ -4,8 +4,10 @@ from state.suits import Suit
 
 
 class Hand:
+    cards: list[Card]
+
     def __init__(self, cards: list[Card]) -> None:
-        self.cards: list[Card] = cards
+        self.cards = cards
 
     def get_card(self, index: int) -> Card:
         return self.cards[index]
@@ -57,6 +59,8 @@ class Hand:
         for card in self.cards:
             if suit == card.get_suit() and rank == card.get_rank():
                 return card
+
+        return None
 
     def get_all_trumps_in_deck(self, trumps: list[Card]) -> list[Card]:
         """Returns all trumps in the hand that match the given trumps list."""

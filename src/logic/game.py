@@ -36,6 +36,10 @@ class Game:
     rng: random.Random
     gamemode: GameMode
 
+    players: list[Player]
+    deck: Deck
+    played_cards: list[Card]
+
     def __init__(self, rng: random.Random = random.Random()) -> None:
         self.players = self.__create_players()
         self.deck: Deck = Deck()
@@ -89,8 +93,7 @@ class Game:
             self.__broadcast(PlayDecisionEvent(player, wants_to_play))
             decisions[i] = wants_to_play
 
-        # TODO: Game types that have suits?
-        chosen_types: list[(Gametype | None, Suit | None)] = [
+        chosen_types: list[tuple[Gametype | None, Suit | None]] = [
             (None, None),
             (None, None),
             (None, None),
@@ -98,18 +101,21 @@ class Game:
         ]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
-                game_type = self.controllers[i].select_gametype(
-                    get_playable_gametypes(
-                        self.players[i].hand, decisions[0:i].count(True)
-                    )
+                playable = get_playable_gametypes(
+                    self.players[i].hand, decisions[0:i].count(True)
                 )
+
+                game_type = self.controllers[i].select_gametype(playable)
                 chosen_types[i] = game_type
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
             match (game_type[0]):
                 case Gametype.SOLO:
-                    self.gamemode = GameModeSolo(game_type[1])
+                    suit = game_type[1]
+                    if suit is None:
+                        raise ValueError("Solo gametype chosen without suit")
+                    self.gamemode = GameModeSolo(suit)
                 case Gametype.WENZ:
                     self.gamemode = GameModeWenz(None)
                 case Gametype.GEIER:
@@ -119,7 +125,10 @@ class Game:
                 case Gametype.FARBGEIER:
                     self.gamemode = GameModeGeier(game_type[1])
                 case Gametype.SAUSPIEL:
-                    self.gamemode = GameModeSauspiel(game_type[1])
+                    suit = game_type[1]
+                    if suit is None:
+                        raise ValueError("Sauspiel gametype chosen without suit")
+                    self.gamemode = GameModeSauspiel(suit)
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
                     raise ValueError("Ramsch cannot be chosen as a gametype")

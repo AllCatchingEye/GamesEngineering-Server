@@ -22,8 +22,8 @@ class PlayerController(ABC):
 
     @abstractmethod
     def select_gametype(
-        self, choosable_gametypes: list[(Gametype, Suit | None)]
-    ) -> Gametype:
+        self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
+    ) -> tuple[Gametype, Suit | None]:
         """
         Ask the player what game type to be played.
         This is only called if the player wants to play.

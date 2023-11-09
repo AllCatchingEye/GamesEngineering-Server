@@ -8,9 +8,9 @@ from state.suits import Suit, get_all_suits
 
 def get_playable_gametypes(
     hand: Hand, plays_ahead: int
-) -> list[(Gametype, Suit | None)]:
+) -> list[tuple[Gametype, Suit | None]]:
     """Returns all playable gametypes with that hand."""
-    types = []
+    types: list[tuple[Gametype, Suit | None]] = []
     # Gametypes Solo
     for suit in get_all_suits():
         types.append((Gametype.SOLO, suit))
@@ -33,13 +33,13 @@ def get_playable_gametypes(
             )
             if len(suit_cards) > 0 and Card(suit, Rank.ASS) not in suit_cards:
                 types.append((Gametype.SAUSPIEL, suit))
-        return types
+    return types
 
 
 def __get_practical_gametypes_wenz_geier(
     hand: Hand, rank: Rank, game_type_suit: Gametype, game_type_no_suit: Gametype
-) -> list[(Gametype, Suit | None)]:
-    practical_types = []
+) -> list[tuple[Gametype, Suit | None]]:
+    practical_types: list[tuple[Gametype, Suit | None]] = []
     if len(hand.get_all_trumps_in_deck(DECK.get_cards_by_rank(rank))) > 0:
         practical_types.append((game_type_no_suit, None))
         for suit in get_all_suits():
