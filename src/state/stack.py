@@ -3,8 +3,9 @@ from state.player import Player
 from state.ranks import Rank, get_value_of
 from state.suits import Suit
 
-
 class PlayedCard:
+    card: Card
+    player: Player
     """Represents a card played by a player during the game."""
 
     def __init__(self, card: Card, player: Player) -> None:
@@ -15,8 +16,8 @@ class PlayedCard:
             card (Card): The card played by the player.
             player (Player): The player who played the card.
         """
-        self.card: Card = card
-        self.player: Player = player
+        self.card = card
+        self.player = player
 
     def get_value(self) -> int:
         return self.card.get_value()

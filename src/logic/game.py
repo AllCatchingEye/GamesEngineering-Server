@@ -36,6 +36,10 @@ class Game:
     rng: random.Random
     gamemode: GameMode
 
+    players: list[Player]
+    deck: Deck
+    played_cards: list[Card]
+
     def __init__(self, rng: random.Random = random.Random()) -> None:
         self.players = self.__create_players()
         self.deck: Deck = Deck()

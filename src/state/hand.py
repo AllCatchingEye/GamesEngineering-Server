@@ -4,8 +4,10 @@ from state.suits import Suit
 
 
 class Hand:
+    cards: list[Card]
+
     def __init__(self, cards: list[Card]) -> None:
-        self.cards: list[Card] = cards
+        self.cards = cards
 
     def get_card(self, index: int) -> Card:
         return self.cards[index]
