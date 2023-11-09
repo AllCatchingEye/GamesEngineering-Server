@@ -46,6 +46,8 @@ class Game:
         self.played_cards: list[Card] = []
         self.controllers = []
         self.rng = rng
+        # Aufteilung der Spielparteien (Spielende Partei, Gegenspieler Partei)
+        self.parties: (list[Player], list[Player]) = ([], [])
 
     def __create_players(self) -> list[Player]:
         """Create a list of players for the game."""
@@ -110,24 +112,45 @@ class Game:
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
+            # Parteien-Aufteilung für Solospiel
+            solo_party = self.players[i]
+            solo_counter_party = self.players.copy()
+            solo_counter_party.remove(solo_party)
+
             match (game_type[0]):
                 case Gametype.SOLO:
                     suit = game_type[1]
                     if suit is None:
                         raise ValueError("Solo gametype chosen without suit")
+                    self.parties = ([solo_party], solo_counter_party)
                     self.gamemode = GameModeSolo(suit)
                 case Gametype.WENZ:
+                    self.parties = ([solo_party], solo_counter_party)
                     self.gamemode = GameModeWenz(None)
                 case Gametype.GEIER:
+                    self.parties = ([solo_party], solo_counter_party)
                     self.gamemode = GameModeGeier(None)
                 case Gametype.FARBWENZ:
+                    self.parties = ([solo_party], solo_counter_party)
                     self.gamemode = GameModeWenz(game_type[1])
                 case Gametype.FARBGEIER:
+                    self.parties = ([solo_party], solo_counter_party)
                     self.gamemode = GameModeGeier(game_type[1])
                 case Gametype.SAUSPIEL:
                     suit = game_type[1]
                     if suit is None:
                         raise ValueError("Sauspiel gametype chosen without suit")
+
+                    # Finde Spieler mit gewünschter Ass
+                    party = self.players[i]
+                    for j, player in enumerate(self.players):
+                        if player.hand.has_card_of_rank_and_suit(Rank.ASS, game_type[1]):
+                            party += self.players[j]
+                    counter_party = self.players.copy()
+                    counter_party.remove(party[0])
+                    counter_party.remove(party[1])
+                    self.parties = ([party], counter_party)
+
                     self.gamemode = GameModeSauspiel(suit)
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
@@ -184,14 +207,16 @@ class Game:
         winner_index = self.__get_winner_index(winner)
         self.__swap_players(winner_index)
 
-    def __get_game_winner(self) -> Player:
+    def __get_game_winner(self) -> list[Player]:
         """Determine the winner of the entire game."""
-        game_winner = self.players[0]
-        for player in self.players[0:]:
-            if player.points > game_winner.points:
-                game_winner = player
-
-        self.__broadcast(GameEndEvent(game_winner, game_winner.points))
+        points_playing_party = 0
+        points_counter_party = 0
+        for player in self.parties[0]:
+            points_playing_party += player.points
+        for player in self.parties[1]:
+            points_counter_party += player.points
+        game_winner = self.parties[0] if points_playing_party > points_counter_party else self.parties[1]
+        self.__broadcast(GameEndEvent(game_winner, (points_playing_party, points_counter_party)))
         return game_winner
 
     def __get_winner_index(self, winner: Player) -> int:

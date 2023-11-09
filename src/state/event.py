@@ -54,5 +54,5 @@ class RoundResultEvent(Event):
 
 @dataclass
 class GameEndEvent(Event):
-    winner: Player  # TODO: Teams?
-    points: int  # TODO: Scoreboard?
+    winner: list[Player]
+    points: (int, int)  # (party who called game, counter party)
