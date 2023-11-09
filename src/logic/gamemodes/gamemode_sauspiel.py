@@ -32,14 +32,15 @@ class GameModeSauspiel(GameMode):
 
         if ace is not None:
             if (
-                stack.get_first_card() not in self.trumps
-                and stack.get_first_card().suit == self.suit
+                    stack.get_first_card() not in self.trumps
+                    and stack.get_first_card().suit == self.suit
             ):
                 # played ass is being searched
                 return [ace]
 
             playable_cards = super().get_playable_cards(stack, hand)
-            if ace in playable_cards:
+            if ace in playable_cards and len(playable_cards) > 1:
+                playable_cards = playable_cards.copy()
                 playable_cards.remove(ace)
             return playable_cards
 
