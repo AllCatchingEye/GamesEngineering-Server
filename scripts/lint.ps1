@@ -1,3 +1,5 @@
+venv\Scripts\activate.bat
+
 Write-Output "[SORTIN IMPORTS]"
 isort .
 Write-Output "[FORMAT CODE]"
