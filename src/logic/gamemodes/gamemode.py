@@ -57,7 +57,7 @@ class GameMode(ABC):
         self, play_party: list[list[Player]]
     ) -> tuple[list[Player], list[int]]:
         """Determine the winner of the entire game."""
-        party_points: list[int] = []
+        party_points: list[int] = [0] * len(play_party)
         for i, party in enumerate(play_party):
             for player in party:
                 party_points[i] += player.points
