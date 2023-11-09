@@ -6,6 +6,7 @@ from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
 from state.stack import Stack
+from state.suits import Suit
 
 
 @dataclass
@@ -34,6 +35,7 @@ class GametypeWishedEvent(Event):
 class GametypeDeterminedEvent(Event):
     player: Player | None
     gametype: Gametype
+    suit: Suit | None
 
 
 @dataclass

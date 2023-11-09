@@ -1,7 +1,6 @@
 from state.card import Card
-from state.gametypes import Gametype
 from state.ranks import Rank
-from state.suits import Suit, get_all_suits
+from state.suits import Suit
 
 
 class Hand:
@@ -66,18 +65,6 @@ class Hand:
             if card in trumps:
                 available_trumps.append(card)
         return available_trumps
-
-    def get_playable_gametypes(self, trumps: list[Card]) -> list[Gametype]:
-        """Returns all playable gametype with that hand."""
-        types = [Gametype.SOLO]
-        sauspiel_suits = get_all_suits()
-        sauspiel_suits.remove(Suit.HERZ)
-        for suit in sauspiel_suits:
-            suit_cards = self.get_all_cards_for_suit(suit, trumps)
-            if len(suit_cards) > 0 and Card(suit, Rank.ASS) not in suit_cards:
-                types.append(Gametype.SAUSPIEL)
-        # TODO check other gametypes than sauspiel
-        return types
 
     def __str__(self) -> str:
         return str(self.cards)

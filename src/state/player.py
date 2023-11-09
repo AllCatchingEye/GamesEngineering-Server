@@ -6,7 +6,7 @@ class Player:
     def __init__(self, player_id: int) -> None:
         self.id = player_id
         self.points = 0
-        self.hand: Hand
+        self.hand: Hand = Hand([])
         self.played_cards: list[Card] = []
 
     def lay_card(self, card: Card) -> None:

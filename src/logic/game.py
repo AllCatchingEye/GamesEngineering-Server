@@ -90,43 +90,40 @@ class Game:
             decisions[i] = wants_to_play
 
         # TODO: Game types that have suits?
-        chosen_types: list[Gametype | None] = [None, None, None, None]
+        chosen_types: list[(Gametype | None, Suit | None)] = [(None, None), (None, None), (None, None), (None, None)]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
                 game_type = self.controllers[i].select_gametype(
-                    get_playable_gametypes(
-                        self.players[i].hand,
-                        GameModeSauspiel(Suit.EICHEL).get_trump_cards(),
-                    )
-                )  # TODO: Other game types
+                    get_playable_gametypes(self.players[i].hand, decisions[0:i].count(True))
+                )
                 chosen_types[i] = game_type
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
-            if game_type is None:
-                continue
 
-            match (game_type):
+            match (game_type[0]):
                 case Gametype.SOLO:
-                    self.gamemode = GameModeSolo(Suit.EICHEL)  # TODO: Fix suit
+                    self.gamemode = GameModeSolo(game_type[1])
                 case Gametype.WENZ:
                     self.gamemode = GameModeWenz(None)
                 case Gametype.GEIER:
                     self.gamemode = GameModeGeier(None)
                 case Gametype.FARBWENZ:
-                    self.gamemode = GameModeWenz(Suit.EICHEL)
+                    self.gamemode = GameModeWenz(game_type[1])
                 case Gametype.FARBGEIER:
-                    self.gamemode = GameModeGeier(Suit.EICHEL)
+                    self.gamemode = GameModeGeier(game_type[1])
                 case Gametype.SAUSPIEL:
-                    self.gamemode = GameModeSauspiel(Suit.EICHEL)
+                    self.gamemode = GameModeSauspiel(game_type[1])
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
                     raise ValueError("Ramsch cannot be chosen as a gametype")
+                case _:
+                    continue
 
-            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type))
-            return game_type
+            self.__broadcast(GametypeDeterminedEvent(self.players[i], game_type[0], game_type[1]))
+            return game_type[0]
 
-        self.__broadcast(GametypeDeterminedEvent(None, game_type))
+        self.__broadcast(GametypeDeterminedEvent(None, Gametype.RAMSCH, None))
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
