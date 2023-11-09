@@ -12,3 +12,6 @@ class Player:
     def lay_card(self, card: Card) -> None:
         self.hand.remove_card(card)
         self.played_cards.append(card)
+
+    def __repr__(self) -> str:
+        return f"Player {self.id}"

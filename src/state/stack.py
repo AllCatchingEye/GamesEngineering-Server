@@ -39,6 +39,11 @@ class PlayedCard:
     def __repr__(self) -> str:
         return str(self)
 
+    def __eq__(self, __value: object) -> bool:
+        if not isinstance(__value, PlayedCard):
+            return False
+        return self.card == __value.card and self.player == __value.player
+
 
 class Stack:
     """Represents a stack of cards played during a round."""

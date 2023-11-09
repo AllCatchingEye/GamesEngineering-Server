@@ -7,18 +7,6 @@ from state.hand import Hand
 from state.player import Player
 from state.stack import Stack
 
-# class EventType(Enum):
-#     # Phase 1: Game start
-#     GAME_START = 0
-#     PLAY_DECISION = 1
-#     GAMETYPE_DECISION = 2
-#     GAMETYPE_DETERMINED = 3
-#     # Phase 2: Play phase
-#     CARD_PLAYED = 4
-#     ROUND_RESULT = 5
-#     # Phase 3: Game end
-#     GAME_END = 6
-
 
 @dataclass
 class Event(ABC):

@@ -3,7 +3,7 @@ from state.suits import Suit
 
 
 class Card:
-    def __init__(self, rank: Rank, suit: Suit) -> None:
+    def __init__(self, suit: Suit, rank: Rank) -> None:
         self.suit = suit
         self.rank = rank
         self.value = get_value_of(self.rank)
@@ -26,5 +26,7 @@ class Card:
     def __repr__(self) -> str:
         return str(self)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return False
         return self.rank == other.rank and self.suit == other.suit
