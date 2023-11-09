@@ -28,7 +28,7 @@ class PlayDecisionEvent(Event):
 @dataclass
 class GametypeWishedEvent(Event):
     player: Player
-    gametype: Gametype
+    gametype: tuple[Gametype, Suit | None]
 
 
 @dataclass

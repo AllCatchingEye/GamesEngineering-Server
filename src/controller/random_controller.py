@@ -18,8 +18,8 @@ class RandomController(PlayerController):
         return self.rng.choice([True, False])
 
     def select_gametype(
-        self, choosable_gametypes: list[(Gametype, Suit | None)]
-    ) -> (Gametype, Suit | None):
+        self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
+    ) -> tuple[Gametype, Suit | None]:
         return self.rng.choice(choosable_gametypes)
 
     def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:

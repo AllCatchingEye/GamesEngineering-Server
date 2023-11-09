@@ -94,12 +94,13 @@ class Game:
             decisions[i] = wants_to_play
 
         # TODO: Game types that have suits?
-        chosen_types: list[(Gametype | None, Suit | None)] = [
+        chosen_types: list[tuple[Gametype | None, Suit | None]] = [
             (None, None),
             (None, None),
             (None, None),
             (None, None),
         ]
+        chosen_types: list[tuple[Gametype | None, Suit | None]] = [(None, None), (None, None), (None, None), (None, None)]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
                 game_type = self.controllers[i].select_gametype(
@@ -113,7 +114,7 @@ class Game:
         for i, game_type in enumerate(chosen_types):
             match (game_type[0]):
                 case Gametype.SOLO:
-                    self.gamemode = GameModeSolo(game_type[1])
+                    self.gamemode = GameModeSolo(game_type[1] if None else Suit.HERZ)
                 case Gametype.WENZ:
                     self.gamemode = GameModeWenz(None)
                 case Gametype.GEIER:
