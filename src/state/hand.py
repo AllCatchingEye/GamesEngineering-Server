@@ -70,4 +70,4 @@ class Hand:
         return str(self.cards)
 
     def __repr__(self) -> str:
-        return str(self)
+        return str(self.cards)

@@ -47,7 +47,9 @@ class GameMode(ABC):
         """Returns the player who won the current stitch"""
         strongest_played_card = stack.get_played_cards()[0]
         for played_card in stack.get_played_cards()[1:]:
-            if self.__card_is_stronger_than(played_card.get_card(), strongest_played_card.get_card()):
+            if self.__card_is_stronger_than(
+                played_card.get_card(), strongest_played_card.get_card()
+            ):
                 strongest_played_card = played_card
         return strongest_played_card.get_player()
 
