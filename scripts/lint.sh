@@ -1,3 +1,5 @@
+source venv/bin/activate
+
 echo "[SORTIN IMPORTS]"
 isort .
 echo "[FORMAT CODE]"
