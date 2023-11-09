@@ -36,6 +36,7 @@ class GametypeDeterminedEvent(Event):
     player: Player | None
     gametype: Gametype
     suit: Suit | None
+    parties: list[list[Player]] | None
 
 
 @dataclass
@@ -48,11 +49,17 @@ class CardPlayedEvent(Event):
 @dataclass
 class RoundResultEvent(Event):
     round_winner: Player  # TODO: Teams?
-    points: int  # TODO: Scoreboard?
+    points: int
     stack: Stack
 
 
 @dataclass
 class GameEndEvent(Event):
     winner: list[Player]
-    points: (int, int)  # (party who called game, counter party)
+    play_party: list[list[Player]]
+    points: list[int]
+
+
+@dataclass
+class AnnouncePlayPartyEvent(Event):
+    parties: list[list[Player]]
