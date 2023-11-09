@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Gametype(Enum):
     # The value of the enum is the stake
     SOLO = 1

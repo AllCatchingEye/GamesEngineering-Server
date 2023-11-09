@@ -60,6 +60,8 @@ class Hand:
             if suit == card.get_suit() and rank == card.get_rank():
                 return card
 
+        return None
+
     def get_all_trumps_in_deck(self, trumps: list[Card]) -> list[Card]:
         """Returns all trumps in the hand that match the given trumps list."""
         available_trumps: list[Card] = []

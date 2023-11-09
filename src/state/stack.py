@@ -3,6 +3,7 @@ from state.player import Player
 from state.ranks import Rank, get_value_of
 from state.suits import Suit
 
+
 class PlayedCard:
     card: Card
     player: Player

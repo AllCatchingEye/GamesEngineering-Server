@@ -93,14 +93,12 @@ class Game:
             self.__broadcast(PlayDecisionEvent(player, wants_to_play))
             decisions[i] = wants_to_play
 
-        # TODO: Game types that have suits?
         chosen_types: list[tuple[Gametype | None, Suit | None]] = [
             (None, None),
             (None, None),
             (None, None),
             (None, None),
         ]
-        chosen_types: list[tuple[Gametype | None, Suit | None]] = [(None, None), (None, None), (None, None), (None, None)]
         for i, wants_to_play in enumerate(decisions):
             if wants_to_play is True:
                 game_type = self.controllers[i].select_gametype(
@@ -112,7 +110,6 @@ class Game:
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
-            
             match (game_type[0]):
                 case Gametype.SOLO:
                     suit = game_type[1]
@@ -128,7 +125,10 @@ class Game:
                 case Gametype.FARBGEIER:
                     self.gamemode = GameModeGeier(game_type[1])
                 case Gametype.SAUSPIEL:
-                    self.gamemode = GameModeSauspiel(game_type[1])
+                    suit = game_type[1]
+                    if suit is None:
+                        raise ValueError("Sauspiel gametype chosen without suit")
+                    self.gamemode = GameModeSauspiel(suit)
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
                     raise ValueError("Ramsch cannot be chosen as a gametype")
