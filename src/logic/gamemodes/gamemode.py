@@ -53,6 +53,18 @@ class GameMode(ABC):
                 strongest_played_card = played_card
         return strongest_played_card.get_player()
 
+    def get_game_winner(
+        self, play_party: list[list[Player]]
+    ) -> tuple[list[Player], list[int]]:
+        """Determine the winner of the entire game."""
+        party_points: list[int] = [0] * len(play_party)
+        for i, party in enumerate(play_party):
+            for player in party:
+                party_points[i] += player.points
+
+        game_winner_index = party_points.index(max(party_points))
+        return play_party[game_winner_index], party_points
+
     def __card_is_stronger_than(self, card_one: Card, card_two: Card) -> bool:
         """Helping-Method to determine which of two cards is stronger"""
         if card_one in self.trumps:

@@ -86,8 +86,8 @@ class TestClass(unittest.TestCase):
 
         self.assertEqual(len(end_events), 1)
 
-        self.assertEqual(end_events[0].winner, self.player1)
-        self.assertEqual(end_events[0].points, 44)
+        self.assertEqual(end_events[0].winner, [self.player0, self.player1, self.player2])
+        self.assertEqual(end_events[0].points, [31, 89])
 
     def test_all_rounds(self):
         self.assertEqual(
