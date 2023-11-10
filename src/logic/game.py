@@ -172,15 +172,15 @@ class Game:
             )
             return game_type[0]
 
-        self.__broadcast(
-            GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
-        )
         self.play_party = [
             [self.players[0]],
             [self.players[1]],
             [self.players[2]],
             [self.players[3]],
         ]
+        self.__broadcast(
+            GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
+        )
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
