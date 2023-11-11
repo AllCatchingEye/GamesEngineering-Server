@@ -1,6 +1,6 @@
 import unittest
 
-from ai.select_card.rl_agent import RLAgent, RLAgentConfig
+from ai.select_card.simple_deep_q_learning.rl_agent import RLAgent, RLAgentConfig
 from state.card import Card
 from state.ranks import Rank
 from state.stack import Stack

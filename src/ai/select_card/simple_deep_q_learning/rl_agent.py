@@ -5,7 +5,7 @@ import torch
 
 from ai.select_card.agent import ISelectCardAgent
 from ai.nn_helper import card_to_nn_input_values, nn_output_code_to_card
-from ai.select_card.policyNN import PolicyNN
+from ai.select_card.simple_deep_q_learning.policyNN import PolicyNN
 from state.card import Card
 from state.event import Event
 from state.stack import Stack
