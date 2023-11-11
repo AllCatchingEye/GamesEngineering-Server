@@ -3,6 +3,7 @@ import unittest
 from ai.nn_helper import (
     card_to_nn_input_values_index,
     code_to_game_type,
+    nn_output_code_to_card,
 )
 from state.card import Card
 from state.gametypes import Gametype
@@ -78,3 +79,19 @@ class TestClass(unittest.TestCase):
 
         for index, game_type in enumerate(mapping.values()):
             self.assertEqual(code_to_game_type(index).value, game_type.value)
+    
+    def __assert_card_equal(self, card: Card, target: Card):
+        self.assertEqual(card.suit, target.suit)
+        self.assertEqual(card.rank, target.rank)
+
+
+    def test_nn_output_code_to_card(self):
+        self.__assert_card_equal(nn_output_code_to_card(0), Card(Suit.EICHEL, Rank.OBER))
+        self.__assert_card_equal(nn_output_code_to_card(1), Card(Suit.EICHEL, Rank.UNTER))
+        self.__assert_card_equal(nn_output_code_to_card(7), Card(Suit.EICHEL, Rank.SIEBEN))
+        self.__assert_card_equal(nn_output_code_to_card(8), Card(Suit.GRAS, Rank.OBER))
+        self.__assert_card_equal(nn_output_code_to_card(8 + 7), Card(Suit.GRAS, Rank.SIEBEN))
+        self.__assert_card_equal(nn_output_code_to_card(2 * 8), Card(Suit.HERZ, Rank.OBER))
+        self.__assert_card_equal(nn_output_code_to_card(2 * 8 + 7), Card(Suit.HERZ, Rank.SIEBEN))
+        self.__assert_card_equal(nn_output_code_to_card(3 * 8), Card(Suit.SCHELLEN, Rank.OBER))
+        self.__assert_card_equal(nn_output_code_to_card(3 * 8 + 7), Card(Suit.SCHELLEN, Rank.SIEBEN))

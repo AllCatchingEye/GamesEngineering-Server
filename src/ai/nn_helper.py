@@ -27,8 +27,9 @@ def card_to_suit_offset(suit: Suit):
 
 
 def card_to_rank_value(rank: Rank):
-    return rank_values.get(rank)
-
+    value = rank_values.get(rank)
+    assert value is not None, "The given Rank " + rank.name + " could not be found"
+    return value
 
 def card_to_nn_input_values_index(card: Card) -> int:
     suit_offset = card_to_suit_offset(card.get_suit())
@@ -38,8 +39,8 @@ def card_to_nn_input_values_index(card: Card) -> int:
 
 def nn_output_code_to_card(code: int) -> Card:
     suit_code = code // NUM_RANKS
-    rank_code = code % NUM_SUITS
-    return Card(suits[suit_code], ranks[rank_code])
+    rank_code = code % NUM_RANKS
+    return Card(suits[suit_code], list(rank_values.keys())[rank_code])
 
 
 def card_to_nn_input_values(hand_cards: list[Card]) -> list[int]:
