@@ -1,6 +1,6 @@
 import unittest
 
-from ai.select_game_type.neuronal_network.agent.nn_helper import (
+from ai.nn_helper import (
     card_to_nn_input_values_index,
     code_to_game_type,
 )

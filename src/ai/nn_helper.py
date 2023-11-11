@@ -1,6 +1,7 @@
 from state.card import Card
 from state.ranks import Rank, get_all_ranks
 from state.suits import Suit, get_all_suits
+from state.gametypes import Gametype
 
 ranks = get_all_ranks()
 suits = get_all_suits()
@@ -47,3 +48,21 @@ def card_to_nn_input_values(hand_cards: list[Card]) -> list[int]:
         card_index = card_to_nn_input_values_index(card)
         nn_input[card_index] = 1
     return nn_input
+
+
+def code_to_game_type(game_type_code: int) -> Gametype:
+    # See also `train_classifier.ipynb` > Example Execution > `category_mapping`
+    if game_type_code <= 3:
+        return Gametype.FARBGEIER
+    if game_type_code <= 7:
+        return Gametype.FARBWENZ
+    if game_type_code == 8:
+        return Gametype.GEIER
+    if game_type_code <= 11:
+        return Gametype.SAUSPIEL
+    if game_type_code <= 15:
+        return Gametype.SOLO
+    if game_type_code == 16:
+        return Gametype.WENZ
+    return Gametype.RAMSCH
+
