@@ -29,6 +29,8 @@ class RLAgent(ISelectCardAgent):
         if not self.config.train:
             self.load_model()
             self.model.eval()
+        else:
+            self.model.train()
 
     def reset(self) -> None:
         self.last_cards = []
