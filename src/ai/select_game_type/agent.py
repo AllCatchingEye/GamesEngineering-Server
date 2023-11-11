@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from state.card import Card
 from state.gametypes import Gametype
+from state.suits import Suit
 
 
 class ISelectGameAgent(ABC):
@@ -22,6 +23,8 @@ class ISelectGameAgent(ABC):
 
     @abstractmethod
     def select_game_type(
-        self, hand_cards: list[Card], choosable_game_types: list[Gametype]
-    ) -> Gametype:
+        self,
+        hand_cards: list[Card],
+        choosable_game_types: list[tuple[Gametype, Suit | None]],
+    ) -> tuple[Gametype, Suit | None]:
         """Invoked to receive a decision which game type the agent would play"""
