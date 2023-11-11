@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from ai.select_game_type.agent import ISelectGameAgent
-from ai.select_game_type.neuronal_network.agent.nn_helper import (
+from ai.nn_helper import (
     card_to_nn_input_values,
     code_to_game_type,
 )

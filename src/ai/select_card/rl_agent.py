@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from ai.select_card.agent import ISelectCardAgent
-from ai.select_card.nn_helper import card_to_nn_input_values, nn_output_code_to_card
+from ai.nn_helper import card_to_nn_input_values, nn_output_code_to_card
 from ai.select_card.policyNN import PolicyNN
 from state.card import Card
 from state.event import Event
