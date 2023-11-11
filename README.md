@@ -16,7 +16,6 @@ Schafkopf Game Server
   * Activate the virtual environment with `source venv/bin/activate`
     * On Windows use `venv\Scripts\activate.bat`
 * Install the requirements with `pip install -r requirements.txt && pip install -r requirements-dev.txt`
->>>>>>> README.md
 
 ### Format, Lint and Typecheck
 
@@ -25,7 +24,6 @@ Schafkopf Game Server
 
 ### Testing
 
-<<<<<<< README.md
 * Windows: `.\scripts\test.ps1`
 * Linux/Mac: `./scripts/test.sh`
 
@@ -54,4 +52,3 @@ How to fix? Run `conda deactivate` and try it again.
 4. Start second client with command `python src/sample_client.py join <key>`. `<key>` is the join key,
    which the first client gets when starting a game, which you need to provide to enter the game
 5. Both clients should now be in the game
->>>>>>> README.md
