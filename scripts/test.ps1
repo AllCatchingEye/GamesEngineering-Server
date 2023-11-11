@@ -1,3 +1,5 @@
+venv\Scripts\activate.bat
+
 python -m coverage run --branch -m unittest discover -v -s src -p *_test.py
 python -m coverage html
 python -m coverage report

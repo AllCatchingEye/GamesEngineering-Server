@@ -6,18 +6,7 @@ from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
 from state.stack import Stack
-
-# class EventType(Enum):
-#     # Phase 1: Game start
-#     GAME_START = 0
-#     PLAY_DECISION = 1
-#     GAMETYPE_DECISION = 2
-#     GAMETYPE_DETERMINED = 3
-#     # Phase 2: Play phase
-#     CARD_PLAYED = 4
-#     ROUND_RESULT = 5
-#     # Phase 3: Game end
-#     GAME_END = 6
+from state.suits import Suit
 
 
 @dataclass
@@ -39,13 +28,15 @@ class PlayDecisionEvent(Event):
 @dataclass
 class GametypeWishedEvent(Event):
     player: Player
-    gametype: Gametype
+    gametype: tuple[Gametype, Suit | None]
 
 
 @dataclass
 class GametypeDeterminedEvent(Event):
-    player: Player
+    player: Player | None
     gametype: Gametype
+    suit: Suit | None
+    parties: list[list[Player]] | None
 
 
 @dataclass
@@ -58,11 +49,17 @@ class CardPlayedEvent(Event):
 @dataclass
 class RoundResultEvent(Event):
     round_winner: Player  # TODO: Teams?
-    points: int  # TODO: Scoreboard?
+    points: int
     stack: Stack
 
 
 @dataclass
 class GameEndEvent(Event):
-    winner: Player  # TODO: Teams?
-    points: int  # TODO: Scoreboard?
+    winner: list[Player]
+    play_party: list[list[Player]]
+    points: list[int]
+
+
+@dataclass
+class AnnouncePlayPartyEvent(Event):
+    parties: list[list[Player]]

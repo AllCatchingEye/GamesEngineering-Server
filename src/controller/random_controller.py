@@ -6,6 +6,7 @@ from state.event import Event
 from state.gametypes import Gametype
 from state.player import Player
 from state.stack import Stack
+from state.suits import Suit
 
 
 class RandomController(PlayerController):
@@ -16,7 +17,9 @@ class RandomController(PlayerController):
     def wants_to_play(self, decisions: list[bool | None]) -> bool:
         return self.rng.choice([True, False])
 
-    def select_gametype(self, choosable_gametypes: list[Gametype]) -> Gametype:
+    def select_gametype(
+        self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
+    ) -> tuple[Gametype, Suit | None]:
         return self.rng.choice(choosable_gametypes)
 
     def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:

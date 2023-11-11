@@ -4,8 +4,10 @@ from state.suits import Suit, get_all_suits
 
 
 class Deck:
+    deck: list[Card]
+
     def __init__(self) -> None:
-        self.deck: list[Card] = self.__create_full_deck()
+        self.deck = self.__create_full_deck()
 
     def __create_full_deck(self) -> list[Card]:
         """Creates a full deck of cards for the game
@@ -33,7 +35,7 @@ class Deck:
         all_ranks: list[Rank] = get_all_ranks()
         full_suit: list[Card] = []
         for rank in all_ranks:
-            card = Card(rank, suit)
+            card = Card(suit, rank)
             full_suit.append(card)
 
         return full_suit
@@ -77,3 +79,6 @@ class Deck:
             A full deck, unshuffled
         """
         return self.deck.copy()
+
+
+DECK = Deck()

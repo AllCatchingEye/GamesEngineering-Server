@@ -1,12 +1,15 @@
+import random
+
 from controller.random_controller import RandomController
 from controller.terminal_controller import TerminalController
 from logic.game import Game
 
-game: Game = Game()
+rng = random.Random(1)
+game: Game = Game(rng)
 game.controllers = [
     TerminalController(game.players[0]),
-    RandomController(game.players[1]),
-    RandomController(game.players[2]),
-    RandomController(game.players[3]),
+    RandomController(game.players[1], rng),
+    RandomController(game.players[2], rng),
+    RandomController(game.players[3], rng),
 ]
 game.run()
