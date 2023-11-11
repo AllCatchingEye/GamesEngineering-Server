@@ -3,8 +3,8 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-from ai.select_card.agent import ISelectCardAgent
 from ai.nn_helper import card_to_nn_input_values, nn_output_code_to_card
+from ai.select_card.agent import ISelectCardAgent
 from ai.select_card.simple_deep_q_learning.policyNN import PolicyNN
 from state.card import Card
 from state.event import Event
@@ -36,13 +36,26 @@ class RLAgent(ISelectCardAgent):
         self.last_cards = []
         self.decision = None
 
+    def __get_best_playable_card(self, tensor: torch.Tensor, playable_cards: list[int]):
+        best_card = None
+        max_prob = -10000
+        tensor_list: list[float] = tensor.tolist()[0]
+
+        for index, value in enumerate(tensor_list):
+            if value > max_prob and playable_cards[index] == 1:
+                best_card = nn_output_code_to_card(index)
+
+        assert best_card is not None, "could not found a best card to play: " + str(
+            playable_cards
+        )
+
+        return best_card
+
     def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
         input_values = card_to_nn_input_values(playable_cards)
         input_tensor = torch.tensor(np.array([input_values]).astype(np.float32))
-        output = self.model(input_tensor)
-        card_code = torch.max(output, 1).indices[0].item()
-        card = nn_output_code_to_card(int(card_code))
-        return card
+        output: torch.Tensor = self.model(input_tensor)
+        return self.__get_best_playable_card(output, input_values)
 
     def load_model(self):
         params = torch.load(self.config.policy_model_path, map_location=self.device)
