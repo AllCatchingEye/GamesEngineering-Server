@@ -10,7 +10,6 @@ Schafkopf Game Server
 
 ### Installing
 
-<<<<<<< README.md
 * Clone this repository
 * (Optional but recommended) Create an virtual environment with `python -m venv venv`
   * Activate the virtual environment with `source venv/bin/activate`
