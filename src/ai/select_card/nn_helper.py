@@ -1,6 +1,4 @@
-from numbers import Number
 from state.card import Card
-from state.gametypes import Gametype
 from state.ranks import Rank, get_all_ranks
 from state.suits import Suit, get_all_suits
 
