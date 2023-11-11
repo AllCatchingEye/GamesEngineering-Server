@@ -25,3 +25,19 @@ Schafkopf Game Server
 
 * Windows: `.\scripts\test.ps1`
 * Linux/Mac: `./scripts/test.sh`
+
+### FAQ
+
+#### Exec tests: Permission denied
+
+You may have to grant your user executable rights for executing the script file.
+
+For Mac- and Linux-Systems, `chmod u+x` could be a solution. But make sure you know what you are doing!
+
+#### Exec tests: No module named coverage
+
+When I run the tests, I get this error: `/Users/<user>/anaconda3/bin/python: No module named coverage`
+
+Reason: It may be the case that your shell uses anaconda's python environment which can lead to issues. 
+
+How to fix? Run `conda deactivate` and try it again.
