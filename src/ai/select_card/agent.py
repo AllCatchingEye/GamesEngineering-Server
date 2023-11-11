@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 
 from state.card import Card
-from state.stack import Stack
 from state.event import Event
+from state.stack import Stack
+
 
 class ISelectCardAgent(ABC):
     def __init__(self) -> None:

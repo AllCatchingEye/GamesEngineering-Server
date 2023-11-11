@@ -1,5 +1,6 @@
 from torch import nn
 
+
 class PolicyNN(nn.Module):
     def __init__(self):
         super().__init__()
@@ -16,6 +17,7 @@ class PolicyNN(nn.Module):
         x = self.flatten(x)
         logits = self.linear_relu_stack(x)
         return logits
-        
-input_size = 32  
-output_size = 32 
+
+
+input_size = 32
+output_size = 32

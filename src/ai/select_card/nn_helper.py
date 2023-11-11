@@ -20,21 +20,26 @@ rank_values = {
     Rank.SIEBEN: 7,
 }
 
+
 def card_to_suit_offset(suit: Suit):
     return suit.value
 
+
 def card_to_rank_value(rank: Rank):
     return rank_values.get(rank)
+
 
 def card_to_nn_input_values_index(card: Card) -> int:
     suit_offset = card_to_suit_offset(card.get_suit())
     rank_value = card_to_rank_value(card.get_rank())
     return suit_offset * NUM_RANKS + rank_value
 
+
 def nn_output_code_to_card(code: int) -> Card:
     suit_code = code // NUM_RANKS
     rank_code = code % NUM_SUITS
     return Card(suits[suit_code], ranks[rank_code])
+
 
 def card_to_nn_input_values(hand_cards: list[Card]) -> list[int]:
     nn_input = [0] * NUM_CARDS

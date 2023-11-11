@@ -1,19 +1,21 @@
 from dataclasses import dataclass
-from ai.select_card.nn_helper import card_to_nn_input_values, nn_output_code_to_card
-from ai.select_card.agent import ISelectCardAgent
-from ai.select_card.policyNN import PolicyNN
 
-import torch
 import numpy as np
+import torch
 
+from ai.select_card.agent import ISelectCardAgent
+from ai.select_card.nn_helper import card_to_nn_input_values, nn_output_code_to_card
+from ai.select_card.policyNN import PolicyNN
 from state.card import Card
-from state.stack import Stack
 from state.event import Event
+from state.stack import Stack
+
 
 @dataclass
 class RLAgentConfig:
     policy_model_path: str
     train: bool
+
 
 class RLAgent(ISelectCardAgent):
     def __init__(self, config: RLAgentConfig):
@@ -24,7 +26,7 @@ class RLAgent(ISelectCardAgent):
         self.last_cards = []
 
     def initialize(self):
-        if(not self.config.train):
+        if not self.config.train:
             self.load_model()
             self.model.eval()
 
@@ -49,8 +51,5 @@ class RLAgent(ISelectCardAgent):
         )
         self.model.load_state_dict(params)
 
-    
     def on_game_event(self, event: Event) -> None:
         """Handle game events"""
-
-
