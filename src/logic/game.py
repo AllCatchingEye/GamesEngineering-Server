@@ -11,6 +11,7 @@ from logic.playable_gametypes import get_playable_gametypes
 from state.card import Card
 from state.deck import Deck
 from state.event import (
+    AnnouncePlayPartyEvent,
     CardPlayedEvent,
     Event,
     GameEndEvent,
@@ -23,6 +24,7 @@ from state.event import (
 from state.gametypes import Gametype
 from state.hand import Hand
 from state.player import Player
+from state.ranks import Rank
 from state.stack import Stack
 from state.suits import Suit
 
@@ -46,6 +48,8 @@ class Game:
         self.played_cards: list[Card] = []
         self.controllers = []
         self.rng = rng
+        # In a game there are always two parties (player-party, non-player-party)
+        self.play_party: list[list[Player]] = []
 
     def __create_players(self) -> list[Player]:
         """Create a list of players for the game."""
@@ -110,24 +114,47 @@ class Game:
                 self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
+            # When playing solo it is always 1v3
+            solo_player_party = self.players[i]
+            solo_non_player_party = self.players.copy()
+            solo_non_player_party.remove(solo_player_party)
+
             match (game_type[0]):
                 case Gametype.SOLO:
                     suit = game_type[1]
                     if suit is None:
                         raise ValueError("Solo gametype chosen without suit")
+                    self.play_party = [[solo_player_party], solo_non_player_party]
                     self.gamemode = GameModeSolo(suit)
                 case Gametype.WENZ:
+                    self.play_party = [[solo_player_party], solo_non_player_party]
                     self.gamemode = GameModeWenz(None)
                 case Gametype.GEIER:
+                    self.play_party = [[solo_player_party], solo_non_player_party]
                     self.gamemode = GameModeGeier(None)
                 case Gametype.FARBWENZ:
+                    self.play_party = [[solo_player_party], solo_non_player_party]
                     self.gamemode = GameModeWenz(game_type[1])
                 case Gametype.FARBGEIER:
+                    self.play_party = [[solo_player_party], solo_non_player_party]
                     self.gamemode = GameModeGeier(game_type[1])
                 case Gametype.SAUSPIEL:
                     suit = game_type[1]
                     if suit is None:
                         raise ValueError("Sauspiel gametype chosen without suit")
+
+                    # Find Player who has the chosen ace
+                    player_party = [self.players[i]]
+                    for j, player in enumerate(self.players):
+                        if player.hand.has_card_of_rank_and_suit(
+                            game_type[1], Rank.ASS
+                        ):
+                            player_party.append(self.players[j])
+                    non_player_party = self.players.copy()
+                    non_player_party.remove(player_party[0])
+                    non_player_party.remove(player_party[1])
+                    self.play_party = [player_party, non_player_party]
+
                     self.gamemode = GameModeSauspiel(suit)
                 case Gametype.RAMSCH:
                     # invalid gamemode, cannot be chosen
@@ -136,11 +163,24 @@ class Game:
                     continue
 
             self.__broadcast(
-                GametypeDeterminedEvent(self.players[i], game_type[0], game_type[1])
+                GametypeDeterminedEvent(
+                    self.players[i],
+                    game_type[0],
+                    game_type[1],
+                    self.play_party if game_type[0] != Gametype.SAUSPIEL else None,
+                )
             )
             return game_type[0]
 
-        self.__broadcast(GametypeDeterminedEvent(None, Gametype.RAMSCH, None))
+        self.play_party = [
+            [self.players[0]],
+            [self.players[1]],
+            [self.players[2]],
+            [self.players[3]],
+        ]
+        self.__broadcast(
+            GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
+        )
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
@@ -149,7 +189,12 @@ class Game:
         for _ in range(ROUNDS):
             self.start_round()
 
-        self.__get_game_winner()
+        game_winner, points_distribution = self.gamemode.get_game_winner(
+            self.play_party
+        )
+        self.__broadcast(
+            GameEndEvent(game_winner, self.play_party, points_distribution)
+        )
 
     def start_round(self) -> None:
         """Start a new round."""
@@ -169,6 +214,13 @@ class Game:
             player.lay_card(card)
             stack.add_card(card, player)
             self.__broadcast(CardPlayedEvent(player, card, stack))
+
+            # Announce that the searched ace had been played and teams are known
+            if isinstance(self.gamemode, GameModeSauspiel) and card == Card(
+                self.gamemode.suit, Rank.ASS
+            ):
+                self.__broadcast(AnnouncePlayPartyEvent(self.play_party))
+
         return stack
 
     def __finish_round(self, stack: Stack) -> None:
@@ -183,16 +235,6 @@ class Game:
         """Change the order of players based on the round winner."""
         winner_index = self.__get_winner_index(winner)
         self.__swap_players(winner_index)
-
-    def __get_game_winner(self) -> Player:
-        """Determine the winner of the entire game."""
-        game_winner = self.players[0]
-        for player in self.players[0:]:
-            if player.points > game_winner.points:
-                game_winner = player
-
-        self.__broadcast(GameEndEvent(game_winner, game_winner.points))
-        return game_winner
 
     def __get_winner_index(self, winner: Player) -> int:
         """Find the index of the player who won"""
