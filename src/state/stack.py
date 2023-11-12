@@ -1,9 +1,10 @@
+from dataclasses import dataclass
 from state.card import Card
 from state.player import Player
 from state.ranks import Rank, get_value_of
 from state.suits import Suit
 
-
+@dataclass
 class PlayedCard:
     card: Card
     player: Player
@@ -46,7 +47,7 @@ class PlayedCard:
             return False
         return self.card == __value.card and self.player == __value.player
 
-
+@dataclass
 class Stack:
     """Represents a stack of cards played during a round."""
 

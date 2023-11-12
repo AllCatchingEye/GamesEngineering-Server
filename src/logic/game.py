@@ -1,6 +1,7 @@
 import random
 
 from controller.player_controller import PlayerController
+from controller.websocket_controller import WebsocketController
 from logic.gamemodes.gamemode import GameMode
 from logic.gamemodes.gamemode_geier import GameModeGeier
 from logic.gamemodes.gamemode_ramsch import GameModeRamsch
@@ -15,7 +16,7 @@ from state.event import (
     CardPlayedEvent,
     Event,
     GameEndEvent,
-    GameStartEvent,
+    HandDistribution,
     GametypeDeterminedEvent,
     GametypeWishedEvent,
     PlayDecisionEvent,
@@ -58,43 +59,46 @@ class Game:
             players.append(Player(i))
         return players
 
-    def run(self) -> None:
+    async def run(self) -> None:
         """Start the game."""
 
-        self.determine_gametype()
-        self.__new_game()
+        await self.determine_gametype()
+        await self.__new_game()
 
-    def determine_gametype(self) -> Gametype:
+    async def determine_gametype(self) -> Gametype:
         """Determine the game type based on player choices."""
-        self.__distribute_cards()
-        game_type = self.__call_game()
+        await self.__distribute_cards()
+        game_type = await self.__call_game()
         return game_type
 
-    def __distribute_cards(self) -> None:
+    async def __distribute_cards(self) -> None:
         """Distribute cards to players."""
         deck: list[Card] = self.deck.get_full_deck()
         self.rng.shuffle(deck)
 
         for player in self.players:
-            deck = self.__distribute_hand(player, deck)
+            deck = await self.__distribute_hand(player, deck)
 
-    def __distribute_hand(self, player: Player, deck: list[Card]) -> list[Card]:
+    async def __distribute_hand(self, player: Player, deck: list[Card]) -> list[Card]:
         """Distribute cards for a player's hand."""
         hand: Hand = Hand(deck[:HAND_SIZE])
         player.hand = hand
 
         deck = deck[HAND_SIZE:]
 
-        self.controllers[player.id].on_game_event(GameStartEvent(hand))
+        await self.controllers[player.id].on_game_event(HandDistribution(hand))
         return deck
 
-    def __call_game(self) -> Gametype:
+    async def __call_game(self) -> Gametype:
         """Call the game type based on player choices."""
         decisions: list[bool | None] = [None, None, None, None]
         for player in self.players:
             i = player.id
-            wants_to_play = self.controllers[i].wants_to_play(decisions)
-            self.__broadcast(PlayDecisionEvent(player, wants_to_play))
+            if isinstance(self.controllers[i], WebsocketController):
+                wants_to_play = await self.controllers[i].wants_to_play(decisions)
+            else: 
+                wants_to_play = self.controllers[i].wants_to_play(decisions)
+            await self.__broadcast(PlayDecisionEvent(player, wants_to_play))
             decisions[i] = wants_to_play
 
         chosen_types: list[tuple[Gametype | None, Suit | None]] = [
@@ -111,7 +115,7 @@ class Game:
 
                 game_type = self.controllers[i].select_gametype(playable)
                 chosen_types[i] = game_type
-                self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
+                await self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
         for i, game_type in enumerate(chosen_types):
             # When playing solo it is always 1v3
@@ -162,7 +166,7 @@ class Game:
                 case _:
                     continue
 
-            self.__broadcast(
+            await self.__broadcast(
                 GametypeDeterminedEvent(
                     self.players[i],
                     game_type[0],
@@ -178,30 +182,30 @@ class Game:
             [self.players[2]],
             [self.players[3]],
         ]
-        self.__broadcast(
+        await self.__broadcast(
             GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
         )
         self.gamemode = GameModeRamsch()
         return Gametype.RAMSCH
 
-    def __new_game(self) -> None:
+    async def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
         for _ in range(ROUNDS):
-            self.start_round()
+            await self.start_round()
 
         game_winner, points_distribution = self.gamemode.get_game_winner(
             self.play_party
         )
-        self.__broadcast(
+        await self.__broadcast(
             GameEndEvent(game_winner, self.play_party, points_distribution)
         )
 
-    def start_round(self) -> None:
+    async def start_round(self) -> None:
         """Start a new round."""
-        stack = self.__play_cards()
-        self.__finish_round(stack)
+        stack = await self.__play_cards()
+        await self.__finish_round(stack)
 
-    def __play_cards(self) -> Stack:
+    async def __play_cards(self) -> Stack:
         """Play cards in the current round."""
         stack = Stack()
         for player in self.players:
@@ -213,22 +217,22 @@ class Game:
                 raise ValueError("Illegal card played")
             player.lay_card(card)
             stack.add_card(card, player)
-            self.__broadcast(CardPlayedEvent(player, card, stack))
+            await self.__broadcast(CardPlayedEvent(player, card, stack))
 
             # Announce that the searched ace had been played and teams are known
             if isinstance(self.gamemode, GameModeSauspiel) and card == Card(
                 self.gamemode.suit, Rank.ASS
             ):
-                self.__broadcast(AnnouncePlayPartyEvent(self.play_party))
+                await self.__broadcast(AnnouncePlayPartyEvent(self.play_party))
 
         return stack
 
-    def __finish_round(self, stack: Stack) -> None:
+    async def __finish_round(self, stack: Stack) -> None:
         """Finish the current round and determine the winner."""
         winner = self.gamemode.determine_stitch_winner(stack)
         stack_value = stack.get_value()
         winner.points += stack_value
-        self.__broadcast(RoundResultEvent(winner, stack_value, stack))
+        await self.__broadcast(RoundResultEvent(winner, stack_value, stack))
         self.__change_player_order(winner)
 
     def __change_player_order(self, winner: Player) -> None:
@@ -249,7 +253,7 @@ class Game:
         last: list[Player] = self.players[:winner_index]
         self.players = first + last
 
-    def __broadcast(self, event: Event) -> None:
+    async def __broadcast(self, event: Event) -> None:
         """Broadcast an event to all players."""
         for controller in self.controllers:
-            controller.on_game_event(event)
+            await controller.on_game_event(event)

@@ -33,5 +33,5 @@ class TerminalController(PlayerController):
         card_index = int(input())
         return playable_cards[card_index]
 
-    def on_game_event(self, event: Event) -> None:
+    async def on_game_event(self, event: Event) -> None:
         print(event)

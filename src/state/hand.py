@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from state.card import Card
 from state.ranks import Rank
 from state.suits import Suit
 
-
+@dataclass
 class Hand:
     cards: list[Card]
 

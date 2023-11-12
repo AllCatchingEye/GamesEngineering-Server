@@ -13,7 +13,7 @@ class PlayerController(ABC):
         self.player = player
 
     @abstractmethod
-    def on_game_event(self, event: Event) -> None:
+    async def on_game_event(self, event: Event) -> None:
         """Called when a game event occurs"""
 
     @abstractmethod
