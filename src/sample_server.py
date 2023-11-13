@@ -77,7 +77,23 @@ async def start_game(ws: WebSocketServerProtocol, game: Game):
         "id": "game_start"
     })
     await ws.send(message)
+    print("Game starts")
     await game.run()
+
+    if await wants_new_game(ws):
+        await game.run()
+
+
+async def wants_new_game(ws: WebSocketServerProtocol) -> bool:
+    new_game_message = json.dumps({
+        "id": "new_game"
+    })
+    await ws.send(new_game_message)
+
+    response: Data = await ws.recv()
+    print(response)
+    wants_new_game: str = response
+    return wants_new_game == "y"
 
 async def send_lobby_info(ws: WebSocketServerProtocol):
     lobby_id: str = token_urlsafe()

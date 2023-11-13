@@ -1,7 +1,6 @@
 import random
 
 from controller.player_controller import PlayerController
-from controller.websocket_controller import WebsocketController
 from logic.gamemodes.gamemode import GameMode
 from logic.gamemodes.gamemode_geier import GameModeGeier
 from logic.gamemodes.gamemode_ramsch import GameModeRamsch
@@ -94,10 +93,7 @@ class Game:
         decisions: list[bool | None] = [None, None, None, None]
         for player in self.players:
             i = player.id
-            if isinstance(self.controllers[i], WebsocketController):
-                wants_to_play = await self.controllers[i].wants_to_play(decisions)
-            else: 
-                wants_to_play = self.controllers[i].wants_to_play(decisions)
+            wants_to_play = await self.controllers[i].wants_to_play(decisions)
             await self.__broadcast(PlayDecisionEvent(player, wants_to_play))
             decisions[i] = wants_to_play
 
@@ -113,7 +109,7 @@ class Game:
                     self.players[i].hand, decisions[0:i].count(True)
                 )
 
-                game_type = self.controllers[i].select_gametype(playable)
+                game_type = await self.controllers[i].select_gametype(playable)
                 chosen_types[i] = game_type
                 await self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
 
@@ -212,7 +208,7 @@ class Game:
             playable_cards = self.gamemode.get_playable_cards(stack, player.hand)
             if len(playable_cards) == 0:
                 raise ValueError("No playable cards")
-            card: Card = self.controllers[player.id].play_card(stack, playable_cards)
+            card: Card = await self.controllers[player.id].play_card(stack, playable_cards)
             if card not in playable_cards or card not in player.hand.cards:
                 raise ValueError("Illegal card played")
             player.lay_card(card)

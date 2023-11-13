@@ -78,7 +78,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o: object):
         if is_dataclass(o):
             result = asdict(o)
-            result['id'] = 'event'
+            result["id"] = getattr(o, "__name__", o.__class__.__name__)
             return result
         if isinstance(o, Enum):
             return o.name

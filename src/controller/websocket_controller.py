@@ -32,29 +32,43 @@ class WebsocketController(PlayerController):
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
-        data = choosable_gametypes.__dict__
-        data["id"] = "select_gametype"
+        data: dict[str, object] = {
+            "id": "select_gametype",
+            "choosable_gametypes": self.to_str(choosable_gametypes)
+        }
         message = json.dumps(data, cls=EnhancedJSONEncoder)
         await self.ws.send(message)
 
         response = await self.ws.recv()
-        data = json.loads(response)
-        gametype_index: int = data["gametype_index"]
+        response_data = json.loads(response)
+        gametype_index: int = response_data["gametype_index"]
 
         return choosable_gametypes[gametype_index]
 
     async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
-        data = stack.__dict__
-        data["playable_cards"] = playable_cards.__dict__
-        data["id"] = "play_card"
+        data: dict[str, object] = {
+            "id": "play_card",
+            "stack": str(stack),
+            "playable_cards": self.to_str(playable_cards)
+        }
         message = json.dumps(data, cls=EnhancedJSONEncoder)
         await self.ws.send(message)
 
         response = await self.ws.recv()
-        data = json.loads(response)
-        card_index: int = data["card_index"]
+        response_data = json.loads(response)
+        card_index: int = response_data["card_index"]
         return playable_cards[card_index]
 
     async def on_game_event(self, event: Event) -> None:
-        message = event.to_json()
+        message: str = await self.to_message(event)
         await self.ws.send(message)
+
+    def to_str(self, o: object) -> str:
+        string: str = ""
+        for index, content in enumerate(o):
+            string += str(index )+ ': ' + str(content )+ '\n'
+        return string
+
+    async def to_message(self, event: Event) -> str:
+        message: str = event.to_json()
+        return message
