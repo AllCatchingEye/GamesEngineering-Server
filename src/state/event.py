@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 
 from state.card import Card
-from state.gametypes import Gametype
+from state.gametypes import Gametype, GameGroup
 from state.hand import Hand
 from state.player import Player
 from state.stack import Stack
@@ -63,3 +63,8 @@ class GameEndEvent(Event):
 @dataclass
 class AnnouncePlayPartyEvent(Event):
     parties: list[list[Player]]
+
+@dataclass
+class GameGroupChosenEvent(Event):
+    player: Player
+    game_groups: list[GameGroup]
