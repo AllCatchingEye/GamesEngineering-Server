@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from state.card import Card
 from state.event import Event
-from state.gametypes import Gametype
+from state.gametypes import Gametype, GameGroup
 from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
@@ -17,7 +17,7 @@ class PlayerController(ABC):
         """Called when a game event occurs"""
 
     @abstractmethod
-    def wants_to_play(self, decisions: list[bool | None]) -> bool:
+    def wants_to_play(self, current_player: Player | None, current_lowest_gamegroup: GameGroup | None) -> bool:
         """Decide if the player wants to play or pass on."""
 
     @abstractmethod
@@ -33,3 +33,7 @@ class PlayerController(ABC):
     @abstractmethod
     def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
         """Determine which card to play"""
+
+    @abstractmethod
+    def chooseGameGroup(self, available_groups: list[GameGroup]) -> GameGroup:
+        """Choose the highest game group you would play"""

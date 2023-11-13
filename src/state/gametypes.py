@@ -12,3 +12,11 @@ class Gametype(Enum):
     FARBGEIER = Stake.MID
     SAUSPIEL = Stake.STANDARD
     RAMSCH = Stake.STANDARD
+
+
+class GameGroup(Enum):
+    # Group acutal gametypes to have less detailed options for play decision discussion
+    HIGH_SOLO = 1  # Farbsolo
+    MID_SOLO = 2  # Wenz und Geier
+    LOW_SOLO = 3  # Farbwenz und Farbgeier
+    ALL = 4

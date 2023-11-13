@@ -19,9 +19,11 @@ from state.event import (
     GametypeDeterminedEvent,
     GametypeWishedEvent,
     PlayDecisionEvent,
-    RoundResultEvent, MoneyUpdateEvent,
+    RoundResultEvent,
+    GameGroupChosenEvent,
+    MoneyUpdateEvent,
 )
-from state.gametypes import Gametype
+from state.gametypes import Gametype, GameGroup
 from state.hand import Hand
 from state.money import Money
 from state.player import Player
@@ -93,99 +95,113 @@ class Game:
 
     def __call_game(self) -> Gametype:
         """Call the game type based on player choices."""
-        decisions: list[bool | None] = [None, None, None, None]
-        for player in self.players:
-            i = player.id
-            wants_to_play = self.controllers[i].wants_to_play(decisions)
-            self.__broadcast(PlayDecisionEvent(player, wants_to_play))
-            decisions[i] = wants_to_play
+        current_player: Player | None = None
+        current_player_index: int | None = None
+        current_game_group: list[GameGroup] = [GameGroup.ALL, GameGroup.LOW_SOLO, GameGroup.MID_SOLO,
+                                               GameGroup.HIGH_SOLO]
 
-        chosen_types: list[tuple[Gametype | None, Suit | None]] = [
-            (None, None),
-            (None, None),
-            (None, None),
-            (None, None),
-        ]
-        for i, wants_to_play in enumerate(decisions):
-            if wants_to_play is True:
-                playable = get_playable_gametypes(
-                    self.players[i].hand, decisions[0:i].count(True)
-                )
+        for i, player in enumerate(self.players):
+            if self.controllers[player.id].wants_to_play(current_player, None):
+                current_player = player
+                current_player_index = i
+                self.__broadcast(PlayDecisionEvent(player, True))
+                break
 
-                game_type = self.controllers[i].select_gametype(playable)
-                chosen_types[i] = game_type
-                self.__broadcast(GametypeWishedEvent(self.players[i], game_type))
-
-        for i, game_type in enumerate(chosen_types):
-            # When playing solo it is always 1v3
-            solo_player_party = self.players[i]
-            solo_non_player_party = self.players.copy()
-            solo_non_player_party.remove(solo_player_party)
-
-            match (game_type[0]):
-                case Gametype.SOLO:
-                    suit = game_type[1]
-                    if suit is None:
-                        raise ValueError("Solo gametype chosen without suit")
-                    self.play_party = [[solo_player_party], solo_non_player_party]
-                    self.gamemode = GameModeSolo(suit)
-                case Gametype.WENZ:
-                    self.play_party = [[solo_player_party], solo_non_player_party]
-                    self.gamemode = GameModeWenz(None)
-                case Gametype.GEIER:
-                    self.play_party = [[solo_player_party], solo_non_player_party]
-                    self.gamemode = GameModeGeier(None)
-                case Gametype.FARBWENZ:
-                    self.play_party = [[solo_player_party], solo_non_player_party]
-                    self.gamemode = GameModeWenz(game_type[1])
-                case Gametype.FARBGEIER:
-                    self.play_party = [[solo_player_party], solo_non_player_party]
-                    self.gamemode = GameModeGeier(game_type[1])
-                case Gametype.SAUSPIEL:
-                    suit = game_type[1]
-                    if suit is None:
-                        raise ValueError("Sauspiel gametype chosen without suit")
-
-                    # Find Player who has the chosen ace
-                    player_party = [self.players[i]]
-                    for j, player in enumerate(self.players):
-                        if player.hand.has_card_of_rank_and_suit(
-                                game_type[1], Rank.ASS
-                        ):
-                            player_party.append(self.players[j])
-                    non_player_party = self.players.copy()
-                    non_player_party.remove(player_party[0])
-                    non_player_party.remove(player_party[1])
-                    self.play_party = [player_party, non_player_party]
-
-                    self.gamemode = GameModeSauspiel(suit)
-                case Gametype.RAMSCH:
-                    # invalid gamemode, cannot be chosen
-                    raise ValueError("Ramsch cannot be chosen as a gametype")
-                case _:
-                    continue
-
+        if current_player is None:
+            self.play_party = [
+                [self.players[0]],
+                [self.players[1]],
+                [self.players[2]],
+                [self.players[3]],
+            ]
             self.__broadcast(
-                GametypeDeterminedEvent(
-                    self.players[i],
-                    game_type[0],
-                    game_type[1],
-                    self.play_party if game_type[0] != Gametype.SAUSPIEL else None,
-                )
+                GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
             )
-            return game_type[0]
+            self.gamemode = GameModeRamsch()
+            return Gametype.RAMSCH
 
-        self.play_party = [
-            [self.players[0]],
-            [self.players[1]],
-            [self.players[2]],
-            [self.players[3]],
-        ]
+        if current_player_index < 3:
+            for player in self.players[current_player_index + 1:]:
+                if len(current_game_group) == 1:
+                    break
+                if self.controllers[player.id].wants_to_play(current_player, current_game_group[0]):
+                    self.__broadcast(PlayDecisionEvent(player, True))
+                    if current_player is not None:
+                        player_decision = self.controllers[current_player.id].chooseGameGroup(current_game_group)
+
+                        current_game_group_reduced = current_game_group.copy()
+                        current_game_group_reduced.pop(0)
+                        oponent_decision = self.controllers[player.id].chooseGameGroup(current_game_group_reduced)
+
+                        if oponent_decision.value < player_decision.value:
+                            current_player = player
+                            index_reduce = current_game_group.index(oponent_decision)
+                            current_game_group = current_game_group[index_reduce:]
+                            self.__broadcast(GameGroupChosenEvent(player, current_game_group))
+                            continue
+
+                        index_reduce = current_game_group.index(player_decision)
+                        current_game_group = current_game_group[index_reduce:]
+                        self.__broadcast(GameGroupChosenEvent(current_player, current_game_group))
+
+        game_type = self.controllers[current_player.id].select_gametype(
+            get_playable_gametypes(current_player.hand, current_game_group))
+
+        # When playing solo it is always 1v3
+        solo_player_party = self.players[current_player.id]
+        solo_non_player_party = self.players.copy()
+        solo_non_player_party.remove(solo_player_party)
+
+        match (game_type[0]):
+            case Gametype.SOLO:
+                suit = game_type[1]
+                if suit is None:
+                    raise ValueError("Solo gametype chosen without suit")
+                self.play_party = [[solo_player_party], solo_non_player_party]
+                self.gamemode = GameModeSolo(suit)
+            case Gametype.WENZ:
+                self.play_party = [[solo_player_party], solo_non_player_party]
+                self.gamemode = GameModeWenz(None)
+            case Gametype.GEIER:
+                self.play_party = [[solo_player_party], solo_non_player_party]
+                self.gamemode = GameModeGeier(None)
+            case Gametype.FARBWENZ:
+                self.play_party = [[solo_player_party], solo_non_player_party]
+                self.gamemode = GameModeWenz(game_type[1])
+            case Gametype.FARBGEIER:
+                self.play_party = [[solo_player_party], solo_non_player_party]
+                self.gamemode = GameModeGeier(game_type[1])
+            case Gametype.SAUSPIEL:
+                suit = game_type[1]
+                if suit is None:
+                    raise ValueError("Sauspiel gametype chosen without suit")
+
+                # Find Player who has the chosen ace
+                player_party = [self.players[current_player.id]]
+                for j, player in enumerate(self.players):
+                    if player.hand.has_card_of_rank_and_suit(
+                            game_type[1], Rank.ASS
+                    ):
+                        player_party.append(self.players[j])
+                non_player_party = self.players.copy()
+                non_player_party.remove(player_party[0])
+                non_player_party.remove(player_party[1])
+                self.play_party = [player_party, non_player_party]
+
+                self.gamemode = GameModeSauspiel(suit)
+            case Gametype.RAMSCH:
+                # invalid gamemode, cannot be chosen
+                raise ValueError("Ramsch cannot be chosen as a gametype")
+
         self.__broadcast(
-            GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
+            GametypeDeterminedEvent(
+                self.players[current_player.id],
+                game_type[0],
+                game_type[1],
+                self.play_party if game_type[0] != Gametype.SAUSPIEL else None,
+            )
         )
-        self.gamemode = GameModeRamsch()
-        return Gametype.RAMSCH
+        return game_type[0]
 
     def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
