@@ -230,6 +230,8 @@ class Game:
         self.__broadcast(
             GameEndEvent(game_winner, self.play_party, points_distribution)
         )
+        for player in self.players:
+            money = self.__get_or_pay_money(player, game_winner, points_distribution)
 
     def start_round(self) -> None:
         """Start a new round."""
@@ -265,6 +267,9 @@ class Game:
         winner.points += stack_value
         self.__broadcast(RoundResultEvent(winner, stack_value, stack))
         self.__change_player_order(winner)
+
+    def __get_or_pay_money(self, player: Player, game_winner: list[Player], points_distribution: list[int]):
+        pass
 
     def __change_player_order(self, winner: Player) -> None:
         """Change the order of players based on the round winner."""
