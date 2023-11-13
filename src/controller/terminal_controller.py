@@ -4,6 +4,7 @@ from state.event import Event
 from state.gametypes import GameGroup, Gametype
 from state.stack import Stack
 from state.suits import Suit
+from state.player import Player
 
 
 class TerminalController(PlayerController):
@@ -15,7 +16,7 @@ class TerminalController(PlayerController):
         return decision == "y"
 
     def select_gametype(
-        self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
+            self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
         print("Choose a gamemode:")
         for index, gametype in enumerate(choosable_gametypes):

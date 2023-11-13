@@ -59,7 +59,6 @@ class GameEndEvent(Event):
 class AnnouncePlayPartyEvent(Event):
     parties: list[list[Player]]
 
-
 @dataclass
 class GameGroupChosenEvent(Event):
     player: Player
