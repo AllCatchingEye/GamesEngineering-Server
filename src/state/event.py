@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from state.card import Card
 from state.gametypes import Gametype
 from state.hand import Hand
+from state.money import Money
 from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
@@ -63,3 +64,8 @@ class GameEndEvent(Event):
 @dataclass
 class AnnouncePlayPartyEvent(Event):
     parties: list[list[Player]]
+
+
+@dataclass
+class MoneyUpdateEvent(Event):
+    money: Money

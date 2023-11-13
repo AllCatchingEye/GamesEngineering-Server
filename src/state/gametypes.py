@@ -1,12 +1,14 @@
 from enum import Enum
 
+from state.money import Money
+
 
 class Gametype(Enum):
     # The value of the enum is the stake
-    SOLO = 1
-    WENZ = 2
-    GEIER = 3
-    FARBWENZ = 4
-    FARBGEIER = 5
-    SAUSPIEL = 6
-    RAMSCH = 7
+    SOLO = Money.from_euro(5)
+    WENZ = Money.from_euro(5)
+    GEIER = Money.from_euro(5)
+    FARBWENZ = Money.from_euro(3)
+    FARBGEIER = Money.from_euro(3)
+    SAUSPIEL = Money.from_euro(1)
+    RAMSCH = Money.from_euro(1)

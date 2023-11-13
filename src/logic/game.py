@@ -19,12 +19,14 @@ from state.event import (
     GametypeDeterminedEvent,
     GametypeWishedEvent,
     PlayDecisionEvent,
-    RoundResultEvent,
+    RoundResultEvent, MoneyUpdateEvent,
 )
 from state.gametypes import Gametype
 from state.hand import Hand
+from state.money import Money
 from state.player import Player
 from state.ranks import Rank
+from state.running_cards_start import RunningCardsStart
 from state.stack import Stack
 from state.suits import Suit
 
@@ -37,7 +39,7 @@ class Game:
     controllers: list[PlayerController]
     rng: random.Random
     gamemode: GameMode
-
+    gametype: Gametype
     players: list[Player]
     deck: Deck
     played_cards: list[Card]
@@ -61,7 +63,7 @@ class Game:
     def run(self) -> None:
         """Start the game."""
 
-        self.determine_gametype()
+        self.gametype = self.determine_gametype()
         self.__new_game()
 
     def determine_gametype(self) -> Gametype:
@@ -195,8 +197,8 @@ class Game:
         self.__broadcast(
             GameEndEvent(game_winner, self.play_party, points_distribution)
         )
-        for player in self.players:
-            money = self.__get_or_pay_money(player, game_winner, points_distribution)
+
+        self.__get_or_pay_money(game_winner, points_distribution)
 
     def start_round(self) -> None:
         """Start a new round."""
@@ -233,8 +235,44 @@ class Game:
         self.__broadcast(RoundResultEvent(winner, stack_value, stack))
         self.__change_player_order(winner)
 
-    def __get_or_pay_money(self, player: Player, game_winner: list[Player], points_distribution: list[int]):
-        pass
+    def __get_or_pay_money(self, game_winner: list[Player], points_distribution: list[int]):
+        stake: Money = self.gametype.value
+        for points in points_distribution:
+            # TODO add schwarz spielen (aktuell kommt man nicht darauf, ob ein Team schon einen Stich gemacht hat
+            #  wegen punktlosen Stichen)
+            if points > 90:
+                # schneiderfree
+                stake += Money.from_euro(1)
+        for team in self.play_party:
+            running_team_cards = self.__get_running_cards(team)
+            if self.gamemode is GameModeGeier or self.gamemode is GameModeWenz:
+                stakes_added = running_team_cards - RunningCardsStart.GEIER_WENZ.value
+            else:
+                stakes_added = running_team_cards - RunningCardsStart.STANDARD.value
+            if stakes_added >= 0:
+                stake += Money.from_euro(1) * (stakes_added + 1)
+        for player in self.players:
+            if player in game_winner:
+                player.money += stake * (
+                        max(len(game_winner), len(self.players) - len(game_winner)) // (len(game_winner)))
+            else:
+                player.money -= stake * (max(len(game_winner), len(self.players) - len(game_winner)) // (
+                        len(self.players) - len(game_winner)))
+            self.controllers[player.id].on_game_event(MoneyUpdateEvent(player.money))
+
+    def __get_running_cards(self, team: list[Player]) -> int:
+        running_cards = 0
+        found_running_card = False
+        for trump in self.gamemode.get_trump_cards():
+            if not found_running_card:
+                break
+            found_running_card = False
+            for player in team:
+                if trump in player.played_cards:
+                    found_running_card = True
+                    running_cards += 1
+                    break
+        return running_cards
 
     def __change_player_order(self, winner: Player) -> None:
         """Change the order of players based on the round winner."""
