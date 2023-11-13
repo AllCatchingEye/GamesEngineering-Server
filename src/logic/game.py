@@ -147,7 +147,7 @@ class Game:
                     player_party = [self.players[i]]
                     for j, player in enumerate(self.players):
                         if player.hand.has_card_of_rank_and_suit(
-                            game_type[1], Rank.ASS
+                                game_type[1], Rank.ASS
                         ):
                             player_party.append(self.players[j])
                     non_player_party = self.players.copy()
@@ -195,6 +195,8 @@ class Game:
         self.__broadcast(
             GameEndEvent(game_winner, self.play_party, points_distribution)
         )
+        for player in self.players:
+            money = self.__get_or_pay_money(player, game_winner, points_distribution)
 
     def start_round(self) -> None:
         """Start a new round."""
@@ -217,7 +219,7 @@ class Game:
 
             # Announce that the searched ace had been played and teams are known
             if isinstance(self.gamemode, GameModeSauspiel) and card == Card(
-                self.gamemode.suit, Rank.ASS
+                    self.gamemode.suit, Rank.ASS
             ):
                 self.__broadcast(AnnouncePlayPartyEvent(self.play_party))
 
@@ -230,6 +232,9 @@ class Game:
         winner.points += stack_value
         self.__broadcast(RoundResultEvent(winner, stack_value, stack))
         self.__change_player_order(winner)
+
+    def __get_or_pay_money(self, player: Player, game_winner: list[Player], points_distribution: list[int]):
+        pass
 
     def __change_player_order(self, winner: Player) -> None:
         """Change the order of players based on the round winner."""

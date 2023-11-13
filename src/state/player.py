@@ -1,9 +1,11 @@
 from state.card import Card
 from state.hand import Hand
+from state.money import Money
 
 
 class Player:
     id: int
+    money: Money
     points: int
     hand: Hand
     played_cards: list[Card]
@@ -11,6 +13,7 @@ class Player:
     def __init__(self, player_id: int) -> None:
         self.id = player_id
         self.points = 0
+        self.money = Money(0, 0)
         self.hand: Hand = Hand([])
         self.played_cards = []
 
