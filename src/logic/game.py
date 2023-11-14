@@ -99,12 +99,12 @@ class Game:
                                                GameGroup.HIGH_SOLO]
 
         for i, player in enumerate(self.players):
-            if self.controllers[player.id].wants_to_play(current_player, None):
+            wants_to_play = self.controllers[player.id].wants_to_play(current_player, None)
+            if wants_to_play:
                 current_player = player
                 current_player_index = i
-                self.__broadcast(PlayDecisionEvent(player, True))
                 break
-            self.__broadcast(PlayDecisionEvent(player, False))
+            self.__broadcast(PlayDecisionEvent(player, wants_to_play))
 
         # No one called a game => Ramsch
         if current_player is None:
