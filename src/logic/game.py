@@ -28,6 +28,7 @@ from state.player import Player
 from state.ranks import Rank
 from state.running_cards_start import RunningCardsStart
 from state.stack import Stack
+from state.stakes import Stake
 from state.suits import Suit
 
 HAND_SIZE = 8
@@ -236,13 +237,14 @@ class Game:
         self.__change_player_order(winner)
 
     def __get_or_pay_money(self, game_winner: list[Player], points_distribution: list[int]):
-        stake: Money = self.gametype.value
+        stake: Money = self.gametype.value.value
         for points in points_distribution:
-            # TODO add schwarz spielen (aktuell kommt man nicht darauf, ob ein Team schon einen Stich gemacht hat
-            #  wegen punktlosen Stichen)
+            if points == 0:
+                # schwarz
+                stake += Stake.STANDARD.value
             if points > 90:
                 # schneiderfree
-                stake += Money.from_euro(1)
+                stake += Stake.STANDARD.value
         for team in self.play_party:
             running_team_cards = self.__get_running_cards(team)
             if self.gamemode is GameModeGeier or self.gamemode is GameModeWenz:
@@ -250,7 +252,7 @@ class Game:
             else:
                 stakes_added = running_team_cards - RunningCardsStart.STANDARD.value
             if stakes_added >= 0:
-                stake += Money.from_euro(1) * (stakes_added + 1)
+                stake += Stake.STANDARD.value * (stakes_added + 1)
         for player in self.players:
             if player in game_winner:
                 player.money += stake * (
