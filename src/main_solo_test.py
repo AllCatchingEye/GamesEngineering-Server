@@ -67,10 +67,9 @@ class TestClass(unittest.TestCase):
         self.assertEqual(play_decisions[3].player, self.player3)
         self.assertEqual(play_decisions[3].wants_to_play, True)
 
-    def test_gametype_wish(self):
-        wish_events = self.sut.event_history.get_events_of_type(GametypeWishedEvent)
-        self.assertEqual(len(wish_events), 1)
-        self.assertEqual(wish_events[0].player, self.player3)
+    def test_gamegroupChosen(self):
+        wish_events = self.sut.event_history.get_events_of_type(GameGroupChosenEvent)
+        self.assertEqual(len(wish_events), 0)
 
     def test_gametype_determined(self):
         determined_events = self.sut.event_history.get_events_of_type(

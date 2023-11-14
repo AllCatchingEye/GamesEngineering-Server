@@ -17,7 +17,6 @@ from state.event import (
     GameEndEvent,
     GameStartEvent,
     GametypeDeterminedEvent,
-    GametypeWishedEvent,
     PlayDecisionEvent,
     RoundResultEvent,
     GameGroupChosenEvent,
@@ -31,7 +30,6 @@ from state.ranks import Rank
 from state.running_cards_start import RunningCardsStart
 from state.stack import Stack
 from state.stakes import Stake
-from state.suits import Suit
 
 HAND_SIZE = 8
 ROUNDS = 8
@@ -106,7 +104,9 @@ class Game:
                 current_player_index = i
                 self.__broadcast(PlayDecisionEvent(player, True))
                 break
+            self.__broadcast(PlayDecisionEvent(player, False))
 
+        # No one called a game => Ramsch
         if current_player is None:
             self.play_party = [
                 [self.players[0]],
@@ -114,35 +114,34 @@ class Game:
                 [self.players[2]],
                 [self.players[3]],
             ]
-            self.__broadcast(
-                GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
-            )
+            self.__broadcast(GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party))
             self.gamemode = GameModeRamsch()
             return Gametype.RAMSCH
 
         if current_player_index < 3:
             for player in self.players[current_player_index + 1:]:
+                # High-Solo has been called, there is no higher game group
                 if len(current_game_group) == 1:
                     break
+
                 if self.controllers[player.id].wants_to_play(current_player, current_game_group[0]):
                     self.__broadcast(PlayDecisionEvent(player, True))
-                    if current_player is not None:
-                        player_decision = self.controllers[current_player.id].chooseGameGroup(current_game_group)
+                    player_decision = self.controllers[current_player.id].chooseGameGroup(current_game_group)
 
-                        current_game_group_reduced = current_game_group.copy()
-                        current_game_group_reduced.pop(0)
-                        oponent_decision = self.controllers[player.id].chooseGameGroup(current_game_group_reduced)
+                    current_game_group_reduced = current_game_group.copy()
+                    current_game_group_reduced.pop(0)
+                    oponent_decision = self.controllers[player.id].chooseGameGroup(current_game_group_reduced)
 
-                        if oponent_decision.value < player_decision.value:
-                            current_player = player
-                            index_reduce = current_game_group.index(oponent_decision)
-                            current_game_group = current_game_group[index_reduce:]
-                            self.__broadcast(GameGroupChosenEvent(player, current_game_group))
-                            continue
-
-                        index_reduce = current_game_group.index(player_decision)
+                    if oponent_decision.value < player_decision.value:
+                        current_player = player
+                        index_reduce = current_game_group.index(oponent_decision)
                         current_game_group = current_game_group[index_reduce:]
-                        self.__broadcast(GameGroupChosenEvent(current_player, current_game_group))
+                        self.__broadcast(GameGroupChosenEvent(player, current_game_group))
+                        continue
+
+                    index_reduce = current_game_group.index(player_decision)
+                    current_game_group = current_game_group[index_reduce:]
+                    self.__broadcast(GameGroupChosenEvent(current_player, current_game_group))
 
         game_type = self.controllers[current_player.id].select_gametype(
             get_playable_gametypes(current_player.hand, current_game_group))
