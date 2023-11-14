@@ -111,6 +111,7 @@ class Game:
                 current_player = player
                 current_player_index = i
                 break
+            self.__broadcast(PlayDecisionEvent(player, False))
 
         # No one called a game => Ramsch
         if current_player is None:
