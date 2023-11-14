@@ -1,14 +1,15 @@
-from dataclasses import asdict
 import json
-from controller.player_controller import PlayerController
-from state.player import Player
-from state.card import Card
-from state.event import Event, EnhancedJSONEncoder
-from state.gametypes import Gametype
-from state.stack import Stack
-from state.suits import Suit
+from dataclasses import asdict
 
 from websockets.server import WebSocketServerProtocol
+
+from controller.player_controller import PlayerController
+from state.card import Card
+from state.event import EnhancedJSONEncoder, Event
+from state.gametypes import Gametype
+from state.player import Player
+from state.stack import Stack
+from state.suits import Suit
 
 
 class WebsocketController(PlayerController):
@@ -34,7 +35,7 @@ class WebsocketController(PlayerController):
     ) -> tuple[Gametype, Suit | None]:
         data: dict[str, object] = {
             "id": "select_gametype",
-            "choosable_gametypes": self.to_str(choosable_gametypes)
+            "choosable_gametypes": self.to_str(choosable_gametypes),
         }
         message = json.dumps(data, cls=EnhancedJSONEncoder)
         await self.ws.send(message)
@@ -49,7 +50,7 @@ class WebsocketController(PlayerController):
         data: dict[str, object] = {
             "id": "play_card",
             "stack": str(stack),
-            "playable_cards": self.to_str(playable_cards)
+            "playable_cards": self.to_str(playable_cards),
         }
         message = json.dumps(data, cls=EnhancedJSONEncoder)
         await self.ws.send(message)
@@ -66,7 +67,7 @@ class WebsocketController(PlayerController):
     def to_str(self, o: object) -> str:
         string: str = ""
         for index, content in enumerate(o):
-            string += str(index )+ ': ' + str(content )+ '\n'
+            string += str(index) + ": " + str(content) + "\n"
         return string
 
     async def to_message(self, event: Event) -> str:

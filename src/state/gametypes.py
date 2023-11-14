@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
+
 @dataclass
 class Gametype(Enum):
     # The value of the enum is the stake

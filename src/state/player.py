@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+
 from state.card import Card
 from state.hand import Hand
+
 
 @dataclass
 class Player:

@@ -1,11 +1,13 @@
 import asyncio
 import json
 from logging import error
+
 import websockets
 from websockets.client import WebSocketClientProtocol
 
 # Just for testing global
 join_key_g = ""
+
 
 async def start_client(game_mode: str) -> None:
     uri = "ws://localhost:8765"
@@ -15,6 +17,7 @@ async def start_client(game_mode: str) -> None:
         while True:
             await run_client(websocket, game_mode)
 
+
 async def run_client(websocket: WebSocketClientProtocol, game_mode: str) -> None:
     if game_mode == "single":
         await start(websocket, game_mode)
@@ -23,21 +26,18 @@ async def run_client(websocket: WebSocketClientProtocol, game_mode: str) -> None
     else:
         error("Unknown game mode")
 
+
 async def start(websocket: WebSocketClientProtocol, game_mode: str) -> None:
     print("Asking server to start single player game")
-    response: dict[str, object] = {
-        "id": "connect",
-        "game_mode": game_mode
-    }
+    response: dict[str, object] = {"id": "connect", "game_mode": game_mode}
     await websocket.send(json.dumps(response))
 
-    response = await websocket.recv()
-    message: dict[str, object] = json.loads(response)
-
-    response = await websocket.recv()
+    await websocket.recv()  # connect_response, not important for websocket client for now
+    await websocket.recv()  # game_started message
     player_id = 0
     await play(websocket, player_id)
     await websocket.wait_closed()
+
 
 # async def join(websocket: WebSocketClientProtocol) -> None:
 #     print(f"Asking server to join game with key {join_key_g}")
@@ -59,59 +59,58 @@ async def start(websocket: WebSocketClientProtocol, game_mode: str) -> None:
 
 
 async def play(ws: WebSocketClientProtocol, player_id: int) -> None:
-    gamestate: dict[str, object] = dict()
+    gamestate: dict[str, object] = {}
     async for message in ws:
         data: dict[str, object] = json.loads(message)
         match data["id"]:
+            # Actions
             case "wants_to_play":
-                await wants_to_play(ws, data, player_id) 
+                await wants_to_play(ws, data, player_id)
             case "select_gametype":
-                await select_gametype(ws, data, player_id) 
+                await select_gametype(ws, data, player_id)
             case "play_card":
-                await play_card(ws, data, player_id) 
+                await play_card(ws, data, player_id)
             case "new_game":
                 print("Your game is over. Do you want to play a new game?")
                 answer: str = input("Enter your answer. (y/n)")
-                await ws.send(json.dumps({
-                    "wants_new_game":  answer
-                }))
-            case _:
-                gamestate = update(gamestate, data, player_id)
+                await ws.send(json.dumps({"wants_new_game": answer}))
+            case _:  # Events
+                gamestate = event_update(gamestate, data)
 
-def update(gamestate: dict[str, object], data: dict[str, object], player_id: int) -> dict[str, object]:
-    # print("Player: " + str(player_id))
-    # print("Event: " + data['id'])
-    # print("Received gamestate update: ")
-    # print(data)
+
+def event_update(
+    gamestate: dict[str, object], data: dict[str, object]
+) -> dict[str, object]:
     show_event(data)
     gamestate.update(data)
     return gamestate
+
 
 def show_event(event: dict[str, object]) -> None:
     match event["id"]:
         case "PlayDecisionEvent":
             player = event["player"]
-            player_id = player["id"]
-            wants_to_play = event["wants_to_play"]
-            print(f'Player {player_id} wants to play: {wants_to_play}')
+            player_id: int = player["id"]
+            plays = event["wants_to_play"]
+            print(f"Player {player_id} wants to play: {plays}")
         case "RoundResultEvent":
             winner = event["round_winner"]
-            winner_id = winner["id"]
-            points = event["points"]
-            print(f'Round was won by {winner_id} with {points} points')
-            print('============================================================')
+            winner_id: int = winner["id"]
+            points: int = event["points"]
+            print(f"Round was won by {winner_id} with {points} points")
+            print("============================================================")
         case "GameEndEvent":
             winners = event["winner"]
             points = event["points"]
-            print(f'Game was won by {winners} with {points} points')
-            print('============================================================')
+            print(f"Game was won by {winners} with {points} points")
+            print("============================================================")
         case "CardPlayedEvent":
             player = event["player"]
             player_id = player["id"]
             card = event["card"]
             suit = card["suit"]
             rank = card["rank"]
-            print(f'Player {player_id} played the card {suit} {rank}')
+            print(f"Player {player_id} played the card {suit} {rank}")
         case "RoundResultEvent":
             winner = event["round_winner"]
             winner_id = winner["id"]
@@ -120,7 +119,9 @@ def show_event(event: dict[str, object]) -> None:
             pass
 
 
-async def wants_to_play(ws: WebSocketClientProtocol, data: dict[str, object], player_id: int) -> None:
+async def wants_to_play(
+    ws: WebSocketClientProtocol, data: dict[str, object], player_id: int
+) -> None:
     print("Player: " + str(player_id))
     print("Your hand:")
     for card in data["cards"]:
@@ -129,42 +130,32 @@ async def wants_to_play(ws: WebSocketClientProtocol, data: dict[str, object], pl
         print(f"{suit} {rank}")
     print("Decisions before you:")
     print(data["decisions"])
-    response: dict[str, str] = {
-        "decision": input("Do you want to play? (y/n) ")
-    } 
+    response: dict[str, str] = {"decision": input("Do you want to play? (y/n) ")}
     await ws.send(json.dumps(response))
 
-async def select_gametype(ws: WebSocketClientProtocol, data: dict[str, object], player_id: int) -> None:
+
+async def select_gametype(
+    ws: WebSocketClientProtocol, data: dict[str, object], player_id: int
+) -> None:
     print("Player: " + str(player_id))
     print("Choose a gamemode:")
     print(data["choosable_gametypes"])
     gametype_index = int(input("Gametype: "))
-    response: dict[str, int] = {
-        "gametype_index": gametype_index
-    }
+    response: dict[str, int] = {"gametype_index": gametype_index}
     await ws.send(json.dumps(response))
 
-async def play_card(ws: WebSocketClientProtocol, data: dict[str, object], player_id: int) -> None:
+
+async def play_card(
+    ws: WebSocketClientProtocol, data: dict[str, object], player_id: int
+) -> None:
     print("Player: " + str(player_id))
     print("The stack is:")
     print(data["stack"])
     print("Choose a card to play:")
     print(data["playable_cards"])
     card_index = int(input("Card: "))
-    response: dict[str, int] = {
-        "card_index": card_index
-    }
+    response: dict[str, int] = {"card_index": card_index}
     await ws.send(json.dumps(response))
-
-async def send_action(websocket: WebSocketClientProtocol) -> None:
-    action = {
-        "action": "dummy_action"
-    }
-    message = json.dumps(action)
-    await websocket.send(message)
-
-async def get_response(ws: WebSocketClientProtocol) -> None:
-    pass
 
 
 asyncio.run(start_client("single"))

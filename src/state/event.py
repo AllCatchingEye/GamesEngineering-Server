@@ -1,7 +1,7 @@
-from abc import ABC
-from dataclasses import dataclass, is_dataclass, asdict
-from enum import Enum
 import json
+from abc import ABC
+from dataclasses import asdict, dataclass, is_dataclass
+from enum import Enum
 
 from state.card import Card
 from state.gametypes import Gametype
@@ -11,12 +11,13 @@ from state.stack import Stack
 from state.suits import Suit
 
 
-
 @dataclass
 class Event(ABC):
     def to_json(self) -> str:
         return json.dumps(self, cls=EnhancedJSONEncoder)
+
     pass
+
 
 @dataclass
 class GameStart(Event):
@@ -25,9 +26,11 @@ class GameStart(Event):
     hand: Hand
     gametypes: list[tuple[Gametype, Suit | None]]
 
+
 @dataclass
 class HandDistribution(Event):
     hand: Hand
+
 
 @dataclass
 class PlayDecisionEvent(Event):
@@ -73,6 +76,7 @@ class GameEndEvent(Event):
 @dataclass
 class AnnouncePlayPartyEvent(Event):
     parties: list[list[Player]]
+
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o: object):

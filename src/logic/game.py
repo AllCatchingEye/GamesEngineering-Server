@@ -15,9 +15,9 @@ from state.event import (
     CardPlayedEvent,
     Event,
     GameEndEvent,
-    HandDistribution,
     GametypeDeterminedEvent,
     GametypeWishedEvent,
+    HandDistribution,
     PlayDecisionEvent,
     RoundResultEvent,
 )
@@ -208,7 +208,9 @@ class Game:
             playable_cards = self.gamemode.get_playable_cards(stack, player.hand)
             if len(playable_cards) == 0:
                 raise ValueError("No playable cards")
-            card: Card = await self.controllers[player.id].play_card(stack, playable_cards)
+            card: Card = await self.controllers[player.id].play_card(
+                stack, playable_cards
+            )
             if card not in playable_cards or card not in player.hand.cards:
                 raise ValueError("Illegal card played")
             player.lay_card(card)

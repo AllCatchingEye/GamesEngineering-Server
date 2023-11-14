@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Suit(Enum):
     EICHEL = 0
     GRAS = 1
