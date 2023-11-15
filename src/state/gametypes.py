@@ -17,4 +17,4 @@ class GameGroup(Enum):
     HIGH_SOLO = 1  # Farbsolo
     MID_SOLO = 2  # Wenz und Geier
     LOW_SOLO = 3  # Farbwenz und Farbgeier
-    ALL = 4
+    SAUSPIEL = 4

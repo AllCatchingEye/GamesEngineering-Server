@@ -1,13 +1,13 @@
 from state.card import Card
 from state.deck import DECK
-from state.gametypes import Gametype, GameGroup
+from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
 from state.ranks import Rank
 from state.suits import Suit, get_all_suits
 
 
 def get_playable_gametypes(
-        hand: Hand, available_game_groups: list[GameGroup]
+    hand: Hand, available_game_groups: list[GameGroup]
 ) -> list[tuple[Gametype, Suit | None]]:
     """Returns all playable gametypes with that hand."""
     types: list[tuple[Gametype, Suit | None]] = []
@@ -29,7 +29,7 @@ def get_playable_gametypes(
         for suit in get_all_suits():
             types.append((Gametype.FARBGEIER, suit))
 
-    if GameGroup.ALL in available_game_groups:
+    if GameGroup.SAUSPIEL in available_game_groups:
         # Gametypes Sauspiel
         sauspiel_suits = get_all_suits()
         sauspiel_suits.remove(Suit.HERZ)
