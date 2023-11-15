@@ -3,7 +3,7 @@ import random
 from controller.player_controller import PlayerController
 from state.card import Card
 from state.event import Event
-from state.gametypes import Gametype
+from state.gametypes import GameGroup, Gametype
 from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
@@ -14,7 +14,7 @@ class RandomController(PlayerController):
         super().__init__(player)
         self.rng = rng
 
-    def wants_to_play(self, decisions: list[bool | None]) -> bool:
+    def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         return self.rng.choice([True, False])
 
     def select_gametype(
@@ -27,3 +27,6 @@ class RandomController(PlayerController):
 
     def on_game_event(self, event: Event) -> None:
         pass
+
+    def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
+        return self.rng.choice(available_groups)

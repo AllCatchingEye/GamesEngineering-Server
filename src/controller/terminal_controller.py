@@ -1,17 +1,16 @@
 from controller.player_controller import PlayerController
 from state.card import Card
 from state.event import Event
-from state.gametypes import Gametype
+from state.gametypes import GameGroup, Gametype
 from state.stack import Stack
 from state.suits import Suit
 
 
 class TerminalController(PlayerController):
-    def wants_to_play(self, decisions: list[bool | None]) -> bool:
+    def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         print("Your hand:")
         print(self.player.hand)
-        print("Decisions before you:")
-        print(decisions)
+        print(f"You have to play atleast {current_lowest_gamegroup}")
         decision = input("Do you want to play? (y/n) ")
         return decision == "y"
 
@@ -35,3 +34,10 @@ class TerminalController(PlayerController):
 
     def on_game_event(self, event: Event) -> None:
         print(event)
+
+    def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
+        print("Choose a gamegroup:")
+        for index, gamegroup in enumerate(available_groups):
+            print(f"{index}: {gamegroup}")
+        gamegroup_index = int(input())
+        return available_groups[gamegroup_index]

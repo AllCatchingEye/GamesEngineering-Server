@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 
 from state.card import Card
-from state.gametypes import Gametype
+from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
 from state.player import Player
 from state.stack import Stack
@@ -23,12 +23,6 @@ class GameStartEvent(Event):
 class PlayDecisionEvent(Event):
     player: Player
     wants_to_play: bool
-
-
-@dataclass
-class GametypeWishedEvent(Event):
-    player: Player
-    gametype: tuple[Gametype, Suit | None]
 
 
 @dataclass
@@ -63,3 +57,9 @@ class GameEndEvent(Event):
 @dataclass
 class AnnouncePlayPartyEvent(Event):
     parties: list[list[Player]]
+
+
+@dataclass
+class GameGroupChosenEvent(Event):
+    player: Player
+    game_groups: list[GameGroup]
