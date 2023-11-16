@@ -1,10 +1,8 @@
-from dataclasses import dataclass
 from enum import Enum
 
 from state.stakes import Stake
 
 
-@dataclass
 class Gametype(Enum):
     # The value of the enum is the stake
     SOLO = 1
@@ -17,6 +15,9 @@ class Gametype(Enum):
 
     def __hash__(self):
         return self.value
+
+    def __repr__(self) -> str:
+        return self.name
 
 
 stake_for_gametype = {
@@ -36,3 +37,6 @@ class GameGroup(Enum):
     MID_SOLO = 2  # Wenz und Geier
     LOW_SOLO = 3  # Farbwenz und Farbgeier
     SAUSPIEL = 4
+
+    def __repr__(self) -> str:
+        return self.name

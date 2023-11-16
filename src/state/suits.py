@@ -8,6 +8,9 @@ class Suit(Enum):
 
     def __str__(self) -> str:
         return self.name
+    
+    def __repr__(self) -> str:
+        return self.name
 
 
 def get_all_suits() -> list[Suit]:
