@@ -1,3 +1,4 @@
+import json
 from abc import ABC
 from dataclasses import dataclass, is_dataclass, asdict
 from enum import Enum
@@ -19,8 +20,11 @@ class Event(ABC):
     pass
 
 @dataclass
-class GameStartEvent(Event):
+class GameStart(Event):
+    player_order: list[int]
+    player: Player
     hand: Hand
+    gametypes: list[tuple[Gametype, Suit | None]]
 
 @dataclass
 class PlayDecisionEvent(Event):
@@ -70,7 +74,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o: object):
         if is_dataclass(o):
             result = asdict(o)
-            result['id'] = 'event'
+            result["id"] = getattr(o, "__name__", o.__class__.__name__)
             return result
         if isinstance(o, Enum):
             return o.name
