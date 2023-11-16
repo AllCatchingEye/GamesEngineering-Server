@@ -1,19 +1,20 @@
 import asyncio
 import json
 import sys
+
 import websockets
 from websockets import WebSocketClientProtocol
 
 from state.event import (
     GameEndUpdate,
+    PlayerChooseGameGroupAnswer,
     PlayerChooseGameGroupQuery,
     PlayerPlayCardAnswer,
     PlayerPlayCardQuery,
     PlayerSelectGameTypeAnswer,
+    PlayerSelectGameTypeQuery,
     PlayerWantsToPlayAnswer,
     PlayerWantsToPlayQuery,
-    PlayerChooseGameGroupAnswer,
-    PlayerSelectGameTypeQuery,
     parse_as,
 )
 

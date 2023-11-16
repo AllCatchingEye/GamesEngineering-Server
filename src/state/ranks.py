@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Rank(Enum):
     ASS = 8
     ZEHN = 7

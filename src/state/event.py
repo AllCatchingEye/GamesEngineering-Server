@@ -1,8 +1,9 @@
 import json
 from abc import ABC
-from dataclasses import dataclass, is_dataclass, asdict
-from typing import Type, TypeVar
+from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
+from typing import Type, TypeVar
+
 from websockets import Data
 
 from state.card import Card

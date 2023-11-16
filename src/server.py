@@ -2,10 +2,10 @@ import asyncio
 import json
 
 from websockets import Data, WebSocketServerProtocol, serve
-from logic.game import Game
 
 from controller.random_controller import RandomController
 from controller.websocket_controller import WebSocketController
+from logic.game import Game
 
 TIMEOUT_SECS = 5 * 60  # 5 Minutes timeout
 CLIENTS: set[WebSocketServerProtocol] = set()
@@ -63,6 +63,7 @@ def create_single_player_game(ws: WebSocketServerProtocol) -> Game:
         RandomController(game.players[3]),
     ]
     return game
+
 
 if __name__ == "__main__":
     asyncio.run(main())

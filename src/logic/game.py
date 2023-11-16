@@ -18,9 +18,9 @@ from state.event import (
     GameGroupChosenUpdate,
     GameStartUpdate,
     GametypeDeterminedUpdate,
+    MoneyUpdate,
     PlayDecisionUpdate,
     RoundResultUpdate,
-    MoneyUpdate,
 )
 from state.gametypes import GameGroup, Gametype, stake_for_gametype
 from state.hand import Hand

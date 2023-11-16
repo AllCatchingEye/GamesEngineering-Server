@@ -1,15 +1,13 @@
 import json
-from websockets.server import WebSocketServerProtocol
-from controller.player_controller import PlayerController
 from typing import Type, TypeVar
-from state.player import Player
+
+from websockets.server import WebSocketServerProtocol
+
+from controller.player_controller import PlayerController
 from state.card import Card
-from state.gametypes import GameGroup, Gametype
-from state.stack import Stack
-from state.suits import Suit
 from state.event import (
-    PlayerChooseGameGroupAnswer,
     Event,
+    PlayerChooseGameGroupAnswer,
     PlayerChooseGameGroupQuery,
     PlayerPlayCardAnswer,
     PlayerPlayCardQuery,
@@ -17,8 +15,12 @@ from state.event import (
     PlayerSelectGameTypeQuery,
     PlayerWantsToPlayAnswer,
     PlayerWantsToPlayQuery,
+    parse_as,
 )
-from state.event import parse_as
+from state.gametypes import GameGroup, Gametype
+from state.player import Player
+from state.stack import Stack
+from state.suits import Suit
 
 E = TypeVar("E", bound=Event)
 
