@@ -23,8 +23,8 @@ class WebSocketController(PlayerController):
         request = PlayerWantsToPlayQuery(current_lowest_gamegroup)
         await self.ws.send(request.to_json())
 
-        decision = await self.get_answer("decision")
-        return decision == "y"
+        decision = await self.get_int_answer("decision")
+        return decision == 1
 
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
@@ -48,10 +48,6 @@ class WebSocketController(PlayerController):
 
         gamegroup_index = await self.get_int_answer("gamegroup_index")
         return available_groups[gamegroup_index]
-
-    async def get_string_answer(self, field_name: str) -> str:
-        answer = await self.get_answer(field_name)
-        return str(answer)
 
     async def get_int_answer(self, field_name: str) -> int:
         answer = await self.get_answer(field_name)
