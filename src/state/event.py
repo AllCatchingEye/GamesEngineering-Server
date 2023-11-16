@@ -6,6 +6,7 @@ from enum import Enum
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
+from state.money import Money
 from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
@@ -66,6 +67,7 @@ class GameGroupChosenEvent(Event):
     player: Player
     game_groups: list[GameGroup]
 
+
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o: object):
         if is_dataclass(o):
@@ -75,3 +77,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         if isinstance(o, Enum):
             return o.name
         return super().default(o)
+
+@dataclass
+class MoneyUpdateEvent(Event):
+    player_id: str
+    money: Money
