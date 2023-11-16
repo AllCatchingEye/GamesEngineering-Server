@@ -10,9 +10,6 @@ class Rank(Enum):
     ACHT = 2
     SIEBEN = 1
 
-    def __hash__(self) -> int:
-        return hash((self.name, self.value))
-
     def __str__(self) -> str:
         return self.name
 

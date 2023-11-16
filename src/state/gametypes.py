@@ -13,9 +13,6 @@ class Gametype(Enum):
     SAUSPIEL = 6
     RAMSCH = 7
 
-    def __hash__(self):
-        return self.value
-
     def __repr__(self) -> str:
         return self.name
 
