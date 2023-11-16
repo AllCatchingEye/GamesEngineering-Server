@@ -9,8 +9,6 @@ from logic.game import Game
 
 TIMEOUT_SECS = 5 * 60  # 5 Minutes timeout
 CLIENTS: set[WebSocketServerProtocol] = set()
-LOBBIES: dict[str, tuple[Game, set[WebSocketServerProtocol]]] = {}
-
 
 async def main() -> None:
     print("Server WebSocket started")
