@@ -16,7 +16,7 @@ class Gametype(Enum):
     RAMSCH = 7
 
     def __hash__(self):
-        return hash(self.name)
+        return self.value
 
 
 stake_for_gametype = {
