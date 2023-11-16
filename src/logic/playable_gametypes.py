@@ -1,29 +1,36 @@
 from state.card import Card
 from state.deck import DECK
-from state.gametypes import Gametype
+from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
 from state.ranks import Rank
 from state.suits import Suit, get_all_suits
 
 
 def get_playable_gametypes(
-    hand: Hand, plays_ahead: int
+    hand: Hand, available_game_groups: list[GameGroup]
 ) -> list[tuple[Gametype, Suit | None]]:
     """Returns all playable gametypes with that hand."""
     types: list[tuple[Gametype, Suit | None]] = []
-    # Gametypes Solo
-    for suit in get_all_suits():
-        types.append((Gametype.SOLO, suit))
-    # Gametypes Wenz
-    types += __get_practical_gametypes_wenz_geier(
-        hand, Rank.UNTER, Gametype.FARBWENZ, Gametype.WENZ
-    )
-    # Gametypes Geier
-    types += __get_practical_gametypes_wenz_geier(
-        hand, Rank.OBER, Gametype.FARBGEIER, Gametype.GEIER
-    )
-    # Gametypes Sauspiel
-    if plays_ahead == 0:
+
+    if GameGroup.HIGH_SOLO in available_game_groups:
+        # Gametypes Solo
+        for suit in get_all_suits():
+            types.append((Gametype.SOLO, suit))
+
+    if GameGroup.MID_SOLO in available_game_groups:
+        types.append((Gametype.WENZ, None))
+        types.append((Gametype.GEIER, None))
+
+    if GameGroup.LOW_SOLO in available_game_groups:
+        # Gametypes Wenz
+        for suit in get_all_suits():
+            types.append((Gametype.FARBWENZ, suit))
+        # Gametypes Geier
+        for suit in get_all_suits():
+            types.append((Gametype.FARBGEIER, suit))
+
+    if GameGroup.SAUSPIEL in available_game_groups:
+        # Gametypes Sauspiel
         sauspiel_suits = get_all_suits()
         sauspiel_suits.remove(Suit.HERZ)
         for suit in sauspiel_suits:
@@ -34,20 +41,3 @@ def get_playable_gametypes(
             if len(suit_cards) > 0 and Card(suit, Rank.ASS) not in suit_cards:
                 types.append((Gametype.SAUSPIEL, suit))
     return types
-
-
-def __get_practical_gametypes_wenz_geier(
-    hand: Hand, rank: Rank, game_type_suit: Gametype, game_type_no_suit: Gametype
-) -> list[tuple[Gametype, Suit | None]]:
-    practical_types: list[tuple[Gametype, Suit | None]] = []
-    if len(hand.get_all_trumps_in_deck(DECK.get_cards_by_rank(rank))) > 0:
-        practical_types.append((game_type_no_suit, None))
-        for suit in get_all_suits():
-            if (
-                len(
-                    hand.get_all_cards_for_suit(suit, DECK.get_cards_by_rank(Rank.OBER))
-                )
-                > 0
-            ):
-                practical_types.append((game_type_suit, suit))
-    return practical_types

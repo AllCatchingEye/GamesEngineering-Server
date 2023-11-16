@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
 
 from state.card import Card
-from state.gametypes import Gametype
+from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
 from state.player import Player
 from state.stack import Stack
@@ -28,20 +28,9 @@ class GameStart(Event):
 
 
 @dataclass
-class HandDistribution(Event):
-    hand: Hand
-
-
-@dataclass
 class PlayDecisionEvent(Event):
     player: Player
     wants_to_play: bool
-
-
-@dataclass
-class GametypeWishedEvent(Event):
-    player: Player
-    gametype: tuple[Gametype, Suit | None]
 
 
 @dataclass
@@ -77,6 +66,10 @@ class GameEndEvent(Event):
 class AnnouncePlayPartyEvent(Event):
     parties: list[list[Player]]
 
+@dataclass
+class GameGroupChosenEvent(Event):
+    player: Player
+    game_groups: list[GameGroup]
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o: object):
@@ -87,3 +80,5 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         if isinstance(o, Enum):
             return o.name
         return super().default(o)
+
+

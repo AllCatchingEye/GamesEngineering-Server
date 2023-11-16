@@ -4,14 +4,12 @@ from math import floor
 import numpy as np
 import torch
 
+from ai.nn_helper import card_to_nn_input_values, code_to_game_type
 from ai.select_game_type.agent import ISelectGameAgent
-from ai.nn_helper import (
-    card_to_nn_input_values,
-    code_to_game_type,
-)
 from ai.select_game_type.neuronal_network.agent.select_game_nn import SelectGameNN
 from state.card import Card
 from state.gametypes import Gametype
+from state.suits import Suit
 
 
 @dataclass
@@ -47,10 +45,12 @@ class NNAgent(ISelectGameAgent):
         output = self.model(input_tensor)
         selected_game_type_code = torch.max(output, 1).indices[0].item()
         self.decision = code_to_game_type(floor(selected_game_type_code))
-        return self.decision != Gametype.RAMSCH
+        return self.decision[0] != Gametype.RAMSCH
 
     def select_game_type(
-        self, hand_cards: list[Card], choosable_game_types: list[Gametype]
+        self,
+        hand_cards: list[Card],
+        choosable_game_types: list[tuple[Gametype, Suit | None]],
     ):
         """Invoked to receive a decision which game type the agent would play. Note, that `choosable_game_types` is ignored for now."""
         assert (
