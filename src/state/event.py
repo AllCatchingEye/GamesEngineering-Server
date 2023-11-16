@@ -3,6 +3,7 @@ from abc import ABC
 from dataclasses import dataclass, is_dataclass, asdict
 from typing import Type, TypeVar
 from enum import Enum
+from websockets import Data
 
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
@@ -15,8 +16,6 @@ from state.suits import Suit
 
 class EnhancedJSONEncoder(json.JSONEncoder):
     def default(self, o: object):
-        if isinstance(o, Player):
-            return str(o.player_id)
         if is_dataclass(o):
             result = asdict(o)
             result["id"] = getattr(o, "__name__", o.__class__.__name__)
@@ -35,8 +34,11 @@ class Event(ABC):
 E = TypeVar("E", bound=Event)
 
 
-def parse_as(message: str, event_type: Type[E]) -> E:
+def parse_as(message: str | Data, event_type: Type[E]) -> E:
     dct = json.loads(message)
+    # if has id, delete
+    if "id" in dct:
+        del dct["id"]
     return event_type(**dct)
 
 
@@ -149,7 +151,7 @@ class PlayerWantsToPlayAnswer(Event):
 
 
 @dataclass
-class ChooseGameGroupAnswer(Event):
+class PlayerChooseGameGroupAnswer(Event):
     gamegroup_index: int
 
 

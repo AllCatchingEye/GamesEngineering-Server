@@ -8,7 +8,7 @@ from state.gametypes import GameGroup, Gametype
 from state.stack import Stack
 from state.suits import Suit
 from state.event import (
-    ChooseGameGroupAnswer,
+    PlayerChooseGameGroupAnswer,
     Event,
     PlayerChooseGameGroupQuery,
     PlayerPlayCardAnswer,
@@ -55,7 +55,7 @@ class WebSocketController(PlayerController):
         request = PlayerChooseGameGroupQuery(available_groups)
         await self.ws.send(request.to_json())
 
-        response = await self.get_answer(ChooseGameGroupAnswer)
+        response = await self.get_answer(PlayerChooseGameGroupAnswer)
         return available_groups[response.gamegroup_index]
 
     async def get_answer(self, event_type: Type[E]) -> E:
