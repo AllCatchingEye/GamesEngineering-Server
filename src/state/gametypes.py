@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from enum import Enum
 
 from state.stakes import Stake
 
-
+@dataclass
 class Gametype(Enum):
     # The value of the enum is the stake
     SOLO = 1

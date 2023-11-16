@@ -61,37 +61,37 @@ class Game:
             players.append(Player(i))
         return players
 
-    def run(self) -> None:
+    async def run(self) -> None:
         """Start the game."""
+        self.gametype = await self.determine_gametype()
+        await self.__new_game()
 
-        self.gametype = self.determine_gametype()
-        self.__new_game()
 
-    def determine_gametype(self) -> Gametype:
+    async def determine_gametype(self) -> Gametype:
         """Determine the game type based on player choices."""
-        self.__distribute_cards()
-        player, game_group = self.__get_player()
-        return self.__select_gametype(player, game_group)
+        await self.__distribute_cards()
+        player, game_group = await self.__get_player()
+        return await self.__select_gametype(player, game_group)
 
-    def __distribute_cards(self) -> None:
+    async def __distribute_cards(self) -> None:
         """Distribute cards to players."""
         deck: list[Card] = self.deck.get_full_deck()
         self.rng.shuffle(deck)
 
         for player in self.players:
-            deck = self.__distribute_hand(player, deck)
+            deck = await self.__distribute_hand(player, deck)
 
-    def __distribute_hand(self, player: Player, deck: list[Card]) -> list[Card]:
+    async def __distribute_hand(self, player: Player, deck: list[Card]) -> list[Card]:
         """Distribute cards for a player's hand."""
         hand: Hand = Hand(deck[:HAND_SIZE])
         player.hand = hand
 
         deck = deck[HAND_SIZE:]
 
-        self.controllers[player.id].on_game_event(GameStartEvent(hand))
+        await self.controllers[player.id].on_game_event(GameStartEvent(hand))
         return deck
 
-    def __get_player(self) -> tuple[Player | None, list[GameGroup]]:
+    async def __get_player(self) -> tuple[Player | None, list[GameGroup]]:
         """Call the game type based on player choices."""
         current_player: Player | None = None
         current_player_index: int | None = None
@@ -103,10 +103,10 @@ class Game:
         ]
 
         for i, player in enumerate(self.players):
-            wants_to_play = self.controllers[player.id].wants_to_play(
+            wants_to_play = await self.controllers[player.id].wants_to_play(
                 current_game_group[0]
             )
-            self.__broadcast(PlayDecisionEvent(player, wants_to_play))
+            await self.__broadcast(PlayDecisionEvent(player, wants_to_play))
             if wants_to_play:
                 current_player = player
                 current_player_index = i
@@ -122,18 +122,18 @@ class Game:
                 if len(current_game_group) == 1:
                     break
 
-                wants_to_play = self.controllers[player.id].wants_to_play(
+                wants_to_play = await self.controllers[player.id].wants_to_play(
                     current_game_group[1]
                 )
-                self.__broadcast(PlayDecisionEvent(player, wants_to_play))
+                await self.__broadcast(PlayDecisionEvent(player, wants_to_play))
                 if wants_to_play:
-                    player_decision = self.controllers[
+                    player_decision = await self.controllers[
                         current_player.id
                     ].choose_game_group(current_game_group)
 
                     current_game_group_reduced = current_game_group.copy()
                     current_game_group_reduced.pop(0)
-                    oponent_decision = self.controllers[player.id].choose_game_group(
+                    oponent_decision = await self.controllers[player.id].choose_game_group(
                         current_game_group_reduced
                     )
 
@@ -141,19 +141,19 @@ class Game:
                         current_player = player
                         index_reduce = current_game_group.index(oponent_decision)
                         current_game_group = current_game_group[index_reduce:]
-                        self.__broadcast(
+                        await self.__broadcast(
                             GameGroupChosenEvent(player, current_game_group)
                         )
                         continue
 
                     index_reduce = current_game_group.index(player_decision)
                     current_game_group = current_game_group[index_reduce:]
-                    self.__broadcast(
+                    await self.__broadcast(
                         GameGroupChosenEvent(current_player, current_game_group)
                     )
         return current_player, current_game_group
 
-    def __select_gametype(
+    async def __select_gametype(
             self, game_player: Player | None, minimum_game_group: list[GameGroup]
     ) -> Gametype:
         if game_player is None:
@@ -163,13 +163,13 @@ class Game:
                 [self.players[2]],
                 [self.players[3]],
             ]
-            self.__broadcast(
+            await self.__broadcast(
                 GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
             )
             self.gamemode = GameModeRamsch()
             return Gametype.RAMSCH
 
-        game_type = self.controllers[game_player.id].select_gametype(
+        game_type = await self.controllers[game_player.id].select_gametype(
             get_playable_gametypes(game_player.hand, minimum_game_group)
         )
 
@@ -213,7 +213,7 @@ class Game:
 
         self.play_party = [player_party, non_player_party]
 
-        self.__broadcast(
+        await self.__broadcast(
             GametypeDeterminedEvent(
                 self.players[game_player.id],
                 game_type[0],
@@ -223,53 +223,52 @@ class Game:
         )
         return game_type[0]
 
-    def __new_game(self) -> None:
+    async def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
         for _ in range(ROUNDS):
-            self.start_round()
+            await self.start_round()
 
         game_winner, points_distribution = self.gamemode.get_game_winner(
             self.play_party
         )
-        self.__broadcast(
+        await self.__broadcast(
             GameEndEvent(game_winner, self.play_party, points_distribution)
         )
 
-        self.__get_or_pay_money(game_winner, points_distribution)
-
-    def start_round(self) -> None:
+    async def start_round(self) -> None:
         """Start a new round."""
-        stack = self.__play_cards()
-        self.__finish_round(stack)
+        self.__get_or_pay_money(game_winner, points_distribution)
+        stack = await self.__play_cards()
+        await self.__finish_round(stack)
 
-    def __play_cards(self) -> Stack:
+    async def __play_cards(self) -> Stack:
         """Play cards in the current round."""
         stack = Stack()
         for player in self.players:
             playable_cards = self.gamemode.get_playable_cards(stack, player.hand)
             if len(playable_cards) == 0:
                 raise ValueError("No playable cards")
-            card: Card = self.controllers[player.id].play_card(stack, playable_cards)
+            card: Card = await self.controllers[player.id].play_card(stack, playable_cards)
             if card not in playable_cards or card not in player.hand.cards:
                 raise ValueError("Illegal card played")
             player.lay_card(card)
             stack.add_card(card, player)
-            self.__broadcast(CardPlayedEvent(player, card, stack))
+            await self.__broadcast(CardPlayedEvent(player, card, stack))
 
             # Announce that the searched ace had been played and teams are known
             if isinstance(self.gamemode, GameModeSauspiel) and card == Card(
                     self.gamemode.suit, Rank.ASS
             ):
-                self.__broadcast(AnnouncePlayPartyEvent(self.play_party))
+                await self.__broadcast(AnnouncePlayPartyEvent(self.play_party))
 
         return stack
 
-    def __finish_round(self, stack: Stack) -> None:
+    async def __finish_round(self, stack: Stack) -> None:
         """Finish the current round and determine the winner."""
         winner = self.gamemode.determine_stitch_winner(stack)
         stack_value = stack.get_value()
         winner.points += stack_value
-        self.__broadcast(RoundResultEvent(winner, stack_value, stack))
+        await self.__broadcast(RoundResultEvent(winner, stack_value, stack))
         self.__change_player_order(winner)
 
     def __get_or_pay_money(self, game_winner: list[Player], points_distribution: list[int]):
@@ -330,7 +329,8 @@ class Game:
         last: list[Player] = self.players[:winner_index]
         self.players = first + last
 
-    def __broadcast(self, event: Event) -> None:
+    async def __broadcast(self, event: Event) -> None:
         """Broadcast an event to all players."""
         for controller in self.controllers:
-            controller.on_game_event(event)
+            await controller.on_game_event(event)
+
