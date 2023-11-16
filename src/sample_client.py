@@ -68,6 +68,8 @@ async def play(ws: WebSocketClientProtocol, player_id: int) -> None:
                 await select_gametype(ws, data, player_id)
             case "play_card":
                 await play_card(ws, data, player_id)
+            case "choose_game_group":
+                await choose_game_group(ws, data, player_id)
             case "new_game":
                 print("Your game is over. Do you want to play a new game?")
                 answer: str = input("Enter your answer. (y/n)")
@@ -121,14 +123,10 @@ async def wants_to_play(
     ws: WebSocketClientProtocol, data: dict[str, object], player_id: int
 ) -> None:
     print("Player: " + str(player_id))
-    print("Your hand:")
-    for card in data["cards"]:
-        suit = card["suit"]
-        rank = card["rank"]
-        print(f"{suit} {rank}")
-    print("Decisions before you:")
-    print(data["decisions"])
-    response: dict[str, str] = {"decision": input("Do you want to play? (y/n) ")}
+    print(data["message"])
+
+    decision = input("Do you want to play? (y/n) ")
+    response: dict[str, str] = {"decision": decision}
     await ws.send(json.dumps(response))
 
 
@@ -136,8 +134,8 @@ async def select_gametype(
     ws: WebSocketClientProtocol, data: dict[str, object], player_id: int
 ) -> None:
     print("Player: " + str(player_id))
-    print("Choose a gamemode:")
-    print(data["choosable_gametypes"])
+    print(data["message"])
+
     gametype_index = int(input("Gametype: "))
     response: dict[str, int] = {"gametype_index": gametype_index}
     await ws.send(json.dumps(response))
@@ -147,13 +145,19 @@ async def play_card(
     ws: WebSocketClientProtocol, data: dict[str, object], player_id: int
 ) -> None:
     print("Player: " + str(player_id))
-    print("The stack is:")
-    print(data["stack"])
-    print("Choose a card to play:")
-    print(data["playable_cards"])
+    print(data["message"])
+
     card_index = int(input("Card: "))
     response: dict[str, int] = {"card_index": card_index}
     await ws.send(json.dumps(response))
 
+async def choose_game_group(ws: WebSocketClientProtocol, data: dict[str, object], player_id: int) -> None:
+    print("Player: " + str(player_id))
+    print(data["message"])
+
+    gamegroup_index: int = int(input("Gamegroup: "))
+    response: dict[str, int] = {"gamegroup": gamegroup_index}
+    print(response)
+    await ws.send(json.dumps(response))
 
 asyncio.run(start_client("single"))
