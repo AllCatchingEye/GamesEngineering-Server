@@ -68,4 +68,5 @@ class GameGroupChosenEvent(Event):
 
 @dataclass
 class MoneyUpdateEvent(Event):
+    player_id: str
     money: Money

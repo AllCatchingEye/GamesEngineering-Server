@@ -296,7 +296,7 @@ class Game:
             else:
                 player.money -= stake * (max(len(game_winner), len(self.players) - len(game_winner)) // (
                         len(self.players) - len(game_winner)))
-            self.controllers[player.id].on_game_event(MoneyUpdateEvent(player.money))
+            self.__broadcast(MoneyUpdateEvent(player, player.money))
 
     def __get_running_cards(self, team: list[Player]) -> int:
         running_cards = 0
