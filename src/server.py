@@ -51,6 +51,7 @@ async def single_player_lobby(ws: WebSocketServerProtocol):
     game: Game = create_single_player_game(ws)
 
     await game.run()
+    await ws.wait_closed()
 
 
 def create_single_player_game(ws: WebSocketServerProtocol) -> Game:

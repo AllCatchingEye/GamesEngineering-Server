@@ -1,6 +1,7 @@
 import json
 from abc import ABC
 from dataclasses import dataclass, is_dataclass, asdict
+from typing import Type, TypeVar
 from enum import Enum
 
 from state.card import Card
@@ -29,6 +30,14 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 class Event(ABC):
     def to_json(self) -> str:
         return json.dumps(self, cls=EnhancedJSONEncoder)
+
+
+E = TypeVar("E", bound=Event)
+
+
+def parse_as(message: str, event_type: Type[E]) -> E:
+    dct = json.loads(message)
+    return event_type(**dct)
 
 
 @dataclass
@@ -132,3 +141,23 @@ class PlayerChooseGameGroupQuery(Event):
 class PlayerPlayCardQuery(Event):
     stack: Stack
     playable_cards: list[Card]
+
+
+@dataclass
+class PlayerWantsToPlayAnswer(Event):
+    decision: bool
+
+
+@dataclass
+class ChooseGameGroupAnswer(Event):
+    gamegroup_index: int
+
+
+@dataclass
+class PlayerSelectGameTypeAnswer(Event):
+    gametype_index: int
+
+
+@dataclass
+class PlayerPlayCardAnswer(Event):
+    card_index: int
