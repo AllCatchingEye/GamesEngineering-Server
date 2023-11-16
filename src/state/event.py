@@ -2,7 +2,6 @@ import json
 from abc import ABC
 from dataclasses import dataclass, is_dataclass, asdict
 from enum import Enum
-import json
 
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
@@ -20,11 +19,8 @@ class Event(ABC):
     pass
 
 @dataclass
-class GameStart(Event):
-    player_order: list[int]
-    player: Player
+class GameStartEvent(Event):
     hand: Hand
-    gametypes: list[tuple[Gametype, Suit | None]]
 
 @dataclass
 class PlayDecisionEvent(Event):
