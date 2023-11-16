@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
+from state.money import Money
 from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
@@ -63,3 +64,9 @@ class AnnouncePlayPartyEvent(Event):
 class GameGroupChosenEvent(Event):
     player: Player
     game_groups: list[GameGroup]
+
+
+@dataclass
+class MoneyUpdateEvent(Event):
+    player_id: str
+    money: Money
