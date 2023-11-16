@@ -199,7 +199,7 @@ class Game:
                 # Find Player who has the chosen ace
                 player_party = [self.players[game_player.player_id]]
                 for j, player in enumerate(self.players):
-                    if player.hand.has_card_of_rank_and_suit(game_type[1], Rank.ASS):
+                    if player.hand.has_card_of_rank_and_suit(suit, Rank.ASS):
                         player_party.append(self.players[j])
                 non_player_party = self.players.copy()
                 non_player_party.remove(player_party[0])
