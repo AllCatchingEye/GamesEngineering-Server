@@ -1,15 +1,14 @@
-import json
 from dataclasses import asdict
-
-from websockets.server import WebSocketServerProtocol
-
+import json
 from controller.player_controller import PlayerController
-from state.card import Card
-from state.event import EnhancedJSONEncoder, Event
-from state.gametypes import Gametype
 from state.player import Player
+from state.card import Card
+from state.event import Event, EnhancedJSONEncoder
+from state.gametypes import GameGroup, Gametype
 from state.stack import Stack
 from state.suits import Suit
+
+from websockets.server import WebSocketServerProtocol
 
 
 class WebsocketController(PlayerController):
@@ -17,9 +16,9 @@ class WebsocketController(PlayerController):
         self.ws = ws
         super().__init__(player)
 
-    async def wants_to_play(self, decisions: list[bool | None]) -> bool:
+    async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         data = asdict(self.player.hand)
-        data["decisions"] = str(decisions)
+        data["decisions"] = str(current_lowest_gamegroup)
         data["id"] = "wants_to_play"
         print(data)
         message = json.dumps(data, cls=EnhancedJSONEncoder)
@@ -33,43 +32,53 @@ class WebsocketController(PlayerController):
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
-        data: dict[str, object] = {
-            "id": "select_gametype",
-            "choosable_gametypes": self.to_str(choosable_gametypes),
-        }
+        data = choosable_gametypes.__dict__
+        data["id"] = "select_gametype"
         message = json.dumps(data, cls=EnhancedJSONEncoder)
         await self.ws.send(message)
 
         response = await self.ws.recv()
-        response_data = json.loads(response)
-        gametype_index: int = response_data["gametype_index"]
+        data = json.loads(response)
+        gametype_index: int = data["gametype_index"]
 
         return choosable_gametypes[gametype_index]
 
     async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
-        data: dict[str, object] = {
-            "id": "play_card",
-            "stack": str(stack),
-            "playable_cards": self.to_str(playable_cards),
-        }
+        data = stack.__dict__
+        data["playable_cards"] = playable_cards.__dict__
+        data["id"] = "play_card"
         message = json.dumps(data, cls=EnhancedJSONEncoder)
         await self.ws.send(message)
 
         response = await self.ws.recv()
-        response_data = json.loads(response)
-        card_index: int = response_data["card_index"]
+        data = json.loads(response)
+        card_index: int = data["card_index"]
         return playable_cards[card_index]
 
+    async def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
+        message = "Choose a gamegroup:\n"
+        message += self.list_to_string(available_groups)
+
+        request = {
+            id: "choose_game_group",
+            message: message
+        }
+        await self.ws.send(json.dumps(request))
+
+        answer = await 
+        return available_groups[gamegroup_index]
+
+    def list_to_string(self, o: list[object]) -> str:
+        message = ""
+        for index, val in enumerate(o):
+            message += f"{index}: {val}\n"
+
+    async def get_answer(self, index_name: str) -> int:
+        response = await self.ws.recv()
+        data = json.loads(response)
+        answer = data[index_name]
+        return answer
+
     async def on_game_event(self, event: Event) -> None:
-        message: str = await self.to_message(event)
+        message = event.to_json()
         await self.ws.send(message)
-
-    def to_str(self, o: object) -> str:
-        string: str = ""
-        for index, content in enumerate(o):
-            string += str(index) + ": " + str(content) + "\n"
-        return string
-
-    async def to_message(self, event: Event) -> str:
-        message: str = event.to_json()
-        return message

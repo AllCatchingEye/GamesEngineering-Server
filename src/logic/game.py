@@ -65,9 +65,9 @@ class Game:
 
     async def determine_gametype(self) -> Gametype:
         """Determine the game type based on player choices."""
-        self.__distribute_cards()
-        player, game_group = self.__get_player()
-        return self.__select_gametype(player, game_group)
+        await self.__distribute_cards()
+        player, game_group = await self.__get_player()
+        return await self.__select_gametype(player, game_group)
 
     async def __distribute_cards(self) -> None:
         """Distribute cards to players."""
@@ -84,10 +84,10 @@ class Game:
 
         deck = deck[HAND_SIZE:]
 
-        await self.controllers[player.id].on_game_event(HandDistribution(hand))
+        await self.controllers[player.id].on_game_event(GameStartEvent(hand))
         return deck
 
-    def __get_player(self) -> tuple[Player | None, list[GameGroup]]:
+    async def __get_player(self) -> tuple[Player | None, list[GameGroup]]:
         """Call the game type based on player choices."""
         current_player: Player | None = None
         current_player_index: int | None = None
@@ -99,10 +99,10 @@ class Game:
         ]
 
         for i, player in enumerate(self.players):
-            wants_to_play = self.controllers[player.id].wants_to_play(
+            wants_to_play = await self.controllers[player.id].wants_to_play(
                 current_game_group[0]
             )
-            self.__broadcast(PlayDecisionEvent(player, wants_to_play))
+            await self.__broadcast(PlayDecisionEvent(player, wants_to_play))
             if wants_to_play:
                 current_player = player
                 current_player_index = i
@@ -118,18 +118,18 @@ class Game:
                 if len(current_game_group) == 1:
                     break
 
-                wants_to_play = self.controllers[player.id].wants_to_play(
+                wants_to_play = await self.controllers[player.id].wants_to_play(
                     current_game_group[1]
                 )
-                self.__broadcast(PlayDecisionEvent(player, wants_to_play))
+                await self.__broadcast(PlayDecisionEvent(player, wants_to_play))
                 if wants_to_play:
-                    player_decision = self.controllers[
+                    player_decision = await self.controllers[
                         current_player.id
                     ].choose_game_group(current_game_group)
 
                     current_game_group_reduced = current_game_group.copy()
                     current_game_group_reduced.pop(0)
-                    oponent_decision = self.controllers[player.id].choose_game_group(
+                    oponent_decision = await self.controllers[player.id].choose_game_group(
                         current_game_group_reduced
                     )
 
@@ -137,19 +137,19 @@ class Game:
                         current_player = player
                         index_reduce = current_game_group.index(oponent_decision)
                         current_game_group = current_game_group[index_reduce:]
-                        self.__broadcast(
+                        await self.__broadcast(
                             GameGroupChosenEvent(player, current_game_group)
                         )
                         continue
 
                     index_reduce = current_game_group.index(player_decision)
                     current_game_group = current_game_group[index_reduce:]
-                    self.__broadcast(
+                    await self.__broadcast(
                         GameGroupChosenEvent(current_player, current_game_group)
                     )
         return current_player, current_game_group
 
-    def __select_gametype(
+    async def __select_gametype(
             self, game_player: Player | None, minimum_game_group: list[GameGroup]
     ) -> Gametype:
         if game_player is None:
@@ -159,13 +159,13 @@ class Game:
                 [self.players[2]],
                 [self.players[3]],
             ]
-            self.__broadcast(
+            await self.__broadcast(
                 GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
             )
             self.gamemode = GameModeRamsch()
             return Gametype.RAMSCH
 
-        game_type = self.controllers[game_player.id].select_gametype(
+        game_type = await self.controllers[game_player.id].select_gametype(
             get_playable_gametypes(game_player.hand, minimum_game_group)
         )
 
@@ -209,7 +209,7 @@ class Game:
 
         self.play_party = [player_party, non_player_party]
 
-        self.__broadcast(
+        await self.__broadcast(
             GametypeDeterminedEvent(
                 self.players[game_player.id],
                 game_type[0],
@@ -243,9 +243,7 @@ class Game:
             playable_cards = self.gamemode.get_playable_cards(stack, player.hand)
             if len(playable_cards) == 0:
                 raise ValueError("No playable cards")
-            card: Card = await self.controllers[player.id].play_card(
-                stack, playable_cards
-            )
+            card: Card = await self.controllers[player.id].play_card(stack, playable_cards)
             if card not in playable_cards or card not in player.hand.cards:
                 raise ValueError("Illegal card played")
             player.lay_card(card)
@@ -290,3 +288,4 @@ class Game:
         """Broadcast an event to all players."""
         for controller in self.controllers:
             await controller.on_game_event(event)
+

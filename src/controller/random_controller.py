@@ -14,7 +14,7 @@ class RandomController(PlayerController):
         super().__init__(player)
         self.rng = rng
 
-    def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
+    async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         return self.rng.choice([True, False])
 
     async def select_gametype(
@@ -28,5 +28,5 @@ class RandomController(PlayerController):
     async def on_game_event(self, event: Event) -> None:
         pass
 
-    def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
+    async def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
         return self.rng.choice(available_groups)

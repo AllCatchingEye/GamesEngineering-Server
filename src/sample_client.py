@@ -1,13 +1,12 @@
 import asyncio
 import json
 from logging import error
-
 import websockets
 from websockets.client import WebSocketClientProtocol
 
+
 # Just for testing global
 join_key_g = ""
-
 
 async def start_client(game_mode: str) -> None:
     uri = "ws://localhost:8765"
@@ -16,7 +15,6 @@ async def start_client(game_mode: str) -> None:
         print("Starting client...")
         while True:
             await run_client(websocket, game_mode)
-
 
 async def run_client(websocket: WebSocketClientProtocol, game_mode: str) -> None:
     if game_mode == "single":

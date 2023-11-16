@@ -17,7 +17,7 @@ class PlayerController(ABC):
         """Called when a game event occurs"""
 
     @abstractmethod
-    def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
+    async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         """Decide if the player wants to play or pass on."""
 
     @abstractmethod
@@ -35,5 +35,5 @@ class PlayerController(ABC):
         """Determine which card to play"""
 
     @abstractmethod
-    def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
+    async def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
         """Choose the highest game group you would play"""

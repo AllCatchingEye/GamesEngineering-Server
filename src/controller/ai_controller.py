@@ -45,12 +45,12 @@ class AiController(PlayerController):
         )
         self.play_game_agent = RLAgent(rl_agent_config)
 
-    def wants_to_play(self, decisions: list[bool | None]) -> bool:
+    async def wants_to_play(self, decisions: list[bool | None]) -> bool:
         return self.select_game_agent.should_play(
             hand_cards=self.player.hand.get_all_cards(), decisions=decisions
         )
 
-    def select_gametype(
+    async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
         return self.select_game_agent.select_game_type(
@@ -58,10 +58,10 @@ class AiController(PlayerController):
             choosable_game_types=choosable_gametypes,
         )
 
-    def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
+    async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
         return self.play_game_agent.play_card(
             stack=stack, playable_cards=playable_cards
         )
 
-    def on_game_event(self, event: Event) -> None:
+    async def on_game_event(self, event: Event) -> None:
         self.play_game_agent.on_game_event(event=event)

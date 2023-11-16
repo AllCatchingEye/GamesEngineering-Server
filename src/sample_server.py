@@ -5,6 +5,9 @@ from secrets import token_urlsafe
 
 from websockets import broadcast
 
+from controller.random_controller import RandomController
+from controller.websocket_controller import WebsocketController
+
 # import logging
 from websockets.server import WebSocketServerProtocol, serve
 from websockets.typing import Data

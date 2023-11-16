@@ -1,7 +1,8 @@
 import json
 from abc import ABC
-from dataclasses import asdict, dataclass, is_dataclass
+from dataclasses import dataclass, is_dataclass, asdict
 from enum import Enum
+import json
 
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
@@ -11,13 +12,12 @@ from state.stack import Stack
 from state.suits import Suit
 
 
+
 @dataclass
 class Event(ABC):
     def to_json(self) -> str:
         return json.dumps(self, cls=EnhancedJSONEncoder)
-
     pass
-
 
 @dataclass
 class GameStart(Event):
@@ -25,7 +25,6 @@ class GameStart(Event):
     player: Player
     hand: Hand
     gametypes: list[tuple[Gametype, Suit | None]]
-
 
 @dataclass
 class PlayDecisionEvent(Event):
@@ -80,5 +79,3 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         if isinstance(o, Enum):
             return o.name
         return super().default(o)
-
-

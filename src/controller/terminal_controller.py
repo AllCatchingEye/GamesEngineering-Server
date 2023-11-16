@@ -7,7 +7,7 @@ from state.suits import Suit
 
 
 class TerminalController(PlayerController):
-    def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
+    async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         print("Your hand:")
         print(self.player.hand)
         print(f"You have to play atleast {current_lowest_gamegroup}")
@@ -35,7 +35,7 @@ class TerminalController(PlayerController):
     async def on_game_event(self, event: Event) -> None:
         print(event)
 
-    def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
+    async def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
         print("Choose a gamegroup:")
         for index, gamegroup in enumerate(available_groups):
             print(f"{index}: {gamegroup}")
