@@ -22,7 +22,7 @@ from state.event import (
     RoundResultEvent,
     MoneyUpdateEvent,
 )
-from state.gametypes import GameGroup, Gametype
+from state.gametypes import GameGroup, Gametype, stake_for_gametype
 from state.hand import Hand
 from state.money import Money
 from state.player import Player
@@ -273,7 +273,7 @@ class Game:
         self.__change_player_order(winner)
 
     def __get_or_pay_money(self, game_winner: list[Player], points_distribution: list[int]):
-        stake: Money = self.gametype.value.value
+        stake: Money = stake_for_gametype[self.gametype].value
         for points in points_distribution:
             if points == 0:
                 # schwarz

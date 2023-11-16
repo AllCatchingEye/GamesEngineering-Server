@@ -5,13 +5,18 @@ from state.stakes import Stake
 
 class Gametype(Enum):
     # The value of the enum is the stake
-    SOLO = Stake.HIGH
-    WENZ = Stake.HIGH
-    GEIER = Stake.HIGH
-    FARBWENZ = Stake.MID
-    FARBGEIER = Stake.MID
-    SAUSPIEL = Stake.STANDARD
-    RAMSCH = Stake.STANDARD
+    SOLO = 1
+    WENZ = 2
+    GEIER = 3
+    FARBWENZ = 4
+    FARBGEIER = 5
+    SAUSPIEL = 6
+    RAMSCH = 7
+
+
+stake_for_gametype = {Gametype.SOLO: Stake.HIGH, Gametype.WENZ: Stake.HIGH, Gametype.GEIER: Stake.HIGH,
+                      Gametype.FARBWENZ: Stake.MID, Gametype.FARBGEIER: Stake.MID, Gametype.SAUSPIEL: Stake.STANDARD,
+                      Gametype.RAMSCH: Stake.STANDARD}
 
 
 class GameGroup(Enum):
