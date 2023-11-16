@@ -11,16 +11,16 @@ from logic.playable_gametypes import get_playable_gametypes
 from state.card import Card
 from state.deck import Deck
 from state.event import (
-    AnnouncePlayPartyEvent,
-    CardPlayedEvent,
+    AnnouncePlayPartyUpdate,
+    CardPlayedUpdate,
     Event,
-    GameEndEvent,
-    GameGroupChosenEvent,
-    GameStartEvent,
-    GametypeDeterminedEvent,
-    PlayDecisionEvent,
-    RoundResultEvent,
-    MoneyUpdateEvent,
+    GameEndUpdate,
+    GameGroupChosenUpdate,
+    GameStartUpdate,
+    GametypeDeterminedUpdate,
+    PlayDecisionUpdate,
+    RoundResultUpdate,
+    MoneyUpdate,
 )
 from state.gametypes import GameGroup, Gametype, stake_for_gametype
 from state.hand import Hand
@@ -66,7 +66,6 @@ class Game:
         self.gametype = await self.determine_gametype()
         await self.__new_game()
 
-
     async def determine_gametype(self) -> Gametype:
         """Determine the game type based on player choices."""
         await self.__distribute_cards()
@@ -88,7 +87,7 @@ class Game:
 
         deck = deck[HAND_SIZE:]
 
-        await self.controllers[player.id].on_game_event(GameStartEvent(hand))
+        await self.controllers[player.player_id].on_game_event(GameStartUpdate(hand))
         return deck
 
     async def __get_player(self) -> tuple[Player | None, list[GameGroup]]:
@@ -103,58 +102,58 @@ class Game:
         ]
 
         for i, player in enumerate(self.players):
-            wants_to_play = await self.controllers[player.id].wants_to_play(
+            wants_to_play = await self.controllers[player.player_id].wants_to_play(
                 current_game_group[0]
             )
-            await self.__broadcast(PlayDecisionEvent(player, wants_to_play))
+            await self.__broadcast(PlayDecisionUpdate(player, wants_to_play))
             if wants_to_play:
                 current_player = player
                 current_player_index = i
                 break
 
         # No one called a game => Ramsch
-        if current_player is None:
+        if current_player is None or current_player_index is None:
             return None, current_game_group
 
         if current_player_index < 3:
-            for player in self.players[current_player_index + 1:]:
+            for player in self.players[current_player_index + 1 :]:
                 # High-Solo has been called, there is no higher game group
                 if len(current_game_group) == 1:
                     break
 
-                wants_to_play = await self.controllers[player.id].wants_to_play(
+                wants_to_play = await self.controllers[player.player_id].wants_to_play(
                     current_game_group[1]
                 )
-                await self.__broadcast(PlayDecisionEvent(player, wants_to_play))
+                await self.__broadcast(PlayDecisionUpdate(player, wants_to_play))
                 if wants_to_play:
                     player_decision = await self.controllers[
-                        current_player.id
+                        current_player.player_id
                     ].choose_game_group(current_game_group)
 
                     current_game_group_reduced = current_game_group.copy()
                     current_game_group_reduced.pop(0)
-                    oponent_decision = await self.controllers[player.id].choose_game_group(
-                        current_game_group_reduced
-                    )
+                    oponent_decision = await self.controllers[
+                        player.player_id
+                    ].choose_game_group(current_game_group_reduced)
 
                     if oponent_decision.value < player_decision.value:
                         current_player = player
                         index_reduce = current_game_group.index(oponent_decision)
                         current_game_group = current_game_group[index_reduce:]
                         await self.__broadcast(
-                            GameGroupChosenEvent(player, current_game_group)
+                            GameGroupChosenUpdate(player, current_game_group)
                         )
                         continue
 
                     index_reduce = current_game_group.index(player_decision)
                     current_game_group = current_game_group[index_reduce:]
                     await self.__broadcast(
-                        GameGroupChosenEvent(current_player, current_game_group)
+                        GameGroupChosenUpdate(current_player, current_game_group)
                     )
         return current_player, current_game_group
 
     async def __select_gametype(
-            self, game_player: Player | None, minimum_game_group: list[GameGroup]
+        self, game_player: Player | None, minimum_game_group: list[GameGroup]
     ) -> Gametype:
         if game_player is None:
             self.play_party = [
@@ -164,19 +163,19 @@ class Game:
                 [self.players[3]],
             ]
             await self.__broadcast(
-                GametypeDeterminedEvent(None, Gametype.RAMSCH, None, self.play_party)
+                GametypeDeterminedUpdate(None, Gametype.RAMSCH, None, self.play_party)
             )
             self.gamemode = GameModeRamsch()
             return Gametype.RAMSCH
 
-        game_type = await self.controllers[game_player.id].select_gametype(
+        game_type = await self.controllers[game_player.player_id].select_gametype(
             get_playable_gametypes(game_player.hand, minimum_game_group)
         )
 
         # When playing solo it is always 1v3
-        player_party = [self.players[game_player.id]]
+        player_party = [self.players[game_player.player_id]]
         non_player_party = self.players.copy()
-        non_player_party.remove(self.players[game_player.id])
+        non_player_party.remove(self.players[game_player.player_id])
 
         match (game_type[0]):
             case Gametype.SOLO:
@@ -198,7 +197,7 @@ class Game:
                     raise ValueError("Sauspiel gametype chosen without suit")
 
                 # Find Player who has the chosen ace
-                player_party = [self.players[game_player.id]]
+                player_party = [self.players[game_player.player_id]]
                 for j, player in enumerate(self.players):
                     if player.hand.has_card_of_rank_and_suit(game_type[1], Rank.ASS):
                         player_party.append(self.players[j])
@@ -214,8 +213,8 @@ class Game:
         self.play_party = [player_party, non_player_party]
 
         await self.__broadcast(
-            GametypeDeterminedEvent(
-                self.players[game_player.id],
+            GametypeDeterminedUpdate(
+                self.players[game_player.player_id],
                 game_type[0],
                 game_type[1],
                 self.play_party if game_type[0] != Gametype.SAUSPIEL else None,
@@ -225,19 +224,22 @@ class Game:
 
     async def __new_game(self) -> None:
         """Start a new game with the specified suit as the game type."""
+        game_winner, points_distribution = None, None
         for _ in range(ROUNDS):
             await self.start_round()
 
         game_winner, points_distribution = self.gamemode.get_game_winner(
             self.play_party
         )
+
+        await self.__get_or_pay_money(game_winner, points_distribution)
+
         await self.__broadcast(
-            GameEndEvent(game_winner, self.play_party, points_distribution)
+            GameEndUpdate(game_winner, self.play_party, points_distribution)
         )
 
     async def start_round(self) -> None:
         """Start a new round."""
-        self.__get_or_pay_money(game_winner, points_distribution)
         stack = await self.__play_cards()
         await self.__finish_round(stack)
 
@@ -248,18 +250,20 @@ class Game:
             playable_cards = self.gamemode.get_playable_cards(stack, player.hand)
             if len(playable_cards) == 0:
                 raise ValueError("No playable cards")
-            card: Card = await self.controllers[player.id].play_card(stack, playable_cards)
+            card: Card = await self.controllers[player.player_id].play_card(
+                stack, playable_cards
+            )
             if card not in playable_cards or card not in player.hand.cards:
                 raise ValueError("Illegal card played")
             player.lay_card(card)
             stack.add_card(card, player)
-            await self.__broadcast(CardPlayedEvent(player, card, stack))
+            await self.__broadcast(CardPlayedUpdate(player, card, stack))
 
             # Announce that the searched ace had been played and teams are known
             if isinstance(self.gamemode, GameModeSauspiel) and card == Card(
-                    self.gamemode.suit, Rank.ASS
+                self.gamemode.suit, Rank.ASS
             ):
-                await self.__broadcast(AnnouncePlayPartyEvent(self.play_party))
+                await self.__broadcast(AnnouncePlayPartyUpdate(self.play_party))
 
         return stack
 
@@ -268,10 +272,12 @@ class Game:
         winner = self.gamemode.determine_stitch_winner(stack)
         stack_value = stack.get_value()
         winner.points += stack_value
-        await self.__broadcast(RoundResultEvent(winner, stack_value, stack))
+        await self.__broadcast(RoundResultUpdate(winner, stack_value, stack))
         self.__change_player_order(winner)
 
-    def __get_or_pay_money(self, game_winner: list[Player], points_distribution: list[int]):
+    async def __get_or_pay_money(
+        self, game_winner: list[Player], points_distribution: list[int]
+    ):
         stake: Money = stake_for_gametype[self.gametype].value
         for points in points_distribution:
             if points == 0:
@@ -291,11 +297,15 @@ class Game:
         for player in self.players:
             if player in game_winner:
                 player.money += stake * (
-                        max(len(game_winner), len(self.players) - len(game_winner)) // (len(game_winner)))
+                    max(len(game_winner), len(self.players) - len(game_winner))
+                    // (len(game_winner))
+                )
             else:
-                player.money -= stake * (max(len(game_winner), len(self.players) - len(game_winner)) // (
-                        len(self.players) - len(game_winner)))
-            self.__broadcast(MoneyUpdateEvent(player, player.money))
+                player.money -= stake * (
+                    max(len(game_winner), len(self.players) - len(game_winner))
+                    // (len(self.players) - len(game_winner))
+                )
+            await self.__broadcast(MoneyUpdate(player, player.money))
 
     def __get_running_cards(self, team: list[Player]) -> int:
         running_cards = 0
@@ -320,7 +330,7 @@ class Game:
         """Find the index of the player who won"""
         winner_index = 0
         for index, player in enumerate(self.players):
-            if player.id == winner.id:
+            if player.player_id == winner.player_id:
                 winner_index = index
         return winner_index
 
@@ -333,4 +343,3 @@ class Game:
         """Broadcast an event to all players."""
         for controller in self.controllers:
             await controller.on_game_event(event)
-

@@ -3,6 +3,7 @@ from enum import Enum
 
 from state.stakes import Stake
 
+
 @dataclass
 class Gametype(Enum):
     # The value of the enum is the stake
@@ -14,10 +15,19 @@ class Gametype(Enum):
     SAUSPIEL = 6
     RAMSCH = 7
 
+    def __hash__(self):
+        return hash(self.name)
 
-stake_for_gametype = {Gametype.SOLO: Stake.HIGH, Gametype.WENZ: Stake.HIGH, Gametype.GEIER: Stake.HIGH,
-                      Gametype.FARBWENZ: Stake.MID, Gametype.FARBGEIER: Stake.MID, Gametype.SAUSPIEL: Stake.STANDARD,
-                      Gametype.RAMSCH: Stake.STANDARD}
+
+stake_for_gametype = {
+    Gametype.SOLO: Stake.HIGH,
+    Gametype.WENZ: Stake.HIGH,
+    Gametype.GEIER: Stake.HIGH,
+    Gametype.FARBWENZ: Stake.MID,
+    Gametype.FARBGEIER: Stake.MID,
+    Gametype.SAUSPIEL: Stake.STANDARD,
+    Gametype.RAMSCH: Stake.STANDARD,
+}
 
 
 class GameGroup(Enum):

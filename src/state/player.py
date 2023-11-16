@@ -5,14 +5,14 @@ from state.money import Money
 
 @dataclass
 class Player:
-    id: int
+    player_id: int
     money: Money
     points: int
     hand: Hand
     played_cards: list[Card]
 
     def __init__(self, player_id: int) -> None:
-        self.id = player_id
+        self.player_id = player_id
         self.points = 0
         self.money = Money(0)
         self.hand: Hand = Hand([])
@@ -23,4 +23,4 @@ class Player:
         self.played_cards.append(card)
 
     def __repr__(self) -> str:
-        return f"Player {self.id}"
+        return f"Player {self.player_id}"

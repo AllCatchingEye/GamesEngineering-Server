@@ -87,36 +87,8 @@ def event_update(
 
 
 def show_event(event: dict[str, object]) -> None:
-    match event["id"]:
-        case "PlayDecisionEvent":
-            player = event["player"]
-            player_id: int = player["id"]
-            plays = event["wants_to_play"]
-            print(f"Player {player_id} wants to play: {plays}")
-        case "RoundResultEvent":
-            winner = event["round_winner"]
-            winner_id: int = winner["id"]
-            points: int = event["points"]
-            print(f"Round was won by {winner_id} with {points} points")
-            print("============================================================")
-        case "GameEndEvent":
-            winners = event["winner"]
-            points = event["points"]
-            print(f"Game was won by {winners} with {points} points")
-            print("============================================================")
-        case "CardPlayedEvent":
-            player = event["player"]
-            player_id = player["id"]
-            card = event["card"]
-            suit = card["suit"]
-            rank = card["rank"]
-            print(f"Player {player_id} played the card {suit} {rank}")
-        case "RoundResultEvent":
-            winner = event["round_winner"]
-            winner_id = winner["id"]
-            print(f'Round was won by {winner_id} with {event["points"]} points')
-        case _:
-            pass
+    print(event)
+    
 
 
 async def wants_to_play(

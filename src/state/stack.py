@@ -37,7 +37,7 @@ class PlayedCard:
         return self.player
 
     def __str__(self) -> str:
-        return f"{self.card} by player {self.player.id}"
+        return f"{self.card} by player {self.player.player_id}"
 
     def __repr__(self) -> str:
         return str(self)
