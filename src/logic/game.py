@@ -21,6 +21,7 @@ from state.event import (
     MoneyUpdate,
     PlayDecisionUpdate,
     RoundResultUpdate,
+    PlayOrderUpdate,
 )
 from state.gametypes import GameGroup, Gametype, stake_for_gametype
 from state.hand import Hand
@@ -232,6 +233,7 @@ class Game:
         """Start a new game with the specified suit as the game type."""
         game_winner, points_distribution = None, None
         for _ in range(ROUNDS):
+            await self.__broadcast(PlayOrderUpdate([player.id for player in self.players]))
             await self.start_round()
 
         game_winner, points_distribution = self.gamemode.get_game_winner(

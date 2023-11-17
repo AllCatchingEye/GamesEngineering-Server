@@ -100,6 +100,11 @@ class MoneyUpdate(Event):
 
 
 @dataclass
+class PlayOrderUpdate(Event):
+    order: list[str]
+
+
+@dataclass
 class LobbyInformationUpdate(Event):
     lobby_id: str
 
