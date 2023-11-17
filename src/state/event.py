@@ -10,7 +10,6 @@ from state.card import Card
 from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
 from state.money import Money
-from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
 
@@ -50,53 +49,53 @@ class GameStartUpdate(Event):
 
 @dataclass
 class PlayDecisionUpdate(Event):
-    player: Player
+    player: str
     wants_to_play: bool
 
 
 @dataclass
 class GametypeDeterminedUpdate(Event):
-    player: Player | None
+    player: str | None
     gametype: Gametype
     suit: Suit | None
-    parties: list[list[Player]] | None
+    parties: list[list[str]] | None
 
 
 @dataclass
 class CardPlayedUpdate(Event):
-    player: Player
+    player: str
     card: Card
     stack: Stack
 
 
 @dataclass
 class RoundResultUpdate(Event):
-    round_winner: Player
+    round_winner: str
     points: int
     stack: Stack
 
 
 @dataclass
 class GameEndUpdate(Event):
-    winner: list[Player]
-    play_party: list[list[Player]]
+    winner: list[str]
+    play_party: list[list[str]]
     points: list[int]
 
 
 @dataclass
 class AnnouncePlayPartyUpdate(Event):
-    parties: list[list[Player]]
+    parties: list[list[str]]
 
 
 @dataclass
 class GameGroupChosenUpdate(Event):
-    player: Player
+    player: str
     game_groups: list[GameGroup]
 
 
 @dataclass
 class MoneyUpdate(Event):
-    player: Player
+    player: str
     money: Money
 
 
@@ -108,19 +107,19 @@ class LobbyInformationUpdate(Event):
 @dataclass
 class LobbyInformationPlayerJoinedUpdate(Event):
     lobby_id: str
-    player: Player
+    player: str
     slot_id: int
 
 
 @dataclass
 class LobbyInformationPlayerLeftUpdate(Event):
     lobby_id: str
-    player: Player
+    player: str
 
 
 @dataclass
 class LobbyInformationPlayerReadyUpdate(Event):
-    player: Player
+    player: str
     lobby_id: str
     player_is_ready: bool
 
