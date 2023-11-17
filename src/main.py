@@ -1,3 +1,4 @@
+import asyncio
 import random
 
 from controller.random_controller import RandomController
@@ -12,4 +13,4 @@ game.controllers = [
     RandomController(game.players[2], rng),
     RandomController(game.players[3], rng),
 ]
-game.run()
+asyncio.run(game.run())

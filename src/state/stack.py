@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+
 from state.card import Card
 from state.player import Player
 from state.ranks import Rank, get_value_of
 from state.suits import Suit
+
 
 @dataclass
 class PlayedCard:
@@ -37,7 +39,7 @@ class PlayedCard:
         return self.player
 
     def __str__(self) -> str:
-        return f"{self.card} by player {self.player.id}"
+        return f"{self.card} by player {self.player.player_id}"
 
     def __repr__(self) -> str:
         return str(self)
@@ -46,6 +48,7 @@ class PlayedCard:
         if not isinstance(__value, PlayedCard):
             return False
         return self.card == __value.card and self.player == __value.player
+
 
 @dataclass
 class Stack:

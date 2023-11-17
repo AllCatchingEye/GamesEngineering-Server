@@ -28,9 +28,9 @@ class GameModeRamsch(GameMode):
         game_loser_index = party_points.index(max(party_points))
         if party_points[game_loser_index] == 120:
             return play_party[game_loser_index], party_points
-        else:
-            winners = []
-            for i, party in enumerate(play_party):
-                if i != game_loser_index:
-                    winners += party
-            return winners, party_points
+        
+        winners: list[Player] = []
+        for i, party in enumerate(play_party):
+            if i != game_loser_index:
+                winners += party
+        return winners, party_points

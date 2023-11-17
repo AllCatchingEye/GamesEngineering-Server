@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class Suit(Enum):
     EICHEL = 0
     GRAS = 1
@@ -7,6 +8,9 @@ class Suit(Enum):
     SCHELLEN = 3
 
     def __str__(self) -> str:
+        return self.name
+
+    def __repr__(self) -> str:
         return self.name
 
 

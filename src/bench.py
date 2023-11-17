@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 from controller.random_controller import RandomController
@@ -16,7 +17,7 @@ if __name__ == "__main__":
             RandomController(game.players[2]),
             RandomController(game.players[3]),
         ]
-        game.run()
+        asyncio.run(game.run())
 
     print(f"Time for {i} games: {time.time() - now} seconds")
     print(f"Average time per game: {(time.time() - now) / i} seconds")

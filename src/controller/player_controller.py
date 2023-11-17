@@ -28,7 +28,6 @@ class PlayerController(ABC):
         Ask the player what game type to be played.
         This is only called if the player wants to play.
         """
-        # TODO: What have the players before said chosen?
 
     @abstractmethod
     async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
