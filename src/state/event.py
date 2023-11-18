@@ -8,9 +8,7 @@ from websockets import Data
 
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
-from state.hand import Hand
 from state.money import Money
-from state.stack import Stack
 from state.suits import Suit
 
 
@@ -45,7 +43,7 @@ def parse_as(message: str | Data, event_type: Type[E]) -> E:
 @dataclass
 class GameStartUpdate(Event):
     player: str
-    hand: Hand
+    hand: list[Card]
 
 
 @dataclass
@@ -66,14 +64,12 @@ class GametypeDeterminedUpdate(Event):
 class CardPlayedUpdate(Event):
     player: str
     card: Card
-    stack: Stack
 
 
 @dataclass
 class RoundResultUpdate(Event):
     round_winner: str
     points: int
-    stack: Stack
 
 
 @dataclass
@@ -147,7 +143,6 @@ class PlayerChooseGameGroupQuery(Event):
 
 @dataclass
 class PlayerPlayCardQuery(Event):
-    stack: Stack
     playable_cards: list[Card]
 
 

@@ -92,7 +92,7 @@ class Game:
 
         deck = deck[HAND_SIZE:]
 
-        await self.controllers[player.slot_id].on_game_event(GameStartUpdate(player.id, hand))
+        await self.controllers[player.slot_id].on_game_event(GameStartUpdate(player.id, hand.cards))
         return deck
 
     async def __get_player(self) -> tuple[Player | None, list[GameGroup]]:
@@ -110,7 +110,7 @@ class Game:
             wants_to_play = await self.controllers[player.slot_id].wants_to_play(
                 current_game_group[0]
             )
-            await self.__broadcast(PlayDecisionUpdate(player, wants_to_play))
+            await self.__broadcast(PlayDecisionUpdate(player.id, wants_to_play))
             if wants_to_play:
                 current_player = player
                 current_player_index = i
@@ -275,10 +275,10 @@ class Game:
                 raise ValueError("Illegal card played")
             player.lay_card(card)
             stack.add_card(card, player)
-            await self.__broadcast(CardPlayedUpdate(player.id, card, stack))
+            await self.__broadcast(CardPlayedUpdate(player.id, card))
 
             # Announce that the searched ace had been played and teams are known
-            if isinstance(self.gamemode, GameModeSauspiel) and card == Card(
+            if isinstance(self.gamemode, GameModeSauspiel) and self.gamemode.suit and card == Card(
                     self.gamemode.suit, Rank.ASS
             ):
                 await self.__broadcast(
@@ -292,7 +292,7 @@ class Game:
         winner = self.gamemode.determine_stitch_winner(stack)
         stack_value = stack.get_value()
         winner.points += stack_value
-        await self.__broadcast(RoundResultUpdate(winner.id, stack_value, stack))
+        await self.__broadcast(RoundResultUpdate(winner.id, stack_value))
         self.__change_player_order(winner)
 
     async def __get_or_pay_money(
