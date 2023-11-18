@@ -64,9 +64,9 @@ class Game:
             players.append(Player(i, i))
         return players
 
-    async def run(self) -> None:
+    async def run(self, games_to_play: int = 1) -> None:
         """Start the game."""
-        while self.games_played < 20:
+        while self.games_played < games_to_play:
             self.gametype = await self.determine_gametype()
             await self.__new_game()
             self.__prepare_new_game()

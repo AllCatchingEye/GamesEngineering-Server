@@ -5,7 +5,7 @@ from controller.random_controller import RandomController
 from logic.game import Game
 
 async def main():
-    i = 10000
+    i = 1000
 
     now = time.time()
 

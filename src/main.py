@@ -13,4 +13,4 @@ game.controllers = [
     RandomController(game.players[2], rng),
     RandomController(game.players[3], rng),
 ]
-asyncio.run(game.run())
+asyncio.run(game.run(games_to_play=20))
