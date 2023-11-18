@@ -9,6 +9,7 @@ from websockets import Data
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
 from state.money import Money
+from state.player import PlayerId
 from state.suits import Suit
 
 
@@ -42,63 +43,63 @@ def parse_as(message: str | Data, event_type: Type[E]) -> E:
 
 @dataclass
 class GameStartUpdate(Event):
-    player: str
+    player: PlayerId
     hand: list[Card]
 
 
 @dataclass
 class PlayDecisionUpdate(Event):
-    player: str
+    player: PlayerId
     wants_to_play: bool
 
 
 @dataclass
 class GametypeDeterminedUpdate(Event):
-    player: str | None
+    player: PlayerId | None
     gametype: Gametype
     suit: Suit | None
-    parties: list[list[str]] | None
+    parties: list[list[PlayerId]] | None
 
 
 @dataclass
 class CardPlayedUpdate(Event):
-    player: str
+    player: PlayerId
     card: Card
 
 
 @dataclass
 class RoundResultUpdate(Event):
-    round_winner: str
+    round_winner: PlayerId
     points: int
 
 
 @dataclass
 class GameEndUpdate(Event):
-    winner: list[str]
-    play_party: list[list[str]]
+    winner: list[PlayerId]
+    play_party: list[list[PlayerId]]
     points: list[int]
 
 
 @dataclass
 class AnnouncePlayPartyUpdate(Event):
-    parties: list[list[str]]
+    parties: list[list[PlayerId]]
 
 
 @dataclass
 class GameGroupChosenUpdate(Event):
-    player: str
+    player: PlayerId
     game_groups: list[GameGroup]
 
 
 @dataclass
 class MoneyUpdate(Event):
-    player: str
+    player: PlayerId
     money: Money
 
 
 @dataclass
 class PlayOrderUpdate(Event):
-    order: list[str]
+    order: list[PlayerId]
 
 
 @dataclass
@@ -109,19 +110,19 @@ class LobbyInformationUpdate(Event):
 @dataclass
 class LobbyInformationPlayerJoinedUpdate(Event):
     lobby_id: str
-    player: str
+    player: PlayerId
     slot_id: int
 
 
 @dataclass
 class LobbyInformationPlayerLeftUpdate(Event):
     lobby_id: str
-    player: str
+    player: PlayerId
 
 
 @dataclass
 class LobbyInformationPlayerReadyUpdate(Event):
-    player: str
+    player: PlayerId
     lobby_id: str
     player_is_ready: bool
 
