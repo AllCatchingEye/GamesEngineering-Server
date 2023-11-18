@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from state.ranks import Rank, get_value_of
+from state.ranks import Rank
 from state.suits import Suit
 
 
@@ -8,21 +8,16 @@ from state.suits import Suit
 class Card:
     suit: Suit
     rank: Rank
-    value: int
 
     def __init__(self, suit: Suit, rank: Rank) -> None:
         self.suit = suit
         self.rank = rank
-        self.value = get_value_of(self.rank)
 
     def get_suit(self) -> Suit:
         return self.suit
 
     def get_rank(self) -> Rank:
         return self.rank
-
-    def get_value(self) -> int:
-        return self.value
 
     def __hash__(self) -> int:
         return hash((self.suit, self.rank))

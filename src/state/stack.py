@@ -23,9 +23,6 @@ class PlayedCard:
         self.card = card
         self.player = player
 
-    def get_value(self) -> int:
-        return self.card.get_value()
-
     def get_card(self) -> Card:
         return self.card
 

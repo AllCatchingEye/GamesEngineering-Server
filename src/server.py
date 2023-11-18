@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 
 from websockets import Data, WebSocketServerProtocol, serve
 
@@ -64,5 +65,10 @@ def create_single_player_game(ws: WebSocketServerProtocol) -> Game:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s:%(message)s",
+        level=logging.INFO,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     asyncio.run(main())
     print("Server WebSocket stopped")

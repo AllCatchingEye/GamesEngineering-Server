@@ -44,6 +44,7 @@ def parse_as(message: str | Data, event_type: Type[E]) -> E:
 
 @dataclass
 class GameStartUpdate(Event):
+    player: str
     hand: Hand
 
 

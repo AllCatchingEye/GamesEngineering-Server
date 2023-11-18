@@ -92,7 +92,7 @@ class Game:
 
         deck = deck[HAND_SIZE:]
 
-        await self.controllers[player.slot_id].on_game_event(GameStartUpdate(hand))
+        await self.controllers[player.slot_id].on_game_event(GameStartUpdate(player.id, hand))
         return deck
 
     async def __get_player(self) -> tuple[Player | None, list[GameGroup]]:
