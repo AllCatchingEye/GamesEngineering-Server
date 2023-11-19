@@ -1,5 +1,4 @@
 import uuid
-
 from dataclasses import dataclass
 
 from state.card import Card
@@ -9,7 +8,6 @@ from state.money import Money
 
 class PlayerId(str):
     pass
-
 
 
 @dataclass

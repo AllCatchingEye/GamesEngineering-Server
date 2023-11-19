@@ -1,8 +1,8 @@
 import json
+import logging
 from abc import ABC
 from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
-import logging
 from typing import Type, TypeVar
 
 from websockets import Data

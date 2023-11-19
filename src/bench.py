@@ -4,6 +4,7 @@ import time
 from controller.random_controller import RandomController
 from logic.game import Game
 
+
 async def main():
     i = 1000
 
