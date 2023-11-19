@@ -10,6 +10,7 @@ from logic.game import Game
 TIMEOUT_SECS = 5 * 60  # 5 Minutes timeout
 CLIENTS: set[WebSocketServerProtocol] = set()
 
+
 async def main() -> None:
     print("Server WebSocket started")
     async with serve(handler, "localhost", 8765, open_timeout=TIMEOUT_SECS):
