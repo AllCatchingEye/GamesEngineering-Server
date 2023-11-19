@@ -48,7 +48,7 @@ class WebSocketController(PlayerController):
         return choosable_gametypes[response.gametype_index]
 
     async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
-        request = PlayerPlayCardQuery(stack, playable_cards)
+        request = PlayerPlayCardQuery(playable_cards)
         await self.ws.send(request.to_json())
 
         response = await self.get_answer(PlayerPlayCardAnswer)
