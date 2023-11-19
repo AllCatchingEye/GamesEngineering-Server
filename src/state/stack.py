@@ -23,9 +23,6 @@ class PlayedCard:
         self.card = card
         self.player = player
 
-    def get_value(self) -> int:
-        return self.card.get_value()
-
     def get_card(self) -> Card:
         return self.card
 
@@ -39,7 +36,7 @@ class PlayedCard:
         return self.player
 
     def __str__(self) -> str:
-        return f"{self.card} by player {self.player.player_id}"
+        return f"{self.card} by player {self.player.id}"
 
     def __repr__(self) -> str:
         return str(self)

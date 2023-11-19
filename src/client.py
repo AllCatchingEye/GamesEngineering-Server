@@ -56,7 +56,7 @@ async def play(ws: WebSocketClientProtocol) -> None:
                 print(f"You have to play atleast {event.current_lowest_gamegroup}")
                 decision = input("Do you want to play? (y/n) ")
                 answer = PlayerWantsToPlayAnswer(decision == "y")
-                await ws.send(json.dumps(answer.to_json()))
+                await ws.send(answer.to_json())
             case PlayerChooseGameGroupQuery.__name__:
                 event = parse_as(message, PlayerChooseGameGroupQuery)
                 print("Choose a gamegroup:")
@@ -64,7 +64,7 @@ async def play(ws: WebSocketClientProtocol) -> None:
                     print(f"{index}: {gamegroup}")
                 decision = input()
                 answer = PlayerChooseGameGroupAnswer(gamegroup_index=int(decision))
-                await ws.send(json.dumps(answer.to_json()))
+                await ws.send(answer.to_json())
             case PlayerSelectGameTypeQuery.__name__:
                 event = parse_as(message, PlayerSelectGameTypeQuery)
                 print("Choose a game type:")
@@ -72,17 +72,15 @@ async def play(ws: WebSocketClientProtocol) -> None:
                     print(f"{index}: {gametype}")
                 decision = input()
                 answer = PlayerSelectGameTypeAnswer(gametype_index=int(decision))
-                await ws.send(json.dumps(answer.to_json()))
+                await ws.send(answer.to_json())
             case PlayerPlayCardQuery.__name__:
                 event = parse_as(message, PlayerPlayCardQuery)
-                print("The stack is:")
-                print(event.stack)
                 print("Choose a card to play:")
                 for index, card in enumerate(event.playable_cards):
                     print(f"{index}: {card}")
                 decision = input()
                 answer = PlayerPlayCardAnswer(card_index=int(decision))
-                await ws.send(json.dumps(answer.to_json()))
+                await ws.send(answer.to_json())
             case GameEndUpdate.__name__:
                 event = parse_as(message, GameEndUpdate)
                 print(event)

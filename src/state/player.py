@@ -1,3 +1,5 @@
+import uuid
+
 from dataclasses import dataclass
 
 from state.card import Card
@@ -5,16 +7,26 @@ from state.hand import Hand
 from state.money import Money
 
 
+class PlayerId(str):
+    pass
+
+
+
 @dataclass
 class Player:
-    player_id: int
+    id: PlayerId
+    slot_id: int
+    # turn order during each game round
+    turn_order: int
     money: Money
     points: int
     hand: Hand
     played_cards: list[Card]
 
-    def __init__(self, player_id: int) -> None:
-        self.player_id = player_id
+    def __init__(self, slot_id: int, turn_order: int) -> None:
+        self.id = PlayerId(str(uuid.uuid4()))
+        self.slot_id = slot_id
+        self.turn_order = turn_order
         self.points = 0
         self.money = Money(0)
         self.hand: Hand = Hand([])
@@ -25,4 +37,4 @@ class Player:
         self.played_cards.append(card)
 
     def __repr__(self) -> str:
-        return f"Player {self.player_id}"
+        return f"Player {self.id}"

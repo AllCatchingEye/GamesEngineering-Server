@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Type, TypeVar
 
 from websockets.server import WebSocketServerProtocol
@@ -47,7 +48,7 @@ class WebSocketController(PlayerController):
         return choosable_gametypes[response.gametype_index]
 
     async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
-        request = PlayerPlayCardQuery(stack, playable_cards)
+        request = PlayerPlayCardQuery(playable_cards)
         await self.ws.send(request.to_json())
 
         response = await self.get_answer(PlayerPlayCardAnswer)
@@ -62,9 +63,10 @@ class WebSocketController(PlayerController):
 
     async def get_answer(self, event_type: Type[E]) -> E:
         response = await self.ws.recv()
-        data = json.loads(response)
-        return parse_as(data, event_type)
+        logging.info(f"Received {response}")
+        return parse_as(response, event_type)
 
     async def on_game_event(self, event: Event) -> None:
         message = event.to_json()
+        logging.info(f"Sending {message}")
         await self.ws.send(message)

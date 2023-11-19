@@ -2,16 +2,15 @@ import json
 from abc import ABC
 from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
+import logging
 from typing import Type, TypeVar
 
 from websockets import Data
 
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
-from state.hand import Hand
 from state.money import Money
-from state.player import Player
-from state.stack import Stack
+from state.player import PlayerId
 from state.suits import Suit
 
 
@@ -36,7 +35,10 @@ E = TypeVar("E", bound=Event)
 
 
 def parse_as(message: str | Data, event_type: Type[E]) -> E:
-    dct = json.loads(message)
+    logging.info(f"parsing {message} as {event_type}")
+    text = message if isinstance(message, str) else message.decode()
+    dct = json.loads(text)
+    logging.info(f"parsed {dct} as type {type(dct)})")
     # if has id, delete
     if "id" in dct:
         del dct["id"]
@@ -45,59 +47,63 @@ def parse_as(message: str | Data, event_type: Type[E]) -> E:
 
 @dataclass
 class GameStartUpdate(Event):
-    hand: Hand
+    player: PlayerId
+    hand: list[Card]
 
 
 @dataclass
 class PlayDecisionUpdate(Event):
-    player: Player
+    player: PlayerId
     wants_to_play: bool
 
 
 @dataclass
 class GametypeDeterminedUpdate(Event):
-    player: Player | None
+    player: PlayerId | None
     gametype: Gametype
     suit: Suit | None
-    parties: list[list[Player]] | None
+    parties: list[list[PlayerId]] | None
 
 
 @dataclass
 class CardPlayedUpdate(Event):
-    player: Player
+    player: PlayerId
     card: Card
-    stack: Stack
 
 
 @dataclass
 class RoundResultUpdate(Event):
-    round_winner: Player
+    round_winner: PlayerId
     points: int
-    stack: Stack
 
 
 @dataclass
 class GameEndUpdate(Event):
-    winner: list[Player]
-    play_party: list[list[Player]]
+    winner: list[PlayerId]
+    play_party: list[list[PlayerId]]
     points: list[int]
 
 
 @dataclass
 class AnnouncePlayPartyUpdate(Event):
-    parties: list[list[Player]]
+    parties: list[list[PlayerId]]
 
 
 @dataclass
 class GameGroupChosenUpdate(Event):
-    player: Player
+    player: PlayerId
     game_groups: list[GameGroup]
 
 
 @dataclass
 class MoneyUpdate(Event):
-    player: Player
+    player: PlayerId
     money: Money
+
+
+@dataclass
+class PlayOrderUpdate(Event):
+    order: list[PlayerId]
 
 
 @dataclass
@@ -108,19 +114,19 @@ class LobbyInformationUpdate(Event):
 @dataclass
 class LobbyInformationPlayerJoinedUpdate(Event):
     lobby_id: str
-    player: Player
+    player: PlayerId
     slot_id: int
 
 
 @dataclass
 class LobbyInformationPlayerLeftUpdate(Event):
     lobby_id: str
-    player: Player
+    player: PlayerId
 
 
 @dataclass
 class LobbyInformationPlayerReadyUpdate(Event):
-    player: Player
+    player: PlayerId
     lobby_id: str
     player_is_ready: bool
 
@@ -142,7 +148,6 @@ class PlayerChooseGameGroupQuery(Event):
 
 @dataclass
 class PlayerPlayCardQuery(Event):
-    stack: Stack
     playable_cards: list[Card]
 
 
