@@ -45,7 +45,7 @@ class Game:
     players: list[Player]
     deck: Deck
     played_cards: list[Card]
-    rounds_played: int
+    games_played: int
 
     def __init__(self, rng: random.Random = random.Random()) -> None:
         self.players = self.__create_players()
@@ -259,7 +259,7 @@ class Game:
             )
         )
 
-    def __prepare_new_game(self):
+    def __prepare_new_game(self) -> None:
         self.gametype = None
         self.gamemode = None
         swap_index = -1
@@ -316,7 +316,7 @@ class Game:
 
     async def __get_or_pay_money(
         self, game_winner: list[Player], points_distribution: list[int]
-    ):
+    ) -> None:
         stake: Money = stake_for_gametype[self.gametype].value
         for points in points_distribution:
             if points == 0:

@@ -13,17 +13,17 @@ class Money:
             sign = "-"
         return sign + f"{self.cent // factor},{abs(self.cent % factor)}€"
 
-    def __add__(self, other: object):
+    def __add__(self, other: object) -> "Money":
         if isinstance(other, Money):
             return Money(self.cent + other.cent)
         raise ValueError("Object to be added has to be of type Money")
 
-    def __sub__(self, other: object):
+    def __sub__(self, other: object) -> "Money":
         if isinstance(other, Money):
             return Money(self.cent - other.cent)
         raise ValueError("Object to be subtracted has to be of type Money")
 
-    def __mul__(self, other: object):
+    def __mul__(self, other: object) -> "Money":
         if isinstance(other, int):
             return Money(self.cent * other)
         raise ValueError("Has to be a multiplication with Integer")

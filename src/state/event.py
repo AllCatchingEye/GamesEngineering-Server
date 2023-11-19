@@ -35,10 +35,8 @@ E = TypeVar("E", bound=Event)
 
 
 def parse_as(message: str | Data, event_type: Type[E]) -> E:
-    logging.info(f"parsing {message} as {event_type}")
     text = message if isinstance(message, str) else message.decode()
     dct = json.loads(text)
-    logging.info(f"parsed {dct} as type {type(dct)})")
     # if has id, delete
     if "id" in dct:
         del dct["id"]
