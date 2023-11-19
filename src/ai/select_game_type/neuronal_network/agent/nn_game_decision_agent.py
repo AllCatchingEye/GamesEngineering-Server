@@ -6,9 +6,12 @@ import torch
 
 from ai.nn_helper import card_to_nn_input_values, code_to_game_type
 from ai.select_game_type.agent import ISelectGameAgent
+from ai.select_game_type.neuronal_network.agent.gametype_helper import (
+    game_type_to_game_group,
+)
 from ai.select_game_type.neuronal_network.agent.select_game_nn import SelectGameNN
 from state.card import Card
-from state.gametypes import Gametype
+from state.gametypes import GameGroup, Gametype
 from state.suits import Suit
 
 
@@ -21,7 +24,7 @@ class NNAgent(ISelectGameAgent):
     def __init__(self, config: NNAgentConfig):
         self.config = config
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.decision = None
+        self.targeted_game_type = None
         self.model = SelectGameNN()
 
     def initialize(self):
@@ -36,16 +39,22 @@ class NNAgent(ISelectGameAgent):
         self.model.eval()
 
     def reset(self):
-        self.decision = None
+        self.targeted_game_type = None
 
-    def should_play(self, hand_cards: list[Card], decisions: list[bool | None]) -> bool:
+    def should_play(
+        self, hand_cards: list[Card], current_lowest_gamegroup: GameGroup
+    ) -> bool:
         """Invoked to receive a decision if the agent would play"""
         input_values = card_to_nn_input_values(hand_cards)
         input_tensor = torch.tensor(np.array([input_values]).astype(np.float32))
         output = self.model(input_tensor)
         selected_game_type_code = torch.max(output, 1).indices[0].item()
-        self.decision = code_to_game_type(floor(selected_game_type_code))
-        return self.decision[0] != Gametype.RAMSCH
+        self.targeted_game_type = code_to_game_type(floor(selected_game_type_code))
+        return (
+            self.targeted_game_type[0] != Gametype.RAMSCH
+            and game_type_to_game_group(self.targeted_game_type[0]).value
+            > current_lowest_gamegroup.value
+        )
 
     def select_game_type(
         self,
@@ -54,6 +63,6 @@ class NNAgent(ISelectGameAgent):
     ):
         """Invoked to receive a decision which game type the agent would play. Note, that `choosable_game_types` is ignored for now."""
         assert (
-            self.decision != None
+            self.targeted_game_type != None
         ), "The agents decision if agent would play wasn't made, yet. Invoke `should_play` to do so."
-        return self.decision
+        return self.targeted_game_type

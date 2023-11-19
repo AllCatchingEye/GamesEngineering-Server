@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from state.card import Card
-from state.gametypes import Gametype
+from state.gametypes import GameGroup, Gametype
 from state.suits import Suit
 
 
@@ -18,7 +18,9 @@ class ISelectGameAgent(ABC):
         """Invoked to reset the agent's internal state"""
 
     @abstractmethod
-    def should_play(self, hand_cards: list[Card], decisions: list[bool | None]) -> bool:
+    def should_play(
+        self, hand_cards: list[Card], current_lowest_gamegroup: GameGroup
+    ) -> bool:
         """Invoked to receive a decision if the agent would play"""
 
     @abstractmethod
