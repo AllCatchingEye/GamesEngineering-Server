@@ -64,8 +64,7 @@ class WebSocketController(PlayerController):
     async def get_answer(self, event_type: Type[E]) -> E:
         response = await self.ws.recv()
         logging.info(f"Received {response}")
-        data = json.loads(response)
-        return parse_as(data, event_type)
+        return parse_as(response, event_type)
 
     async def on_game_event(self, event: Event) -> None:
         message = event.to_json()

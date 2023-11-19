@@ -2,6 +2,7 @@ import json
 from abc import ABC
 from dataclasses import asdict, dataclass, is_dataclass
 from enum import Enum
+import logging
 from typing import Type, TypeVar
 
 from websockets import Data
@@ -34,7 +35,10 @@ E = TypeVar("E", bound=Event)
 
 
 def parse_as(message: str | Data, event_type: Type[E]) -> E:
-    dct = json.loads(message)
+    logging.info(f"parsing {message} as {event_type}")
+    text = message if isinstance(message, str) else message.decode()
+    dct = json.loads(text)
+    logging.info(f"parsed {dct} as type {type(dct)})")
     # if has id, delete
     if "id" in dct:
         del dct["id"]

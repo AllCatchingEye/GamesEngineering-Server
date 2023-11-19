@@ -49,7 +49,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
 async def single_player_lobby(ws: WebSocketServerProtocol):
     game: Game = create_single_player_game(ws)
 
-    await game.run(games_to_play=20)
+    await game.run(games_to_play=1)
     await ws.wait_closed()
 
 
