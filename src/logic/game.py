@@ -249,6 +249,7 @@ class Game:
         )
 
     def __prepare_new_game(self):
+        self.gametype = None
         swap_index = -1
         for i, player in enumerate(self.players):
             # cycling players for next game
