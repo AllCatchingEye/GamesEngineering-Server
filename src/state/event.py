@@ -7,7 +7,7 @@ from typing import Type, TypeVar
 from websockets import Data
 
 from state.card import Card
-from state.gametypes import GameGroup, Gametype
+from state.gametypes import GameGroup, Gametype, GametypeWithSuit
 from state.money import Money
 from state.player import PlayerId
 from state.suits import Suit
@@ -135,7 +135,7 @@ class PlayerWantsToPlayQuery(Event):
 
 @dataclass
 class PlayerSelectGameTypeQuery(Event):
-    choosable_gametypes: list[tuple[Gametype, Suit | None]]
+    choosable_gametypes: list[GametypeWithSuit]
 
 
 @dataclass
