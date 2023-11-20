@@ -16,7 +16,7 @@ class Hand:
         return self.cards[index]
 
     def get_all_cards(self) -> list[Card]:
-        return self.cards
+        return self.cards.copy()
 
     def remove_card(self, card: Card) -> None:
         self.cards.remove(card)

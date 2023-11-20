@@ -93,7 +93,7 @@ class Game:
         deck = deck[HAND_SIZE:]
 
         await self.controllers[player.slot_id].on_game_event(
-            GameStartUpdate(player.id, hand.cards)
+            GameStartUpdate(player.id, hand.get_all_cards())
         )
         return deck
 
@@ -344,7 +344,7 @@ class Game:
                     max(len(game_winner), len(self.players) - len(game_winner))
                     // (len(self.players) - len(game_winner))
                 )
-            await self.__broadcast(MoneyUpdate(player.id, player.money))
+            await self.controllers[player.slot_id].on_game_event(MoneyUpdate(player.id, player.money))
 
     def __get_running_cards(self, team: list[Player]) -> int:
         running_cards = 0
