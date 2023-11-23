@@ -29,6 +29,14 @@ class Hand:
                 suits.append(card)
         return suits
 
+    def get_all_cards_for_rank(self, rank: Rank) -> list[Card]:
+        """Returns all cards in the hand for the given rank"""
+        ranks: list[Card] = []
+        for card in self.cards:
+            if card.get_rank() == rank:
+                ranks.append(card)
+        return ranks
+
     def has_card_of_rank_and_suit(self, suit: Suit, rank: Rank) -> bool:
         """Checks if the hand has a card of the given suit and rank in it"""
         for card in self.cards:
