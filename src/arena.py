@@ -1,14 +1,14 @@
 import asyncio
 import random
 from dataclasses import dataclass
-from typing import Callable, Type, TypeVar
+from typing import Callable, TypeVar
 
 import pandas as pd
 from tqdm import tqdm
 
 from controller.ai_controller import AiController
+from controller.passive_controller import PassiveController
 from controller.player_controller import PlayerController
-from controller.random_controller import RandomController
 from logic.game import Game
 from state.card import Card
 from state.event import Event, GameStartUpdate, GametypeDeterminedUpdate, MoneyUpdate
@@ -148,14 +148,17 @@ class Arena:
         rng = random.Random(self.config.rng_seed)
         for game in tqdm(range(self.config.games), desc="Games", unit="game", ncols=80):
             game = Game(rng=rng)
-            controllers = [
-                ArenaController(bot_creator()) for bot_creator in self.bot_creators
-            ]
+            mapped_controllers = {
+                i: ArenaController(bot_creator())
+                for i, bot_creator in enumerate(self.bot_creators)
+            }
+            controllers = [mapped_controllers[i] for i in range(len(self.bot_creators))]
+            rng.shuffle(controllers)
             game.controllers = controllers
             await game.run(games_to_play=self.config.rounds_per_game)
 
             # Update money
-            for i, controller in enumerate(game.controllers):
+            for i, controller in mapped_controllers.items():
                 self.money[i] += controller.money
                 self.wins[i] += controller.wins
 
@@ -166,7 +169,7 @@ class Arena:
                     increment(self.wins_per_gamemode[i], gamemode, wins)
 
             # Update played gamemodes
-            for i, controller in enumerate(game.controllers):
+            for i, controller in mapped_controllers.items():
                 for gamemode, played in controller.played_gamemodes.items():
                     increment(
                         self.played_gamemodes[i],
@@ -235,9 +238,9 @@ class Arena:
 if __name__ == "__main__":
     arena = Arena()
     arena.add_bot(AiController)
-    arena.add_bot(RandomController)
-    arena.add_bot(RandomController)
-    arena.add_bot(RandomController)
+    arena.add_bot(PassiveController)
+    arena.add_bot(PassiveController)
+    arena.add_bot(PassiveController)
     asyncio.run(arena.run())
 
     print("Overview")
