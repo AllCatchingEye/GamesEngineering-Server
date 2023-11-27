@@ -1,4 +1,5 @@
 import random
+from typing import Sequence
 
 from controller.player_controller import PlayerController
 from logic.gamemodes.gamemode import GameMode
@@ -38,7 +39,7 @@ PLAYER_COUNT = 4
 
 
 class Game:
-    controllers: list[PlayerController]
+    controllers: Sequence[PlayerController]
     rng: random.Random
     gamemode: GameMode
     gametype: Gametype
@@ -287,7 +288,9 @@ class Game:
                 stack, playable_cards
             )
             if card not in playable_cards or card not in player.hand.cards:
-                raise ValueError("Illegal card played")
+                raise ValueError(
+                    f"Illegal card played, tried to play {card} from {player.hand} but only {playable_cards} are allowed"
+                )
             player.lay_card(card)
             stack.add_card(card, player)
             await self.__broadcast(CardPlayedUpdate(player.id, card))
@@ -344,7 +347,9 @@ class Game:
                     max(len(game_winner), len(self.players) - len(game_winner))
                     // (len(self.players) - len(game_winner))
                 )
-            await self.controllers[player.slot_id].on_game_event(MoneyUpdate(player.id, player.money))
+            await self.controllers[player.slot_id].on_game_event(
+                MoneyUpdate(player.id, player.money)
+            )
 
     def __get_running_cards(self, team: list[Player]) -> int:
         running_cards = 0
