@@ -32,24 +32,37 @@ def increment_money(dictionary: dict[T, Money], key: T, value: Money) -> None:
 
 @dataclass
 class ArenaConfig:
-    games: int = 10
+    games: int = 100
     rounds_per_game: int = 10
     rng_seed: int | None = None
+
+
+@dataclass
+class GameTypeWithSuitAndAnnouncer:
+    gametype: Gametype
+    suit: Suit | None
+    announcer: bool
+
+    def __hash__(self) -> int:
+        return hash((self.gametype, self.suit, self.announcer))
+
+    def __str__(self) -> str:
+        return f"{self.gametype} {self.suit} {self.announcer}"
 
 
 class ArenaController(PlayerController):
     actual_controller: PlayerController
     player_id: PlayerId
 
-    gamemode: GametypeWithSuit
+    gamemode: GameTypeWithSuitAndAnnouncer
 
     money_before: Money
     money: Money
-    money_per_gamemode: dict[GametypeWithSuit, Money]
+    money_per_gamemode: dict[GameTypeWithSuitAndAnnouncer, Money]
     wins: int
-    wins_per_gamemode: dict[GametypeWithSuit, int]
-    played_gamemodes: dict[GametypeWithSuit, int]
-    points_per_gamemode: dict[GametypeWithSuit, int]
+    wins_per_gamemode: dict[GameTypeWithSuitAndAnnouncer, int]
+    played_gamemodes: dict[GameTypeWithSuitAndAnnouncer, int]
+    points_per_gamemode: dict[GameTypeWithSuitAndAnnouncer, int]
 
     def __init__(self, actual_controller: PlayerController) -> None:
         super().__init__()
@@ -80,17 +93,18 @@ class ArenaController(PlayerController):
         if isinstance(event, GameStartUpdate):
             self.player_id = event.player
         if isinstance(event, GametypeDeterminedUpdate):
-            gamemode = GametypeWithSuit(event.gametype, event.suit)
+            gamemode = GameTypeWithSuitAndAnnouncer(
+                event.gametype, event.suit, event.player == self.player_id
+            )
             self.gamemode = gamemode
             increment(self.played_gamemodes, gamemode)
         if isinstance(event, MoneyUpdate) and event.player == self.player_id:
             self.money = event.money
-            if event.money.cent > 0:
+            diff = self.money - self.money_before
+            if diff.cent > 0:
                 self.wins += 1
                 increment(self.wins_per_gamemode, self.gamemode)
-            increment_money(
-                self.money_per_gamemode, self.gamemode, self.money - self.money_before
-            )
+            increment_money(self.money_per_gamemode, self.gamemode, diff)
             self.money_before = self.money
         return await self.actual_controller.on_game_event(event)
 
@@ -105,9 +119,9 @@ class Arena:
     money: list[Money]
     wins: list[int]
     total_gamemodes: dict[GametypeWithSuit, int]
-    played_gamemodes: list[dict[GametypeWithSuit, int]]
-    money_per_gamemode: list[dict[GametypeWithSuit, Money]]
-    wins_per_gamemode: list[dict[GametypeWithSuit, int]]
+    played_gamemodes: list[dict[GameTypeWithSuitAndAnnouncer, int]]
+    money_per_gamemode: list[dict[GameTypeWithSuitAndAnnouncer, Money]]
+    wins_per_gamemode: list[dict[GameTypeWithSuitAndAnnouncer, int]]
 
     def __init__(self, config: ArenaConfig = ArenaConfig()) -> None:
         self.config = config
@@ -187,7 +201,6 @@ class Arena:
                     "Winrate",
                     "Money",
                     "Money per game",
-                    "Money per win",
                 ]
             )
             for gamemode, played in self.played_gamemodes[i].items():
@@ -195,9 +208,6 @@ class Arena:
                 money = self.money_per_gamemode[i].get(gamemode, Money(0))
                 win_rate = wins / played
                 money_per_game = Money(int(money.cent / played))
-                money_per_win = Money(0)
-                if wins > 0:
-                    money_per_win = Money(int(money.cent / wins))
                 df.loc[gamemode] = [
                     gamemode,
                     played,
@@ -206,7 +216,6 @@ class Arena:
                     win_rate,
                     money,
                     money_per_game,
-                    money_per_win,
                 ]
             dfs.append(df)
 
