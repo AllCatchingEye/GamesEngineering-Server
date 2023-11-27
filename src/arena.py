@@ -32,7 +32,7 @@ def increment_money(dictionary: dict[T, Money], key: T, value: Money) -> None:
 
 @dataclass
 class ArenaConfig:
-    games: int = 100
+    games: int = 1000
     rounds_per_game: int = 10
     rng_seed: int | None = None
 
@@ -118,8 +118,8 @@ class Arena:
 
     money: list[Money]
     wins: list[int]
-    total_gamemodes: dict[GametypeWithSuit, int]
-    played_gamemodes: list[dict[GameTypeWithSuitAndAnnouncer, int]]
+    played_gamemodes: list[dict[GametypeWithSuit, int]]
+    played_gamemmodes_with_announcer: list[dict[GameTypeWithSuitAndAnnouncer, int]]
     money_per_gamemode: list[dict[GameTypeWithSuitAndAnnouncer, Money]]
     wins_per_gamemode: list[dict[GameTypeWithSuitAndAnnouncer, int]]
 
@@ -129,6 +129,7 @@ class Arena:
         self.bot_names = []
         self.money = []
         self.wins = []
+        self.played_gamemmodes_with_announcer = []
         self.played_gamemodes = []
         self.money_per_gamemode = []
         self.wins_per_gamemode = []
@@ -139,6 +140,7 @@ class Arena:
         self.bot_names.append(bot_creator.__name__)
         self.money.append(Money(0))
         self.wins.append(0)
+        self.played_gamemmodes_with_announcer.append({})
         self.played_gamemodes.append({})
         self.money_per_gamemode.append({})
         self.wins_per_gamemode.append({})
@@ -167,7 +169,16 @@ class Arena:
             # Update played gamemodes
             for i, controller in enumerate(game.controllers):
                 for gamemode, played in controller.played_gamemodes.items():
-                    increment(self.played_gamemodes[i], gamemode, played)
+                    increment(
+                        self.played_gamemodes[i],
+                        GametypeWithSuit(gamemode.gametype, gamemode.suit),
+                        played,
+                    )
+                    increment(
+                        self.played_gamemmodes_with_announcer[i],
+                        gamemode,
+                        played,
+                    )
 
     def results_overview(self) -> pd.DataFrame:
         total_games = self.config.games * self.config.rounds_per_game
@@ -203,7 +214,7 @@ class Arena:
                     "Money per game",
                 ]
             )
-            for gamemode, played in self.played_gamemodes[i].items():
+            for gamemode, played in self.played_gamemmodes_with_announcer[i].items():
                 wins = self.wins_per_gamemode[i].get(gamemode, 0)
                 money = self.money_per_gamemode[i].get(gamemode, Money(0))
                 win_rate = wins / played
