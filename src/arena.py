@@ -43,20 +43,24 @@ class ArenaController(PlayerController):
 
     gamemode: GametypeWithSuit
 
+    money_before: Money
     money: Money
     money_per_gamemode: dict[GametypeWithSuit, Money]
     wins: int
     wins_per_gamemode: dict[GametypeWithSuit, int]
     played_gamemodes: dict[GametypeWithSuit, int]
+    points_per_gamemode: dict[GametypeWithSuit, int]
 
     def __init__(self, actual_controller: PlayerController) -> None:
         super().__init__()
         self.actual_controller = actual_controller
+        self.money_before = Money(0)
         self.money = Money(0)
         self.wins = 0
         self.played_gamemodes = {}
         self.money_per_gamemode = {}
         self.wins_per_gamemode = {}
+        self.points_per_gamemode = {}
 
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         return await self.actual_controller.wants_to_play(current_lowest_gamegroup)
@@ -80,11 +84,14 @@ class ArenaController(PlayerController):
             self.gamemode = gamemode
             increment(self.played_gamemodes, gamemode)
         if isinstance(event, MoneyUpdate) and event.player == self.player_id:
-            self.money += event.money
+            self.money = event.money
             if event.money.cent > 0:
                 self.wins += 1
                 increment(self.wins_per_gamemode, self.gamemode)
-            increment_money(self.money_per_gamemode, self.gamemode, event.money)
+            increment_money(
+                self.money_per_gamemode, self.gamemode, self.money - self.money_before
+            )
+            self.money_before = self.money
         return await self.actual_controller.on_game_event(event)
 
 
@@ -172,7 +179,16 @@ class Arena:
         dfs = []
         for i in range(len(self.bot_creators)):
             df = pd.DataFrame(
-                columns=["Gamemode", "Played", "Play rate", "Wins", "Winrate", "Money", "Money per game", "Money per win"]
+                columns=[
+                    "Gamemode",
+                    "Played",
+                    "Play rate",
+                    "Wins",
+                    "Winrate",
+                    "Money",
+                    "Money per game",
+                    "Money per win",
+                ]
             )
             for gamemode, played in self.played_gamemodes[i].items():
                 wins = self.wins_per_gamemode[i].get(gamemode, 0)
@@ -190,7 +206,7 @@ class Arena:
                     win_rate,
                     money,
                     money_per_game,
-                    money_per_win
+                    money_per_win,
                 ]
             dfs.append(df)
 
