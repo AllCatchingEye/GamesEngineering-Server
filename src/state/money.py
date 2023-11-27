@@ -31,6 +31,12 @@ class Money:
     def __is_negative(self) -> bool:
         return self.cent < 0
 
+    # comparison operators
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, Money):
+            return self.cent < other.cent
+        raise ValueError("Object to be compared has to be of type Money")
+
     @staticmethod
     def from_euro(euro: int) -> "Money":
         return Money.from_euro_and_cent(euro, 0)

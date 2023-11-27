@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from tqdm import tqdm
+import pandas as pd
 from controller.ai_controller import AiController
 
 from controller.player_controller import PlayerController
@@ -29,16 +30,22 @@ class ArenaController(PlayerController):
     actual_controller: PlayerController
     player_id: PlayerId
 
+    gamemode: GametypeWithSuit
+
     money: Money
+    money_per_gamemode: dict[GametypeWithSuit, Money]
     wins: int
-    played_gamemodes: list[GametypeWithSuit]
+    wins_per_gamemode: dict[GametypeWithSuit, int]
+    played_gamemodes: dict[GametypeWithSuit, int]
 
     def __init__(self, actual_controller: PlayerController) -> None:
         super().__init__()
         self.actual_controller = actual_controller
         self.money = Money(0)
         self.wins = 0
-        self.played_gamemodes = []
+        self.played_gamemodes = {}
+        self.money_per_gamemode = {}
+        self.wins_per_gamemode = {}
 
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         return await self.actual_controller.wants_to_play(current_lowest_gamegroup)
@@ -58,11 +65,19 @@ class ArenaController(PlayerController):
         if isinstance(event, GameStartUpdate):
             self.player_id = event.player
         if isinstance(event, GametypeDeterminedUpdate):
-            self.played_gamemodes.append(GametypeWithSuit(event.gametype, event.suit))
+            gamemode = GametypeWithSuit(event.gametype, event.suit)
+            self.gamemode = gamemode
+            self.played_gamemodes[gamemode] = self.played_gamemodes.get(gamemode, 0) + 1
         if isinstance(event, MoneyUpdate) and event.player == self.player_id:
             self.money += event.money
             if event.money.cent > 0:
                 self.wins += 1
+                self.wins_per_gamemode[self.gamemode] = (
+                    self.wins_per_gamemode.get(self.gamemode, 0) + 1
+                )
+            self.money_per_gamemode[self.gamemode] = (
+                self.money_per_gamemode.get(self.gamemode, Money(0)) + event.money
+            )
         return await self.actual_controller.on_game_event(event)
 
 
@@ -75,7 +90,10 @@ class Arena:
 
     money: list[Money]
     wins: list[int]
-    played_gamemodes: dict[GametypeWithSuit, int]
+    total_gamemodes: dict[GametypeWithSuit, int]
+    played_gamemodes: list[dict[GametypeWithSuit, int]]
+    money_per_gamemode: list[dict[GametypeWithSuit, Money]]
+    wins_per_gamemode: list[dict[GametypeWithSuit, int]]
 
     def __init__(self, config: ArenaConfig = ArenaConfig()) -> None:
         self.config = config
@@ -83,7 +101,9 @@ class Arena:
         self.bot_names = []
         self.money = []
         self.wins = []
-        self.played_gamemodes = {}
+        self.played_gamemodes = []
+        self.money_per_gamemode = []
+        self.wins_per_gamemode = []
 
     def add_bot(self, bot_creator: Callable[[], PlayerController]) -> None:
         """Provides a function to create a bot and add it to the arena."""
@@ -91,6 +111,9 @@ class Arena:
         self.bot_names.append(bot_creator.__name__)
         self.money.append(Money(0))
         self.wins.append(0)
+        self.played_gamemodes.append({})
+        self.money_per_gamemode.append({})
+        self.wins_per_gamemode.append({})
 
     async def run(self) -> None:
         rng = random.Random(self.config.rng_seed)
@@ -107,31 +130,64 @@ class Arena:
                 self.money[i] += controller.money
                 self.wins[i] += controller.wins
 
-            # Update played gamemodes, only first controller is enough as all controllers play the same
-            for gamemode in controllers[0].played_gamemodes:
-                self.played_gamemodes[gamemode] = (
-                    self.played_gamemodes.get(gamemode, 0) + 1
-                )
+                for gamemode, money in controller.money_per_gamemode.items():
+                    self.money_per_gamemode[i][gamemode] = (
+                        self.money_per_gamemode[i].get(gamemode, Money(0)) + money
+                    )
 
-    def print_results(self) -> None:
-        print(
-            f"Played {self.config.games} games with {self.config.rounds_per_game} rounds each"
-        )
+                for gamemode, wins in controller.wins_per_gamemode.items():
+                    self.wins_per_gamemode[i][gamemode] = (
+                        self.wins_per_gamemode[i].get(gamemode, 0) + wins
+                    )
 
-        total_rounds = self.config.games * self.config.rounds_per_game
+            # Update played gamemodes
+            for i, controller in enumerate(game.controllers):
+                for gamemode, played in controller.played_gamemodes.items():
+                    self.played_gamemodes[i][gamemode] = (
+                        self.played_gamemodes[i].get(gamemode, 0) + played
+                    )
 
+    def results_overview(self) -> pd.DataFrame:
+        total_games = self.config.games * self.config.rounds_per_game
+        df = pd.DataFrame(columns=["Bot", "Money", "Wins", "Winrate"])
         for i in range(len(self.bot_creators)):
             money = self.money[i]
-            win_rate = self.wins[i] / total_rounds
-            print(f"Bot {i} ({self.bot_names[i]}): {money} ({win_rate*100:.2f}%)")
+            wins = self.wins[i]
+            win_rate = wins / total_games
+            df.loc[i] = [self.bot_names[i], money, wins, win_rate]
 
-        print()
-        print("Played gamemodes percentage:")
-        played_gamemodes = sorted(
-            self.played_gamemodes.items(), key=lambda x: x[1], reverse=True
-        )
-        for gamemode, played in played_gamemodes:
-            print(f"{gamemode}: {played/total_rounds*100:.2f}%")
+        return df
+
+    def results_gamemodes(self) -> pd.DataFrame:
+        total_games = self.config.games * self.config.rounds_per_game
+        df = pd.DataFrame(columns=["Gamemode", "Played", "Play rate"])
+        for i in range(len(self.bot_creators)):
+            for gamemode, played in self.played_gamemodes[i].items():
+                df.loc[gamemode] = [gamemode, played, played / total_games]
+        return df
+
+    def results_gamemodes_per_player(self) -> list[pd.DataFrame]:
+        total_games = self.config.games * self.config.rounds_per_game
+        dfs = []
+        for i in range(len(self.bot_creators)):
+            df = pd.DataFrame(
+                columns=["Gamemode", "Played", "Play rate", "Wins", "Winrate", "Money"]
+            )
+            for gamemode, played in self.played_gamemodes[i].items():
+                wins = self.wins_per_gamemode[i].get(gamemode, 0)
+                money = self.money_per_gamemode[i].get(gamemode, Money(0))
+                win_rate = wins / played
+                df.loc[gamemode] = [
+                    gamemode,
+                    played,
+                    played / total_games,
+                    wins,
+                    win_rate,
+                    money,
+                ]
+            dfs.append(df)
+
+        return dfs
 
 
 if __name__ == "__main__":
@@ -141,4 +197,18 @@ if __name__ == "__main__":
     arena.add_bot(RandomController)
     arena.add_bot(RandomController)
     asyncio.run(arena.run())
-    arena.print_results()
+
+    print("Overview")
+    df = arena.results_overview()
+    print(df.sort_values(by="Money", ascending=False))
+
+    print()
+    print("Gamemodes")
+    df = arena.results_gamemodes()
+    print(df.sort_values(by="Play rate", ascending=False))
+
+    print()
+    print("Gamemodes per player")
+    dfs = arena.results_gamemodes_per_player()
+    for df in dfs:
+        print(df.sort_values(by="Money", ascending=False))
