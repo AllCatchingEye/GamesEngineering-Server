@@ -1,7 +1,6 @@
 import asyncio
 import random
 from dataclasses import dataclass
-from re import S
 from typing import Callable
 
 from controller.player_controller import PlayerController
@@ -18,7 +17,7 @@ from state.suits import Suit
 
 @dataclass
 class ArenaConfig:
-    games: int = 100
+    games: int = 1000
     rounds_per_game: int = 10
     rng_seed: int | None = None
 
@@ -122,8 +121,11 @@ class Arena:
 
         print()
         print("Played gamemodes percentage:")
-        for gamemode, count in self.played_gamemodes.items():
-            print(f"{gamemode}: {count/total_rounds*100:.2f}%")
+        played_gamemodes = sorted(
+            self.played_gamemodes.items(), key=lambda x: x[1], reverse=True
+        )
+        for gamemode, played in played_gamemodes:
+            print(f"{gamemode}: {played/total_rounds*100:.2f}%")
 
 
 if __name__ == "__main__":
