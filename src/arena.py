@@ -1,7 +1,7 @@
 import asyncio
 import random
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Type, TypeVar
 
 from tqdm import tqdm
 import pandas as pd
@@ -19,9 +19,20 @@ from state.stack import Stack
 from state.suits import Suit
 
 
+T = TypeVar("T")
+
+
+def increment(dictionary: dict[T, int], key: T, value: int = 1) -> None:
+    dictionary[key] = dictionary.get(key, 0) + value
+
+
+def increment_money(dictionary: dict[T, Money], key: T, value: Money) -> None:
+    dictionary[key] = dictionary.get(key, Money(0)) + value
+
+
 @dataclass
 class ArenaConfig:
-    games: int = 1000
+    games: int = 10
     rounds_per_game: int = 10
     rng_seed: int | None = None
 
@@ -67,17 +78,13 @@ class ArenaController(PlayerController):
         if isinstance(event, GametypeDeterminedUpdate):
             gamemode = GametypeWithSuit(event.gametype, event.suit)
             self.gamemode = gamemode
-            self.played_gamemodes[gamemode] = self.played_gamemodes.get(gamemode, 0) + 1
+            increment(self.played_gamemodes, gamemode)
         if isinstance(event, MoneyUpdate) and event.player == self.player_id:
             self.money += event.money
             if event.money.cent > 0:
                 self.wins += 1
-                self.wins_per_gamemode[self.gamemode] = (
-                    self.wins_per_gamemode.get(self.gamemode, 0) + 1
-                )
-            self.money_per_gamemode[self.gamemode] = (
-                self.money_per_gamemode.get(self.gamemode, Money(0)) + event.money
-            )
+                increment(self.wins_per_gamemode, self.gamemode)
+            increment_money(self.money_per_gamemode, self.gamemode, event.money)
         return await self.actual_controller.on_game_event(event)
 
 
@@ -131,21 +138,15 @@ class Arena:
                 self.wins[i] += controller.wins
 
                 for gamemode, money in controller.money_per_gamemode.items():
-                    self.money_per_gamemode[i][gamemode] = (
-                        self.money_per_gamemode[i].get(gamemode, Money(0)) + money
-                    )
+                    increment_money(self.money_per_gamemode[i], gamemode, money)
 
                 for gamemode, wins in controller.wins_per_gamemode.items():
-                    self.wins_per_gamemode[i][gamemode] = (
-                        self.wins_per_gamemode[i].get(gamemode, 0) + wins
-                    )
+                    increment(self.wins_per_gamemode[i], gamemode, wins)
 
             # Update played gamemodes
             for i, controller in enumerate(game.controllers):
                 for gamemode, played in controller.played_gamemodes.items():
-                    self.played_gamemodes[i][gamemode] = (
-                        self.played_gamemodes[i].get(gamemode, 0) + played
-                    )
+                    increment(self.played_gamemodes[i], gamemode, played)
 
     def results_overview(self) -> pd.DataFrame:
         total_games = self.config.games * self.config.rounds_per_game
@@ -171,12 +172,16 @@ class Arena:
         dfs = []
         for i in range(len(self.bot_creators)):
             df = pd.DataFrame(
-                columns=["Gamemode", "Played", "Play rate", "Wins", "Winrate", "Money"]
+                columns=["Gamemode", "Played", "Play rate", "Wins", "Winrate", "Money", "Money per game", "Money per win"]
             )
             for gamemode, played in self.played_gamemodes[i].items():
                 wins = self.wins_per_gamemode[i].get(gamemode, 0)
                 money = self.money_per_gamemode[i].get(gamemode, Money(0))
                 win_rate = wins / played
+                money_per_game = Money(int(money.cent / played))
+                money_per_win = Money(0)
+                if wins > 0:
+                    money_per_win = Money(int(money.cent / wins))
                 df.loc[gamemode] = [
                     gamemode,
                     played,
@@ -184,6 +189,8 @@ class Arena:
                     wins,
                     win_rate,
                     money,
+                    money_per_game,
+                    money_per_win
                 ]
             dfs.append(df)
 
