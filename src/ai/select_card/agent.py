@@ -8,6 +8,7 @@ from state.stack import Stack
 
 class ISelectCardAgent(ABC):
     player_id: PlayerId
+    hand: list[Card]
 
     def __init__(self) -> None:
         pass

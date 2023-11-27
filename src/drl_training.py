@@ -10,15 +10,12 @@ EPOCHS_UNTIL_APPLYING_TRAINING = 100
 
 def get_new_game():
     new_game = Game(random.Random())
-    new_trained_ai_controller = AiController(new_game.players[0], True)
+    new_trained_ai_controller = AiController(True)
     new_game.controllers = [
         new_trained_ai_controller,
-        AiController(new_game.players[1], False),
-        AiController(new_game.players[2], False),
-        AiController(new_game.players[3], False),
-        # RandomController(new_game.players[1]),
-        # RandomController(new_game.players[2]),
-        # RandomController(new_game.players[3]),
+        AiController(False),
+        AiController(False),
+        AiController(False),
     ]
     return (new_game, new_trained_ai_controller)
 

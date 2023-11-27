@@ -120,6 +120,7 @@ class DQLAgent(ISelectCardAgent):
     def on_game_event(self, event: Event):
         if isinstance(event, GameStartUpdate):
             self.player_id = event.player
+            self.hand = event.hand
 
         self.__handle_model_loading(event)
         self.__handle_allies(event)
