@@ -1,6 +1,7 @@
 import os
 
-from ai.select_card.simple_deep_q_learning.rl_agent import RLAgent, RLAgentConfig
+from ai.select_card.simple_deep_q_learning.rl_agent import DQLAgent, DQLAgentConfig
+from ai.select_card.simple_deep_q_learning.rl_agent_trainer import DQLAgentTrainer
 from ai.select_game_type.neuronal_network.agent.gametype_helper import (
     game_type_to_game_group,
 )
@@ -41,12 +42,13 @@ class AiController(PlayerController):
             "select_card",
             "simple_deep_q_learning",
             "model",
-            "params.pth",
         )
-        rl_agent_config = RLAgentConfig(
-            policy_model_path=rl_agents_model_params_path, train=train
+        rl_agent_config = DQLAgentConfig(policy_model_base_path=rl_agents_model_params_path)
+        self.play_game_agent = (
+            DQLAgentTrainer(rl_agent_config)
+            if train is True
+            else DQLAgent(rl_agent_config)
         )
-        self.play_game_agent = RLAgent(rl_agent_config)
 
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
@@ -57,12 +59,12 @@ class AiController(PlayerController):
         )
 
     async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
-        return self.play_game_agent.play_card(
+        return self.play_game_agent.select_card(
             stack=stack, playable_cards=playable_cards
         )
 
     async def on_game_event(self, event: Event) -> None:
-        self.play_game_agent.on_game_event(event=event)
+        self.play_game_agent.on_game_event(event=event, player=self.player)
 
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup):
         return self.select_game_agent.should_play(
@@ -76,3 +78,10 @@ class AiController(PlayerController):
             self.select_game_agent.targeted_game_type is not None
         ), "First ask the ai controller if it wants to play, then ask for the game group"
         return game_type_to_game_group(self.select_game_agent.targeted_game_type[0])
+
+    def persist_training_results(self):
+        assert isinstance(
+            self.play_game_agent, DQLAgentTrainer
+        ), "The controller doesn't get trained."
+
+        self.play_game_agent.persist_trained_policy()

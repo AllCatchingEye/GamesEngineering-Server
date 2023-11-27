@@ -40,12 +40,11 @@ class WebSocketController(PlayerController):
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
-        
         mapped: list[GametypeWithSuit] = []
-        
+
         for gametype, suit in choosable_gametypes:
             mapped.append(GametypeWithSuit(gametype, suit))
-        
+
         request = PlayerSelectGameTypeQuery(mapped)
         await self.send(request)
 
@@ -65,7 +64,7 @@ class WebSocketController(PlayerController):
 
         response = await self.get_answer(PlayerChooseGameGroupAnswer)
         return available_groups[response.gamegroup_index]
-    
+
     async def send(self, event: Event) -> None:
         message = event.to_json()
         logging.info(f"Sending {message}")

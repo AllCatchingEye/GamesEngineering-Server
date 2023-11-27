@@ -18,10 +18,12 @@ class Gametype(Enum):
     def __repr__(self) -> str:
         return self.name
 
+
 @dataclass
 class GametypeWithSuit:
     gametype: Gametype
     suit: Suit | None
+
 
 stake_for_gametype = {
     Gametype.SOLO: Stake.HIGH,

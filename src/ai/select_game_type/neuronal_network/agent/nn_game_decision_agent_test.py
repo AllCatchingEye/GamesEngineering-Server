@@ -6,7 +6,7 @@ from ai.select_game_type.neuronal_network.agent.nn_game_decision_agent import (
     NNAgentConfig,
 )
 from state.card import Card
-from state.gametypes import Gametype
+from state.gametypes import GameGroup, Gametype
 from state.ranks import Rank
 from state.suits import Suit
 
@@ -39,7 +39,9 @@ class TestClass(unittest.TestCase):
             Card(Suit.SCHELLEN, Rank.UNTER),
         ]
         # Must not raise
-        should_play = self.agent.should_play(hand_cards=some_hand_cards, decisions=[])
+        should_play = self.agent.should_play(
+            hand_cards=some_hand_cards, current_lowest_gamegroup=GameGroup.SAUSPIEL
+        )
         self.assertEqual(type(should_play), bool)
         result = self.agent.select_game_type(
             hand_cards=some_hand_cards, choosable_game_types=[]
