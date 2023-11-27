@@ -8,9 +8,14 @@ from ai.nn_helper import action_to_card, card_to_nn_input_values, encode_dqn_inp
 from ai.select_card.agent import ISelectCardAgent
 from ai.select_card.simple_deep_q_learning.policyNN import PolicyNN
 from state.card import Card
-from state.event import AnnouncePlayPartyUpdate, Event, GametypeDeterminedUpdate
+from state.event import (
+    AnnouncePlayPartyUpdate,
+    Event,
+    GameStartUpdate,
+    GametypeDeterminedUpdate,
+)
 from state.gametypes import Gametype
-from state.player import Player, PlayerId
+from state.player import PlayerId
 from state.stack import Stack
 
 
@@ -37,7 +42,10 @@ class DQLAgent(ISelectCardAgent):
         self.model.load_state_dict(params)
 
     def _get_model_path(self, game_type: Gametype):
-        return "%s/%s.pth"%(self._config.policy_model_base_path, game_type.name.lower())
+        return "%s/%s.pth" % (
+            self._config.policy_model_base_path,
+            game_type.name.lower(),
+        )
 
     def _initialize_model(self, model_path: str):
         self.__load_model(model_path)
@@ -83,34 +91,35 @@ class DQLAgent(ISelectCardAgent):
     def select_card(self, stack: Stack, playable_cards: list[Card]):
         return self._compute_best_card(stack, playable_cards)
 
-    def __get_allies(
-        self, parties: list[list[PlayerId]], player: Player
-    ) -> list[PlayerId]:
+    def __get_allies(self, parties: list[list[PlayerId]]) -> list[PlayerId]:
         for party in parties:
-            if player.id in party:
+            if self.player_id in party:
                 return party
         return []
 
     def get_allies(self):
         return self.__allies
 
-    def __handle_allies(self, event: Event, player: Player):
+    def __handle_allies(self, event: Event):
         if (
             isinstance(event, GametypeDeterminedUpdate)
             and event.gametype != Gametype.SAUSPIEL
             and event.parties is not None
         ):
-            self.__allies = self.__get_allies(event.parties, player)
+            self.__allies = self.__get_allies(event.parties)
         elif isinstance(event, AnnouncePlayPartyUpdate):
-            self.__allies = self.__get_allies(event.parties, player)
+            self.__allies = self.__get_allies(event.parties)
 
     def __handle_model_loading(self, event: Event):
-        if(isinstance(event, GametypeDeterminedUpdate)):
+        if isinstance(event, GametypeDeterminedUpdate):
             self._game_type = event.gametype
             model_path = self._get_model_path(event.gametype)
             if path.exists(model_path):
                 self._initialize_model(model_path)
 
-    def on_game_event(self, event: Event, player: Player):
+    def on_game_event(self, event: Event):
+        if isinstance(event, GameStartUpdate):
+            self.player_id = event.player
+
         self.__handle_model_loading(event)
-        self.__handle_allies(event, player)
+        self.__handle_allies(event)
