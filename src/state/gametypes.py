@@ -24,6 +24,14 @@ class GametypeWithSuit:
     gametype: Gametype
     suit: Suit | None
 
+    def __hash__(self) -> int:
+        return hash((self.gametype, self.suit))
+
+    def __str__(self) -> str:
+        if self.suit is None:
+            return str(self.gametype.name)
+        return f"{self.suit.name} {self.gametype.name}"
+
 
 stake_for_gametype = {
     Gametype.SOLO: Stake.HIGH,
