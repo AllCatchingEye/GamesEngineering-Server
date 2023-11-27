@@ -1,14 +1,27 @@
 import unittest
 
 from ai.nn_helper import (
+    action_to_card,
+    card_to_action,
     card_to_nn_input_values_index,
     code_to_game_type,
-    nn_output_code_to_card,
 )
 from state.card import Card
 from state.gametypes import Gametype
 from state.ranks import Rank
 from state.suits import Suit
+
+CARD_ACTION_MAPPING = {
+    0: Card(Suit.EICHEL, Rank.OBER),
+    1: Card(Suit.EICHEL, Rank.UNTER),
+    7: Card(Suit.EICHEL, Rank.SIEBEN),
+    8: Card(Suit.GRAS, Rank.OBER),
+    8 + 7: Card(Suit.GRAS, Rank.SIEBEN),
+    (2 * 8): Card(Suit.HERZ, Rank.OBER),
+    (2 * 8) + 7: Card(Suit.HERZ, Rank.SIEBEN),
+    (3 * 8): Card(Suit.SCHELLEN, Rank.OBER),
+    (3 * 8) + 7: Card(Suit.SCHELLEN, Rank.SIEBEN),
+}
 
 
 class TestClass(unittest.TestCase):
@@ -121,29 +134,10 @@ class TestClass(unittest.TestCase):
         self.assertEqual(card.suit, target.suit)
         self.assertEqual(card.rank, target.rank)
 
-    def test_nn_output_code_to_card(self):
-        self.__assert_card_equal(
-            nn_output_code_to_card(0), Card(Suit.EICHEL, Rank.OBER)
-        )
-        self.__assert_card_equal(
-            nn_output_code_to_card(1), Card(Suit.EICHEL, Rank.UNTER)
-        )
-        self.__assert_card_equal(
-            nn_output_code_to_card(7), Card(Suit.EICHEL, Rank.SIEBEN)
-        )
-        self.__assert_card_equal(nn_output_code_to_card(8), Card(Suit.GRAS, Rank.OBER))
-        self.__assert_card_equal(
-            nn_output_code_to_card(8 + 7), Card(Suit.GRAS, Rank.SIEBEN)
-        )
-        self.__assert_card_equal(
-            nn_output_code_to_card(2 * 8), Card(Suit.HERZ, Rank.OBER)
-        )
-        self.__assert_card_equal(
-            nn_output_code_to_card(2 * 8 + 7), Card(Suit.HERZ, Rank.SIEBEN)
-        )
-        self.__assert_card_equal(
-            nn_output_code_to_card(3 * 8), Card(Suit.SCHELLEN, Rank.OBER)
-        )
-        self.__assert_card_equal(
-            nn_output_code_to_card(3 * 8 + 7), Card(Suit.SCHELLEN, Rank.SIEBEN)
-        )
+    def test_action_to_card(self):
+        for action, card in CARD_ACTION_MAPPING.items():
+            self.__assert_card_equal(action_to_card(action), card)
+
+    def test_card_to_action(self):
+        for action, card in CARD_ACTION_MAPPING.items():
+            self.assertEqual(card_to_action(card), action)

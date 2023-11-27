@@ -1,6 +1,8 @@
 from state.card import Card
 from state.gametypes import Gametype
+from state.player import PlayerId
 from state.ranks import Rank, get_all_ranks
+from state.stack import PlayedCard
 from state.suits import Suit, get_all_suits
 
 ranks = get_all_ranks()
@@ -22,11 +24,11 @@ rank_values = {
 }
 
 
-def card_to_suit_offset(suit: Suit):
+def card_to_suit_offset(suit: Suit) -> int:
     return suit.value
 
 
-def card_to_rank_value(rank: Rank):
+def card_to_rank_value(rank: Rank) -> int:
     value = rank_values.get(rank)
     assert value is not None, "The given Rank " + rank.name + " could not be found"
     return value
@@ -38,9 +40,13 @@ def card_to_nn_input_values_index(card: Card) -> int:
     return suit_offset * NUM_RANKS + rank_value
 
 
-def nn_output_code_to_card(code: int) -> Card:
-    suit_code = code // NUM_RANKS
-    rank_code = code % NUM_RANKS
+def card_to_action(card: Card) -> int:
+    return card.get_suit().value * NUM_RANKS + card_to_rank_value(card.get_rank())
+
+
+def action_to_card(action: int) -> Card:
+    suit_code = action // NUM_RANKS
+    rank_code = action % NUM_RANKS
     return Card(suits[suit_code], list(rank_values.keys())[rank_code])
 
 
@@ -50,6 +56,33 @@ def card_to_nn_input_values(hand_cards: list[Card]) -> list[int]:
         card_index = card_to_nn_input_values_index(card)
         nn_input[card_index] = 1
     return nn_input
+
+
+def allied_card_nn_input(
+    stack: list[tuple[Card, PlayerId]], allies: list[PlayerId]
+) -> list[int]:
+    ally_ids = [id for id in allies]
+    nn_input = [0] * NUM_CARDS
+    for played_card, player_id in stack:
+        card_index = card_to_nn_input_values_index(played_card)
+        nn_input[card_index] = 1 if player_id in ally_ids else 0
+    return nn_input
+
+
+def encode_dqn_input(
+    stack: list[tuple[Card, PlayerId]],
+    allies: list[PlayerId],
+    playable_cards: list[Card],
+) -> list[int]:
+    encoded_input: list[int] = []
+    played_cards = [played_card for (played_card, _) in stack]
+    encoded_stack_input = card_to_nn_input_values(played_cards)
+    encoded_ally_input = allied_card_nn_input(stack, allies)
+    encoded_playable_cards = card_to_nn_input_values(playable_cards)
+    encoded_input.extend(encoded_stack_input)
+    encoded_input.extend(encoded_ally_input)
+    encoded_input.extend(encoded_playable_cards)
+    return encoded_input
 
 
 def code_to_game_type(game_type_code: int) -> tuple[Gametype, Suit | None]:
