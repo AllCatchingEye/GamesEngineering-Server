@@ -2,6 +2,7 @@ import asyncio
 import random
 from dataclasses import dataclass
 from typing import Callable
+from controller.ai_controller import AiController
 
 from controller.player_controller import PlayerController
 from controller.random_controller import RandomController
@@ -68,6 +69,7 @@ class Arena:
 
     config: ArenaConfig
     bot_creators: list[Callable[[], PlayerController]]
+    bot_names: list[str]
 
     money: list[Money]
     wins: list[int]
@@ -76,6 +78,7 @@ class Arena:
     def __init__(self, config: ArenaConfig = ArenaConfig()) -> None:
         self.config = config
         self.bot_creators = []
+        self.bot_names = []
         self.money = []
         self.wins = []
         self.played_gamemodes = {}
@@ -83,6 +86,7 @@ class Arena:
     def add_bot(self, bot_creator: Callable[[], PlayerController]) -> None:
         """Provides a function to create a bot and add it to the arena."""
         self.bot_creators.append(bot_creator)
+        self.bot_names.append(bot_creator.__name__)
         self.money.append(Money(0))
         self.wins.append(0)
 
@@ -117,7 +121,7 @@ class Arena:
         for i in range(len(self.bot_creators)):
             money = self.money[i]
             win_rate = self.wins[i] / total_rounds
-            print(f"Bot {i}: {money} ({win_rate*100:.2f}%)")
+            print(f"Bot {i} ({self.bot_names[i]}): {money} ({win_rate*100:.2f}%)")
 
         print()
         print("Played gamemodes percentage:")
@@ -130,7 +134,7 @@ class Arena:
 
 if __name__ == "__main__":
     arena = Arena()
-    arena.add_bot(RandomController)
+    arena.add_bot(AiController)
     arena.add_bot(RandomController)
     arena.add_bot(RandomController)
     arena.add_bot(RandomController)
