@@ -2,6 +2,8 @@ import asyncio
 import random
 from dataclasses import dataclass
 from typing import Callable
+
+from tqdm import tqdm
 from controller.ai_controller import AiController
 
 from controller.player_controller import PlayerController
@@ -92,7 +94,7 @@ class Arena:
 
     async def run(self) -> None:
         rng = random.Random(self.config.rng_seed)
-        for game in range(self.config.games):
+        for game in tqdm(range(self.config.games), desc="Games", unit="game", ncols=80):
             game = Game(rng=rng)
             controllers = [
                 ArenaController(bot_creator()) for bot_creator in self.bot_creators
