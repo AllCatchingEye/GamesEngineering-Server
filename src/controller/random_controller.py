@@ -4,14 +4,13 @@ from controller.player_controller import PlayerController
 from state.card import Card
 from state.event import Event
 from state.gametypes import GameGroup, Gametype
-from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
 
 
 class RandomController(PlayerController):
-    def __init__(self, player: Player, rng: random.Random = random.Random()):
-        super().__init__(player)
+    def __init__(self, rng: random.Random = random.Random()):
+        super().__init__()
         self.rng = rng
 
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:

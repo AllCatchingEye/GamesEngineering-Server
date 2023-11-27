@@ -11,16 +11,17 @@ from ai.select_game_type.neuronal_network.agent.nn_game_decision_agent import (
 )
 from controller.player_controller import PlayerController
 from state.card import Card
-from state.event import Event
+from state.event import Event, GameStartUpdate
 from state.gametypes import GameGroup, Gametype
-from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
 
 
 class AiController(PlayerController):
-    def __init__(self, player: Player, train: bool = False):
-        super().__init__(player)
+    hand_cards: list[Card]
+
+    def __init__(self, train: bool = False):
+        super().__init__()
         from_here = os.path.dirname(os.path.abspath(__file__))
 
         nn_agents_model_params_path = os.path.join(
@@ -54,7 +55,7 @@ class AiController(PlayerController):
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
         return self.select_game_agent.select_game_type(
-            hand_cards=self.player.hand.get_all_cards(),
+            hand_cards=self.hand_cards,
             choosable_game_types=choosable_gametypes,
         )
 
@@ -64,11 +65,14 @@ class AiController(PlayerController):
         )
 
     async def on_game_event(self, event: Event) -> None:
-        self.play_game_agent.on_game_event(event=event, player=self.player)
+        if isinstance(event, GameStartUpdate):
+            self.hand_cards = event.hand
+
+        self.play_game_agent.on_game_event(event=event)
 
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup):
         return self.select_game_agent.should_play(
-            hand_cards=self.player.hand.get_all_cards(),
+            hand_cards=self.hand_cards,
             current_lowest_gamegroup=current_lowest_gamegroup,
         )
 

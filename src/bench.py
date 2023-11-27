@@ -6,7 +6,7 @@ from logic.game import Game
 
 
 async def main() -> None:
-    i = 1000
+    i = 10000
 
     now = time.time()
 

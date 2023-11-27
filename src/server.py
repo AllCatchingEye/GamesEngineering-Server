@@ -57,10 +57,10 @@ async def single_player_lobby(ws: WebSocketServerProtocol) -> None:
 def create_single_player_game(ws: WebSocketServerProtocol) -> Game:
     game: Game = Game()
     game.controllers = [
-        WebSocketController(game.players[0], ws),
-        RandomController(game.players[1]),
-        RandomController(game.players[2]),
-        RandomController(game.players[3]),
+        WebSocketController(ws),
+        RandomController(),
+        RandomController(),
+        RandomController(),
     ]
     return game
 
