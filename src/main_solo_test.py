@@ -7,10 +7,10 @@ from logic.game import Game
 from state.card import Card
 from state.event import *
 from state.gametypes import Gametype
+from state.player import Player
 from state.ranks import Rank
 from state.stack import PlayedCard, Stack
 from state.suits import Suit
-from state.player import Player
 
 T = TypeVar("T", bound=Event)
 
@@ -107,7 +107,7 @@ class TestClass(unittest.TestCase):
     def test_round_1(self):
         r = 1
         playable_cards, stack = self.sut.player_turns[r - 1]
-        play_order = self.sut.event_history.get_events_of_type(PlayOrderUpdate)[r-1]
+        play_order = self.sut.event_history.get_events_of_type(PlayOrderUpdate)[r - 1]
         cards_played = self.sut.event_history.get_events_of_type(CardPlayedUpdate)[
             4 * (r - 1) : 4 * (r - 1) + 4
         ]
@@ -117,7 +117,10 @@ class TestClass(unittest.TestCase):
 
         # player had first turn
         self.assertTrue(play_order is not None)
-        self.assertEqual(play_order.order, [self.player0.id, self.player1.id, self.player2.id, self.player3.id])
+        self.assertEqual(
+            play_order.order,
+            [self.player0.id, self.player1.id, self.player2.id, self.player3.id],
+        )
         self.assertEqual(len(playable_cards), 8)
         self.assertEqual(len(stack), 0)
 
@@ -141,7 +144,7 @@ class TestClass(unittest.TestCase):
     def test_round_2(self):
         r = 2
         playable_cards, stack = self.sut.player_turns[r - 1]
-        play_order = self.sut.event_history.get_events_of_type(PlayOrderUpdate)[r-1]
+        play_order = self.sut.event_history.get_events_of_type(PlayOrderUpdate)[r - 1]
         cards_played = self.sut.event_history.get_events_of_type(CardPlayedUpdate)[
             4 * (r - 1) : 4 * (r - 1) + 4
         ]
@@ -151,7 +154,10 @@ class TestClass(unittest.TestCase):
 
         # player had first turn, order did not change
         self.assertTrue(play_order is not None)
-        self.assertEqual(play_order.order, [self.player0.id, self.player1.id, self.player2.id, self.player3.id])
+        self.assertEqual(
+            play_order.order,
+            [self.player0.id, self.player1.id, self.player2.id, self.player3.id],
+        )
         self.assertEqual(len(playable_cards), 7)
         self.assertEqual(len(stack), 0)
 
@@ -181,7 +187,7 @@ class TestClass(unittest.TestCase):
     def test_round_3(self):
         r = 3
         playable_cards, stack = self.sut.player_turns[r - 1]
-        play_order = self.sut.event_history.get_events_of_type(PlayOrderUpdate)[r-1]
+        play_order = self.sut.event_history.get_events_of_type(PlayOrderUpdate)[r - 1]
         cards_played = self.sut.event_history.get_events_of_type(CardPlayedUpdate)[
             4 * (r - 1) : 4 * (r - 1) + 4
         ]
@@ -191,7 +197,10 @@ class TestClass(unittest.TestCase):
 
         # player had second last turn, order changed
         self.assertTrue(play_order is not None)
-        self.assertEqual(play_order.order, [self.player2.id, self.player3.id, self.player0.id, self.player1.id])
+        self.assertEqual(
+            play_order.order,
+            [self.player2.id, self.player3.id, self.player0.id, self.player1.id],
+        )
         self.assertEqual(len(playable_cards), 1)
         self.assertEqual(len(stack), 2)
 

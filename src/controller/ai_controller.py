@@ -44,7 +44,9 @@ class AiController(PlayerController):
             "simple_deep_q_learning",
             "model",
         )
-        rl_agent_config = DQLAgentConfig(policy_model_base_path=rl_agents_model_params_path)
+        rl_agent_config = DQLAgentConfig(
+            policy_model_base_path=rl_agents_model_params_path
+        )
         self.play_game_agent = (
             DQLAgentTrainer(rl_agent_config)
             if train is True

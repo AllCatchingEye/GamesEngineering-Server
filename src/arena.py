@@ -3,10 +3,10 @@ import random
 from dataclasses import dataclass
 from typing import Callable, Type, TypeVar
 
-from tqdm import tqdm
 import pandas as pd
-from controller.ai_controller import AiController
+from tqdm import tqdm
 
+from controller.ai_controller import AiController
 from controller.player_controller import PlayerController
 from controller.random_controller import RandomController
 from logic.game import Game
@@ -17,7 +17,6 @@ from state.money import Money
 from state.player import PlayerId
 from state.stack import Stack
 from state.suits import Suit
-
 
 T = TypeVar("T")
 

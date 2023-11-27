@@ -8,7 +8,7 @@ from state.stack import Stack
 
 class ISelectCardAgent(ABC):
     player_id: PlayerId
-    
+
     def __init__(self) -> None:
         pass
 

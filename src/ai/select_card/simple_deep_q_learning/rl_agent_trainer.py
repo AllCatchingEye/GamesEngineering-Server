@@ -59,7 +59,7 @@ class DQLAgentTrainer(DQLAgent):
     def persist_trained_policy(self):
         if self._game_type is None:
             raise Exception("game_type is not defined, yet.")
-        
+
         torch.save(self.model.state_dict(), self._get_model_path(self._game_type))
 
     def __get_eps_threshold(self, steps_done: int) -> float:
@@ -123,7 +123,10 @@ class DQLAgentTrainer(DQLAgent):
                 self.__round_cards, self.get_allies(), player.hand.cards
             )
             next_state = [
-                a | b for a, b in zip(encoded_cards_of_this_round, self.__state) # TODO: self.state contains former hand cards??
+                a | b
+                for a, b in zip(
+                    encoded_cards_of_this_round, self.__state
+                )  # TODO: self.state contains former hand cards??
             ]
             self.dql_processor.memoize_state(
                 self.__state, self.__played_card, self.__reward, next_state
