@@ -1,3 +1,5 @@
+from typing import Callable
+
 from controller.player_controller import PlayerController
 from logic.gamemodes.gamemode_geier import GameModeGeier
 from logic.gamemodes.gamemode_sauspiel import GameModeSauspiel
@@ -13,32 +15,50 @@ from state.suits import Suit, get_all_suits
 
 
 class HandcraftedController(PlayerController):
+    player_id: PlayerId
     hand: Hand
     played_cards: list[Card]
     ally: list[Player]
     current_gametype: Gametype
-    valid_gamegroups: list[GameGroup]
+    current_suit: Suit
+    highest_gamegroup = GameGroup | None
     valid_gamemodes: list[(Gametype, Suit)]
+    play_card_gamemode: Callable
 
     def __init__(self, player: Player):
         super().__init__(player)
         self.played_cards = []
-        self.valid_gamegroups = []
+        self.highest_gamegroup = None
         self.valid_gamemodes = []
 
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
-        if current_lowest_gamegroup.value == 4:
-            if self.is_sauspiel_valid():
-                self.valid_gamegroups.append(GameGroup.SAUSPIEL)
-        if current_lowest_gamegroup.value >= 3:
-
         if current_lowest_gamegroup.value >= 1:
             soli_gamemodes = self.is_farbsolo_valid()
             if len(soli_gamemodes) > 0:
                 self.valid_gamemodes.append(soli_gamemodes)
-                self.valid_gamegroups.append(GameGroup.HIGH_SOLO)
-        if len(self.valid_gamegroups) > 0:
-            return True
+                self.highest_gamegroup = GameGroup.HIGH_SOLO
+                return True
+        if current_lowest_gamegroup.value >= 2:
+            wenz_gamemodes = self.is_wenz_or_geier_valid(Gametype.WENZ)
+            geier_gamemodes = self.is_wenz_or_geier_valid(Gametype.GEIER)
+            if len(wenz_gamemodes) > 0 or len(geier_gamemodes) > 0:
+                self.valid_gamemodes += wenz_gamemodes
+                self.valid_gamemodes += geier_gamemodes
+                self.highest_gamegroup = GameGroup.MID_SOLO
+                return True
+        if current_lowest_gamegroup.value >= 3:
+            farbwenz_gamemodes = self.is_farbwenz_or_farbgeier_valid(Gametype.FARBWENZ)
+            farbgeier_gamemodes = self.is_farbwenz_or_farbgeier_valid(Gametype.FARBGEIER)
+            if len(farbwenz_gamemodes) > 0 or len(farbgeier_gamemodes) > 0:
+                self.valid_gamemodes += farbwenz_gamemodes
+                self.valid_gamemodes += farbgeier_gamemodes
+                self.highest_gamegroup = GameGroup.LOW_SOLO
+                return True
+        if current_lowest_gamegroup.value == 4:
+            if self.is_sauspiel_valid():
+                self.highest_gamegroup = GameGroup.SAUSPIEL
+                return True
+        return False
 
     def is_sauspiel_valid(self) -> bool:
         gamemode = GameModeSauspiel(Suit.EICHEL)
@@ -215,7 +235,8 @@ class HandcraftedController(PlayerController):
                                         for last_farbe in fehl_farben:
                                             if last_farbe is not ass.suit and last_farbe is not farbe:
                                                 zehn_groesser_count = 0
-                                                for card in self.hand.get_all_cards_for_suit(farbe, gamemode.get_trump_cards()):
+                                                for card in self.hand.get_all_cards_for_suit(farbe,
+                                                                                             gamemode.get_trump_cards()):
                                                     if card.get_rank().value > 6:
                                                         zehn_groesser_count += 1
                                                 if zehn_groesser_count > 0:
@@ -225,13 +246,13 @@ class HandcraftedController(PlayerController):
                     return type
                 elif len(fehl_farben) == 2:
                     if running_cards == 2 and self.hand.get_all_cards_for_rank(Rank.ASS) == 2:
-                            zehn_groesser_count = 0
-                            for farbe in fehl_farben:
-                                for card in self.hand.get_all_cards_for_suit(farbe, gamemode.get_trump_cards()):
-                                    if card.get_rank().value > 6:
-                                        zehn_groesser_count += 1
-                            if zehn_groesser_count > 3:
-                                return type
+                        zehn_groesser_count = 0
+                        for farbe in fehl_farben:
+                            for card in self.hand.get_all_cards_for_suit(farbe, gamemode.get_trump_cards()):
+                                if card.get_rank().value > 6:
+                                    zehn_groesser_count += 1
+                        if zehn_groesser_count > 3:
+                            return type
                 elif len(fehl_farben) == 3:
                     if running_cards > 0 and self.hand.get_all_cards_for_rank(Rank.ASS) == 2:
                         for farbe in fehl_farben:
@@ -272,10 +293,14 @@ class HandcraftedController(PlayerController):
         farbwenz_or_geier = []
         for suit in get_all_suits():
             type = (gametype, suit)
-            if gametype == Gametype.WENZ:
+            if gametype == Gametype.FARBWENZ:
                 gamemode = GameModeWenz(suit)
-            elif gametype == Gametype.GEIER:
+                high_trumps = self.hand.get_all_cards_for_rank(Rank.UNTER)
+                trump_rank = Rank.UNTER
+            elif gametype == Gametype.FARBGEIER:
                 gamemode = GameModeGeier(suit)
+                high_trumps = self.hand.get_all_cards_for_rank(Rank.OBER)
+                trump_rank = Rank.OBER
             else:
                 return farbwenz_or_geier
             trumps_in_hand = self.hand.get_all_trumps_in_deck(gamemode.get_trump_cards())
@@ -284,60 +309,45 @@ class HandcraftedController(PlayerController):
             running_cards = self.get_running_cards(gamemode.get_trump_cards())
             match len(trumps_in_hand):
                 case 8:
-                    if len(self.hand.get_all_cards_for_rank(Rank.OBER)) > 0 and len(
-                            self.hand.get_all_cards_for_rank(Rank.UNTER)) > 0:
-                        farbwenz_or_geier.append(type)
+                    farbwenz_or_geier.append(type)
                 case 7:
-                    unter_groesser_herz_count = 0
-                    ober_groesser_herz_count = 0
-                    herz_zehn_groesser_count = 0
-                    unter_count = 0
-                    ober_count = 0
-                    for trump in trumps_in_hand:
-                        index = gamemode.get_trump_cards().index(trump)
-                        if index < 10:
-                            herz_zehn_groesser_count += 1
-                        if index < 8:
-                            unter_count += 1
-                        if index < 7:
-                            unter_groesser_herz_count += 1
-                        if index < 4:
-                            ober_count += 1
-                        if index < 3:
-                            ober_groesser_herz_count += 1
-                    if unter_groesser_herz_count > 3 and ober_count > 1 and self.has_card(Suit.EICHEL, Rank.OBER):
+                    if len(high_trumps) > 1:
                         farbwenz_or_geier.append(type)
-                    elif unter_count > 2 and ober_groesser_herz_count > 0 and herz_zehn_groesser_count > 4 and len(
-                            fehl_asse) == 1:
+                    elif running_cards > 0:
                         farbwenz_or_geier.append(type)
                 case 6:
-                    unter_groesser_eichel_count = 0
-                    herz_zehn_groesser_count = 0
-                    unter_count = 0
-                    for trump in trumps_in_hand:
-                        index = gamemode.get_trump_cards().index(trump)
-                        if index < 10:
-                            herz_zehn_groesser_count += 1
-                        if index < 8:
-                            unter_count += 1
-                        if index < 5:
-                            unter_groesser_eichel_count += 1
-                    if running_cards > 1 and unter_groesser_eichel_count > 2 and unter_count > 4 and herz_zehn_groesser_count > 5:
-                        if len(fehl_asse) > 1:
+                    if len(high_trumps) > 2:
+                        farbwenz_or_geier.append(type)
+                    else:
+                        high_trump_groesser_herz_count = 0
+                        for trump in high_trumps:
+                            index = gamemode.get_trump_cards().index(trump)
+                            if index < 3:
+                                high_trump_groesser_herz_count += 1
+                        if high_trump_groesser_herz_count > 1:
                             farbwenz_or_geier.append(type)
-                        elif len(fehl_asse) == 1 and len(fehl_farben) == 1:
+                        elif fehl_farben == 1:
                             farbwenz_or_geier.append(type)
                 case 5:
-                    unter_groesser_eichel_count = 0
-                    for trump in trumps_in_hand:
+                    high_trump_groesser_herz_count = 0
+                    zehn_groesser_count = 0
+                    for trump in high_trumps:
                         index = gamemode.get_trump_cards().index(trump)
+                        if index < 3:
+                            high_trump_groesser_herz_count += 1
                         if index < 5:
-                            unter_groesser_eichel_count += 1
-                    if running_cards > 2 and unter_groesser_eichel_count > 3 and len(fehl_asse) > 1 and len(
-                            fehl_farben) < 3:
-                        farbwenz_or_geier.append(type)
+                            zehn_groesser_count += 1
+                    if high_trump_groesser_herz_count > 1 and zehn_groesser_count > 2:
+                        match len(fehl_farben):
+                            case 3:
+                                if len(fehl_asse) > 1:
+                                    farbwenz_or_geier.append(type)
+                            case 2:
+                                if len(fehl_asse) > 0:
+                                    farbwenz_or_geier.append(type)
+                            case 1:
+                                farbwenz_or_geier.append(type)
         return farbwenz_or_geier
-
 
     def get_fehl_farben(self, hand: list[Card], trumps: list[Card]) -> list[Suit]:
         fehl_farben = []
@@ -371,22 +381,63 @@ class HandcraftedController(PlayerController):
     async def select_gametype(
             self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
-        return self.rng.choice(choosable_gametypes)
+        selected_gamemode = self.rng.choice(self.valid_gamemodes)
+        if selected_gamemode in choosable_gametypes:
+            return selected_gamemode
+        else:
+            return self.rng.choice(choosable_gametypes)
 
     async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
-        return self.rng.choice(playable_cards)
+        return self.play_card_gamemode(stack, playable_cards)
+
+    def play_card_solo(self, stack: Stack, playable_cards: list[Card]) -> Card:
+        pass
+
+    def play_card_anti_solo(self, stack: Stack, playable_cards: list[Card]) -> Card:
+        pass
+
+    def play_card_sauspiel(self, stack: Stack, playable_cards: list[Card]) -> Card:
+        pass
+
+    def play_card_anti_sauspiel(self, stack: Stack, playable_cards: list[Card]) -> Card:
+        pass
+
+    def play_card_ramsch(self, stack: Stack, playable_cards: list[Card]) -> Card:
+        pass
 
     async def on_game_event(self, event: Event) -> None:
         match event:
             case GameStartUpdate():
+                self.player_id = event.player
                 self.hand = Hand(event.hand)
             case GametypeDeterminedUpdate():
                 self.current_gametype = event.gametype
+                self.current_suit = event.suit
+                match self.current_gametype:
+                    case Gametype.RAMSCH:
+                        self.play_card_gamemode = self.play_card_ramsch
+                    case Gametype.SAUSPIEL:
+                        if event.player == self.player_id or self.has_card(self.current_suit, Rank.ASS):
+                            self.play_card_gamemode = self.play_card_sauspiel
+                        else:
+                            self.play_card_gamemode = self.play_card_anti_sauspiel
+                    case _:
+                        if event.player == self.player_id:
+                            self.play_card_gamemode = self.play_card_solo
+                        else:
+                            self.play_card_gamemode = self.play_card_anti_solo
                 for party in event.parties:
                     if self.player in party:
                         self.ally = party
             case CardPlayedUpdate():
                 self.played_cards.append(event.card)
+            case AnnouncePlayPartyUpdate():
+                for party in event.parties:
+                    if self.player in party:
+                        self.ally = party
 
     async def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
-        return self.rng.choice(available_groups)
+        if self.highest_gamegroup in available_groups:
+            return self.highest_gamegroup
+        else:
+            return self.rng.choice(available_groups)
