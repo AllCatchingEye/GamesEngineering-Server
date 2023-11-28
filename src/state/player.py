@@ -20,6 +20,7 @@ class Player:
     points: int
     hand: Hand
     played_cards: list[Card]
+    stitches: list[Card]
 
     def __init__(self, slot_id: int, turn_order: int) -> None:
         self.id = PlayerId(str(uuid.uuid4()))
@@ -29,10 +30,18 @@ class Player:
         self.money = Money(0)
         self.hand: Hand = Hand([])
         self.played_cards = []
+        self.stitches = []
 
     def lay_card(self, card: Card) -> None:
         self.hand.remove_card(card)
         self.played_cards.append(card)
 
+    def reset(self) -> None:
+        self.played_cards = []
+        self.stitches = []
+        self.points = 0
+
+    def get_amount_stitches(self) -> int:
+        return round(len(self.stitches) / 4)
     def __repr__(self) -> str:
         return f"Player {self.id}"

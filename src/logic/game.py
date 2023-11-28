@@ -269,6 +269,8 @@ class Game:
             player.turn_order = (player.turn_order - 1) % PLAYER_COUNT
             if player.turn_order == 0:
                 swap_index = i
+
+            player.reset()
         self.__swap_players(swap_index)
         self.games_played += 1
 
@@ -321,21 +323,30 @@ class Game:
         self, game_winner: list[Player], points_distribution: list[int]
     ) -> None:
         stake: Money = stake_for_gametype[self.gametype].value
-        for points in points_distribution:
-            if points == 0:
-                # schwarz
-                stake += Stake.STANDARD.value
-            if points > 90:
-                # schneiderfree
-                stake += Stake.STANDARD.value
-        for team in self.play_party:
-            running_team_cards = self.__get_running_cards(team)
-            if self.gamemode is GameModeGeier or self.gamemode is GameModeWenz:
-                stakes_added = running_team_cards - RunningCardsStart.GEIER_WENZ.value
+        if self.gametype == Gametype.RAMSCH:
+            # Check virgin
+            if len(game_winner) > 1:
+                for player in game_winner:
+                    if player.get_amount_stitches() == 0:
+                        stake += Stake.STANDARD.value
             else:
-                stakes_added = running_team_cards - RunningCardsStart.STANDARD.value
-            if stakes_added >= 0:
-                stake += Stake.STANDARD.value * (stakes_added + 1)
+                stake *= 3
+        else:
+            for points in points_distribution:
+                if points == 0:
+                    # schwarz
+                    stake += Stake.STANDARD.value
+                if points > 90:
+                    # schneiderfree
+                    stake += Stake.STANDARD.value
+            for team in self.play_party:
+                running_team_cards = self.__get_running_cards(team)
+                if self.gamemode is GameModeGeier or self.gamemode is GameModeWenz:
+                    stakes_added = running_team_cards - RunningCardsStart.GEIER_WENZ.value
+                else:
+                    stakes_added = running_team_cards - RunningCardsStart.STANDARD.value
+                if stakes_added >= 0:
+                    stake += Stake.STANDARD.value * (stakes_added + 1)
         for player in self.players:
             if player in game_winner:
                 player.money += stake * (
