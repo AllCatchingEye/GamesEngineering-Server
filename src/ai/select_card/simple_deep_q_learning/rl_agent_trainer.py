@@ -9,7 +9,7 @@ from ai.select_card.simple_deep_q_learning.policyNN import PolicyNN
 from ai.select_card.simple_deep_q_learning.rl_agent import DQLAgent, DQLAgentConfig
 from state.card import Card
 from state.event import CardPlayedUpdate, Event, GameEndUpdate, RoundResultUpdate
-from state.player import Player, PlayerId
+from state.player import PlayerId
 from state.stack import Stack
 
 # BATCH_SIZE is the number of transitions sampled from the replay buffer
@@ -59,7 +59,7 @@ class DQLAgentTrainer(DQLAgent):
     def persist_trained_policy(self):
         if self._game_type is None:
             raise Exception("game_type is not defined, yet.")
-        
+
         torch.save(self.model.state_dict(), self._get_model_path(self._game_type))
 
     def __get_eps_threshold(self, steps_done: int) -> float:
@@ -96,19 +96,19 @@ class DQLAgentTrainer(DQLAgent):
         if isinstance(event, RoundResultUpdate):
             self.__round_cards.clear()
 
-    def __update_reward_on_demand(self, event: Event, player: Player):
+    def __update_reward_on_demand(self, event: Event):
         if isinstance(event, GameEndUpdate):
-            if player.id in event.winner:
+            if self.player_i in event.winner:
                 self.__reward = GAME_WON_REWARD
             else:
                 self.__reward = -1
         if isinstance(event, RoundResultUpdate):
-            if player.id == event.round_winner:
+            if self.player_id == event.round_winner:
                 self.__reward = ROUND_WON_REWARD
             else:
                 self.__reward = 0
 
-    def __memoize_step_on_demand(self, event: Event, player: Player):
+    def __memoize_step_on_demand(self, event: Event):
         if isinstance(event, GameEndUpdate) or isinstance(event, RoundResultUpdate):
             if self.__state is None:
                 raise ValueError(
@@ -120,10 +120,13 @@ class DQLAgentTrainer(DQLAgent):
                 )
 
             encoded_cards_of_this_round = encode_dqn_input(
-                self.__round_cards, self.get_allies(), player.hand.cards
+                self.__round_cards, self.get_allies(), self.hand
             )
             next_state = [
-                a | b for a, b in zip(encoded_cards_of_this_round, self.__state) # TODO: self.state contains former hand cards??
+                a | b
+                for a, b in zip(
+                    encoded_cards_of_this_round, self.__state
+                )  # TODO: self.state contains former hand cards??
             ]
             self.dql_processor.memoize_state(
                 self.__state, self.__played_card, self.__reward, next_state
@@ -134,11 +137,11 @@ class DQLAgentTrainer(DQLAgent):
             self.dql_processor.optimize_model()
             self.dql_processor.update_network()
 
-    def on_game_event(self, event: Event, player: Player):
-        super().on_game_event(event, player)
-        self.__update_reward_on_demand(event, player)
+    def on_game_event(self, event: Event):
+        super().on_game_event(event)
+        self.__update_reward_on_demand(event)
         self.__update_last_played_card_on_demand(event)
-        self.__memoize_step_on_demand(event, player)
+        self.__memoize_step_on_demand(event)
         self.__apply_training_on_demand(event)
 
     def public__get_state(self):

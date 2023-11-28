@@ -2,11 +2,14 @@ from abc import ABC, abstractmethod
 
 from state.card import Card
 from state.event import Event
-from state.player import Player
+from state.player import PlayerId
 from state.stack import Stack
 
 
 class ISelectCardAgent(ABC):
+    player_id: PlayerId
+    hand: list[Card]
+
     def __init__(self) -> None:
         pass
 
@@ -21,5 +24,5 @@ class ISelectCardAgent(ABC):
         pass
 
     @abstractmethod
-    def on_game_event(self, event: Event, player: Player) -> None:
+    def on_game_event(self, event: Event) -> None:
         """Handle game events"""

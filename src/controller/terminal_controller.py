@@ -8,8 +8,6 @@ from state.suits import Suit
 
 class TerminalController(PlayerController):
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
-        print("Your hand:")
-        print(self.player.hand)
         print(f"You have to play atleast {current_lowest_gamegroup}")
         decision = input("Do you want to play? (y/n) ")
         return decision == "y"

@@ -3,14 +3,13 @@ from abc import ABC, abstractmethod
 from state.card import Card
 from state.event import Event
 from state.gametypes import GameGroup, Gametype
-from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
 
 
 class PlayerController(ABC):
-    def __init__(self, player: Player) -> None:
-        self.player = player
+    def __init__(self) -> None:
+        pass
 
     @abstractmethod
     async def on_game_event(self, event: Event) -> None:

@@ -18,7 +18,6 @@ from state.event import (
     parse_as,
 )
 from state.gametypes import GameGroup, Gametype, GametypeWithSuit
-from state.player import Player
 from state.stack import Stack
 from state.suits import Suit
 
@@ -26,9 +25,9 @@ E = TypeVar("E", bound=Event)
 
 
 class WebSocketController(PlayerController):
-    def __init__(self, player: Player, ws: WebSocketServerProtocol) -> None:
+    def __init__(self, ws: WebSocketServerProtocol) -> None:
         self.ws = ws
-        super().__init__(player)
+        super().__init__()
 
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup) -> bool:
         request = PlayerWantsToPlayQuery(current_lowest_gamegroup)

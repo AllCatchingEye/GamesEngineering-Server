@@ -6,17 +6,17 @@ from logic.game import Game
 
 
 async def main() -> None:
-    i = 1000
+    i = 10000
 
     now = time.time()
 
     for _ in range(i):
         game: Game = Game()
         game.controllers = [
-            RandomController(game.players[0]),
-            RandomController(game.players[1]),
-            RandomController(game.players[2]),
-            RandomController(game.players[3]),
+            RandomController(),
+            RandomController(),
+            RandomController(),
+            RandomController(),
         ]
         await game.run()
 
