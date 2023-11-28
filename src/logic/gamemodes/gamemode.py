@@ -51,7 +51,10 @@ class GameMode(ABC):
                 played_card.get_card(), strongest_played_card.get_card()
             ):
                 strongest_played_card = played_card
-        return strongest_played_card.get_player()
+        stitch_winner = strongest_played_card.get_player()
+        for card in stack.get_played_cards():
+            stitch_winner.stitches.append(card.get_card())
+        return stitch_winner
 
     def get_game_winner(
         self, play_party: list[list[Player]]
