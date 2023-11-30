@@ -1,6 +1,6 @@
 import random
-from controller.random_controller import RandomController
 
+from controller.random_controller import RandomController
 from state.gametypes import GameGroup
 
 

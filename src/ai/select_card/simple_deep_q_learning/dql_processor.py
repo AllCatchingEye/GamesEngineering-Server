@@ -48,14 +48,13 @@ class DQLProcessor:
         self.__memory = ReplayMemory(1000)
 
     def memoize_state(
-        self, state: list[int], action: int, reward: float, next_state: list[int]
+        self,
+        state: torch.Tensor,
+        action: torch.Tensor,
+        reward: torch.Tensor,
+        next_state: torch.Tensor,
     ):
-        self.__memory.push(
-            torch.tensor([state], dtype=torch.float, device=self.__device),
-            torch.tensor([[action]], dtype=torch.int64, device=self.__device),
-            torch.tensor([next_state], dtype=torch.float, device=self.__device),
-            torch.tensor([reward], dtype=torch.float, device=self.__device),
-        )
+        self.__memory.push(state, action, next_state, reward)
 
     def optimize_model(self):
         if len(self.__memory) < self.__batch_size:
