@@ -7,22 +7,21 @@ from state.stack import Stack
 
 
 class ISelectCardAgent(ABC):
-    player_id: PlayerId
-    hand: list[Card]
-
     def __init__(self) -> None:
         pass
 
     @abstractmethod
     def reset(self) -> None:
         """Invoked to reset the agent's internal state"""
-        pass
 
     @abstractmethod
     def select_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
         """Select card via drl algorithm based on stack and playable cards"""
-        pass
 
     @abstractmethod
-    def on_game_event(self, event: Event) -> None:
+    def on_game_event(self, event: Event, player_id: PlayerId) -> None:
         """Handle game events"""
+
+    @abstractmethod
+    def set_hand_cards(self, hand_cards: list[Card]):
+        """Update hand cards"""

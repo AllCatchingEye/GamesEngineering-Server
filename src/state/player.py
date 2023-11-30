@@ -43,5 +43,6 @@ class Player:
 
     def get_amount_stitches(self) -> int:
         return round(len(self.stitches) / 4)
+
     def __repr__(self) -> str:
         return f"Player {self.id}"

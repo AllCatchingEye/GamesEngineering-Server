@@ -1,6 +1,6 @@
 import unittest
 
-from src.ai.select_card.simple_deep_q_learning.rl_agent import DQLAgent, DQLAgentConfig
+from ai.select_card.simple_deep_q_learning.sdql_agent import SDQLAgent, SDQLAgentConfig
 from state.card import Card
 from state.ranks import Rank
 from state.stack import Stack
@@ -13,9 +13,8 @@ class TestClass(unittest.TestCase):
         super().setUpClass()
 
     def setUp(self) -> None:
-        config = DQLAgentConfig("./model/params.pth")
-        self.agent = DQLAgent(config)
-        self.agent.initialize()
+        config = SDQLAgentConfig("./model/params.pth")
+        self.agent = SDQLAgent(config)
         return super().setUp()
 
     def skip_test_init_rl_agent(self):

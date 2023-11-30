@@ -342,7 +342,9 @@ class Game:
             for team in self.play_party:
                 running_team_cards = self.__get_running_cards(team)
                 if self.gamemode is GameModeGeier or self.gamemode is GameModeWenz:
-                    stakes_added = running_team_cards - RunningCardsStart.GEIER_WENZ.value
+                    stakes_added = (
+                        running_team_cards - RunningCardsStart.GEIER_WENZ.value
+                    )
                 else:
                     stakes_added = running_team_cards - RunningCardsStart.STANDARD.value
                 if stakes_added >= 0:

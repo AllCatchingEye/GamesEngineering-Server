@@ -36,7 +36,7 @@ class GameModeRamsch(GameMode):
             party_points[i] = player.points
 
         if len(player_equal_points) > 1:
-           # Check most stitches
+            # Check most stitches
             most_stitches = 0
             player_most_stitches = []
             for player in player_equal_points:
@@ -68,7 +68,10 @@ class GameModeRamsch(GameMode):
                         highest_player_trump = math.inf
                         for card in player.stitches:
                             if card in self.get_trump_cards():
-                                highest_player_trump = min(self.get_trump_cards().index(card), highest_player_trump)
+                                highest_player_trump = min(
+                                    self.get_trump_cards().index(card),
+                                    highest_player_trump,
+                                )
                         if highest_player_trump < highest_trump:
                             player_highest_trump = player
                             highest_trump = highest_player_trump
