@@ -13,6 +13,27 @@ def take_first_matching(deck: list[Card], predicate: Callable[[Card], bool]) -> 
     raise ValueError(f"Card not found in deck {deck}")
 
 
+def take_matching(
+    deck: list[Card], predicate: Callable[[Card], bool], n: int = 1
+) -> list[Card]:
+    taken: list[Card] = []
+
+    for card in deck:
+        if predicate(card):
+            taken.append(card)
+
+        if len(taken) >= n:
+            break
+
+    for card in taken:
+        deck.remove(card)
+
+    if len(taken) < n:
+        raise ValueError(f"Not enough cards in deck {deck}")
+
+    return taken
+
+
 def take_rank(deck: list[Card], rank: Rank) -> Card:
     for card in deck:
         if card.rank == rank:
