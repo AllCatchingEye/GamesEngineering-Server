@@ -1,11 +1,11 @@
 version: '3'
 
 services:
-  my-python-server:
+  schafkopf-server:
     build:
       context: .
     ports:
       - "8765:8765"
     environment:
-      - HOST_ADDRESS=0.0.0.0
+      - HOST=0.0.0.0
       - PORT=8765
