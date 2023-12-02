@@ -32,6 +32,7 @@ from state.ranks import Rank
 from state.running_cards_start import RunningCardsStart
 from state.stack import Stack
 from state.stakes import Stake
+from state.suits import Suit
 
 HAND_SIZE = 8
 ROUNDS = 8
@@ -43,6 +44,7 @@ class Game:
     rng: random.Random
     gamemode: GameMode
     gametype: Gametype
+    suit: Suit | None
     players: list[Player]
     deck: Deck
     played_cards: list[Card]
@@ -55,6 +57,7 @@ class Game:
         self.controllers = []
         self.rng = rng
         self.games_played = 0
+        self.gametype = None
         # In a game there are always two parties (player-party, non-player-party)
         self.play_party: list[list[Player]] = []
 
@@ -75,11 +78,20 @@ class Game:
     async def determine_gametype(self) -> Gametype:
         """Determine the game type based on player choices."""
         await self.__distribute_cards()
+        await self.announce_hands()
+        
+        if self.gametype is not None:
+            return self.gametype
+        
         player, game_group = await self.__get_player()
         return await self.__select_gametype(player, game_group)
 
     async def __distribute_cards(self) -> None:
         """Distribute cards to players."""
+        # check if the first player already has cards
+        if len(self.players[0].hand.cards) > 0:
+            return
+        
         deck: list[Card] = self.deck.get_full_deck()
         self.rng.shuffle(deck)
 
@@ -92,11 +104,14 @@ class Game:
         player.hand = hand
 
         deck = deck[HAND_SIZE:]
-
-        await self.controllers[player.slot_id].on_game_event(
-            GameStartUpdate(player.id, hand.get_all_cards())
-        )
+        
         return deck
+    
+    async def announce_hands(self) -> None:
+        for player in self.players:
+            await self.controllers[player.slot_id].on_game_event(
+                GameStartUpdate(player.id, player.hand.get_all_cards())
+            )
 
     async def __get_player(self) -> tuple[Player | None, list[GameGroup]]:
         """Call the game type based on player choices."""
@@ -263,6 +278,7 @@ class Game:
     def __prepare_new_game(self) -> None:
         self.gametype = None
         self.gamemode = None
+        self.suit = None
         swap_index = -1
         for i, player in enumerate(self.players):
             # cycling players for next game
