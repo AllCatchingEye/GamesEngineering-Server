@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-
+import os
 from websockets import Data, WebSocketServerProtocol, serve
 
 from controller.random_controller import RandomController
@@ -13,8 +13,10 @@ CLIENTS: set[WebSocketServerProtocol] = set()
 
 
 async def main() -> None:
+    host = os.environ.get("HOST", "localhost")
+    port = int(os.environ.get("PORT", 8765))
     print("Server WebSocket started")
-    async with serve(handler, "localhost", 8765, open_timeout=TIMEOUT_SECS):
+    async with serve(handler, host, port, open_timeout=TIMEOUT_SECS):
         print("Websocket runs")
         await asyncio.Future()  # run forever
 
