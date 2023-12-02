@@ -21,7 +21,7 @@ class Hand:
     def remove_card(self, card: Card) -> None:
         self.cards.remove(card)
 
-    def get_all_cards_for_suit(self, suit: Suit, trumps: list[Card]) -> list[Card]:
+    def get_all_cards_for_suit(self, suit: Suit, trumps: set[Card]) -> list[Card]:
         """Returns all cards in the hand for the given suit that are not trumps"""
         suits: list[Card] = []
         for card in self.cards:
@@ -44,7 +44,7 @@ class Hand:
 
         return None
 
-    def get_all_trumps_in_deck(self, trumps: list[Card]) -> list[Card]:
+    def get_all_trumps_in_deck(self, trumps: set[Card]) -> list[Card]:
         """Returns all trumps in the hand that match the given trumps list."""
         available_trumps: list[Card] = []
         for card in self.cards:

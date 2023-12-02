@@ -69,7 +69,7 @@ class GameModeRamsch(GameMode):
                         for card in player.stitches:
                             if card in self.get_trump_cards():
                                 highest_player_trump = min(
-                                    self.get_trump_cards().index(card),
+                                    self.trumps.index(card),
                                     highest_player_trump,
                                 )
                         if highest_player_trump < highest_trump:

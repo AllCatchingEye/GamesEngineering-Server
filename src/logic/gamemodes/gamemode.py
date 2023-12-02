@@ -10,10 +10,12 @@ from state.suits import Suit
 class GameMode(ABC):
     suit: Suit | None
     trumps: list[Card]
+    trumps_set: set[Card]
 
     def __init__(self, suit: Suit | None, trumps: list[Card]):
         self.suit = suit
         self.trumps = trumps
+        self.trumps_set = set(trumps)
 
     def get_playable_cards(self, stack: Stack, hand: Hand) -> list[Card]:
         """Determine which cards can be played"""
@@ -21,27 +23,27 @@ class GameMode(ABC):
             return hand.get_all_cards()
 
         # is trump round?
-        trump_round = stack.get_first_card() in self.trumps
+        trump_round = stack.get_first_card() in self.trumps_set
 
         if trump_round:
             # Check trumps
-            playable_trumps = hand.get_all_trumps_in_deck(self.trumps)
+            playable_trumps = hand.get_all_trumps_in_deck(self.trumps_set)
 
             if len(playable_trumps) > 0:
                 return playable_trumps
         else:
             # Same color
             played_suit = stack.get_first_card().get_suit()
-            same_suit = hand.get_all_cards_for_suit(played_suit, self.trumps)
+            same_suit = hand.get_all_cards_for_suit(played_suit, self.trumps_set)
             if len(same_suit) > 0:
                 return same_suit
 
         # Any card - free to choose
         return hand.get_all_cards()
 
-    def get_trump_cards(self) -> list[Card]:
+    def get_trump_cards(self) -> set[Card]:
         """Returns a list of all trump cards"""
-        return self.trumps
+        return self.trumps_set
 
     def determine_stitch_winner(self, stack: Stack) -> Player:
         """Returns the player who won the current stitch"""
@@ -70,8 +72,8 @@ class GameMode(ABC):
 
     def __card_is_stronger_than(self, card_one: Card, card_two: Card) -> bool:
         """Helping-Method to determine which of two cards is stronger"""
-        if card_one in self.trumps:
-            if card_two in self.trumps:
+        if card_one in self.trumps_set:
+            if card_two in self.trumps_set:
                 # Compare two trump-cards
                 return self.trumps.index(card_one) < self.trumps.index(card_two)
             # Trump-Card wins over regular card
