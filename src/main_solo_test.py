@@ -37,13 +37,13 @@ class TestClass(unittest.TestCase):
         cls.player2 = cls.game.players[2]
         cls.player3 = cls.game.players[3]
 
-        cls.sut = TestController(cls.player0, rng=cls.rng)
+        cls.sut = TestController(rng=cls.rng)
 
         cls.game.controllers = [
             cls.sut,
-            TestController(cls.player1, rng=cls.rng),
-            TestController(cls.player2, rng=cls.rng),
-            TestController(cls.player3, rng=cls.rng),
+            TestController(rng=cls.rng),
+            TestController(rng=cls.rng),
+            TestController(rng=cls.rng),
         ]
         asyncio.run(cls.game.run())
 
@@ -226,8 +226,8 @@ class TestController(RandomController):
     event_history: EventList
     player_turns: list[tuple[list[Card], list[PlayedCard]]]
 
-    def __init__(self, player: Player, rng: random.Random):
-        super().__init__(player, rng)
+    def __init__(self, rng: random.Random):
+        super().__init__(rng)
         self.event_history = EventList()
         self.player_turns = []
 
