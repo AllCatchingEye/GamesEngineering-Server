@@ -1,13 +1,18 @@
 import asyncio
+import datetime
 import logging
 import random
 import sys
-from time import gmtime, strftime, time
+from time import time
 
+from matplotlib import pyplot as plt
+
+from ai.select_card.rl_agent_trainer import RLBaseAgentTrainer
 from controller.ai_controller import AiController
+from controller.random_controller import RandomController
 from logic.game import Game
 
-NUM_EPOCHS = 10_000
+NUM_EPOCHS = 10_000_000
 EPOCHS_UNTIL_APPLYING_TRAINING = 100
 DISPLAY_LOGS = False
 DISPLAY_PROGRESS = True
@@ -21,22 +26,39 @@ def get_new_game():
         new_trained_ai_controller,
         AiController(False),
         AiController(False),
-        AiController(False),
+        # AiController(False),
+        RandomController(),
     ]
     return (new_game, new_trained_ai_controller)
 
 
-def main():
+def evaluate(rewards: list[float]):
+    fig = plt.figure(figsize=(10, 10))
+
+    ax = fig.add_subplot(111)
+    ax.plot(rewards)
+    ax.set_xlabel("episode")
+    ax.set_ylabel("reward")
+    plt.show()
+
+
+async def main():
     if not DISPLAY_PROGRESS:
         logging.basicConfig(level=logging.DEBUG)
 
-    print("Training started.")
+    print("> Training started.")
+
+    mean_rewards: list[float] = []
 
     start = time()
     last_update = start
     for epoch in range(NUM_EPOCHS):
         game, trained_ai_controller = get_new_game()
-        asyncio.run(game.run())
+        await game.run()
+        if isinstance(trained_ai_controller.play_game_agent, RLBaseAgentTrainer):
+            rewards = trained_ai_controller.play_game_agent.rewards
+            mean_rewards.append(sum(rewards) / len(rewards))
+        trained_ai_controller.play_game_agent.reset()
 
         end = time()
         if DISPLAY_PROGRESS and end - last_update > UPDATE_PROGRESS_INTERVAL_MS:
@@ -44,11 +66,12 @@ def main():
             duration = end - start
             remaining_time = duration / (epoch + 1) * NUM_EPOCHS
             sys.stdout.write(
-                "\rTraining ongoing: %i%% (%s of ~%s)"
+                "> Training ongoing: %i%% (%s of ~%s)%s\r"
                 % (
                     (epoch + 1) / NUM_EPOCHS * 100,
-                    strftime("%M:%S", gmtime(duration)),
-                    strftime("%M:%S", gmtime(remaining_time)),
+                    str(datetime.timedelta(seconds=duration))[:-7],
+                    str(datetime.timedelta(seconds=remaining_time))[:-7],
+                    " " * 20,
                 )
             )
             sys.stdout.flush()
@@ -59,8 +82,10 @@ def main():
             game = updated_game
             trained_ai_controller = updated_trained_ai_controller
 
-    print("\nTraining complete.")
+    print("\n> Training complete.")
+
+    evaluate(mean_rewards)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

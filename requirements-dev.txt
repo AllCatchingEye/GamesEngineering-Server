@@ -4,3 +4,4 @@ pylint==3.0.1
 mypy==1.6.1
 coverage==7.3.2
 vulture==2.10
+matplotlib==3.8.1
