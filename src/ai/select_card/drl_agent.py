@@ -55,7 +55,7 @@ class DRLAgent(RLBaseAgent, ABC):
                 (card.card, card.player.id) for card in stack.played_cards
             ]
             input_tensor = self.encode_state(
-                transformed_state, self._allies, playable_cards
+                transformed_state, self.allies, playable_cards
             )
             output: torch.Tensor = self.model(input_tensor)
             return self.decode_card(output, playable_cards)

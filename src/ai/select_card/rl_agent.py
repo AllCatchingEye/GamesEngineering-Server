@@ -18,8 +18,8 @@ class RLBaseAgent(ISelectCardAgent, ABC):
     __logger = logging.getLogger("RLBaseAgent")
 
     def __init__(self):
-        self._game_type: Gametype | None
-        self._allies = []
+        self.game_type: Gametype | None
+        self.allies = []
         self.hand_cards: list[Card] | None
 
     def __get_allies(
@@ -32,10 +32,10 @@ class RLBaseAgent(ISelectCardAgent, ABC):
 
     def _reset_allies(self):
         self.__logger.debug("Reset allies")
-        self._allies = []
+        self.allies = []
 
     def get_allies(self):
-        return self._allies
+        return self.allies
 
     def __handle_allies(self, event: Event, player_id: PlayerId):
         if (
@@ -44,10 +44,10 @@ class RLBaseAgent(ISelectCardAgent, ABC):
             and event.parties is not None
         ):
             self.__logger.debug("👬 Setting allies")
-            self._allies = self.__get_allies(event.parties, player_id)
+            self.allies = self.__get_allies(event.parties, player_id)
         elif isinstance(event, AnnouncePlayPartyUpdate):
             self.__logger.debug("👬 Setting allies")
-            self._allies = self.__get_allies(event.parties, player_id)
+            self.allies = self.__get_allies(event.parties, player_id)
 
     def set_hand_cards(self, hand_cards: list[Card]):
         self.hand_cards = hand_cards
