@@ -6,7 +6,7 @@ from ai.select_card.agent import ISelectCardAgent
 from state.card import Card
 from state.event import AnnouncePlayPartyUpdate, Event, GametypeDeterminedUpdate
 from state.gametypes import Gametype
-from state.player import PlayerId
+from state.player import PlayerId, struct_to_play_parties
 
 
 @dataclass
@@ -44,10 +44,10 @@ class RLBaseAgent(ISelectCardAgent, ABC):
             and event.parties is not None
         ):
             self.__logger.debug("👬 Setting allies")
-            self.allies = self.__get_allies(event.parties, player_id)
+            self.allies = self.__get_allies(struct_to_play_parties(event.parties), player_id)
         elif isinstance(event, AnnouncePlayPartyUpdate):
             self.__logger.debug("👬 Setting allies")
-            self.allies = self.__get_allies(event.parties, player_id)
+            self.allies = self.__get_allies(struct_to_play_parties(event.parties), player_id)
 
     def set_hand_cards(self, hand_cards: list[Card]):
         self.hand_cards = hand_cards

@@ -11,6 +11,7 @@ from state.gametypes import GameGroup, Gametype, GametypeWithSuit
 from state.money import Money
 from state.player import PlayerId
 from state.suits import Suit
+from state.player import PlayPartiesStruct
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
@@ -59,7 +60,7 @@ class GametypeDeterminedUpdate(Event):
     player: PlayerId | None
     gametype: Gametype
     suit: Suit | None
-    parties: list[list[PlayerId]] | None
+    parties: PlayPartiesStruct | None
 
 
 @dataclass
@@ -77,13 +78,13 @@ class RoundResultUpdate(Event):
 @dataclass
 class GameEndUpdate(Event):
     winner: list[PlayerId]
-    play_party: list[list[PlayerId]]
+    play_party: PlayPartiesStruct
     points: list[int]
 
 
 @dataclass
 class AnnouncePlayPartyUpdate(Event):
-    parties: list[list[PlayerId]]
+    parties: PlayPartiesStruct
 
 
 @dataclass
