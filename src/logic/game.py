@@ -27,7 +27,7 @@ from state.event import (
 from state.gametypes import GameGroup, Gametype, stake_for_gametype
 from state.hand import Hand
 from state.money import Money
-from state.player import Player
+from state.player import Player, play_parties_to_struct
 from state.ranks import Rank
 from state.running_cards_start import RunningCardsStart
 from state.stack import Stack
@@ -190,7 +190,7 @@ class Game:
                     None,
                     Gametype.RAMSCH,
                     None,
-                    [[player.id for player in party] for party in self.play_party],
+                    play_parties_to_struct([[player.id for player in party] for party in self.play_party]),
                 )
             )
             self.gamemode = GameModeRamsch()
@@ -245,7 +245,7 @@ class Game:
                 self.players[game_player.turn_order].id,
                 game_type[0],
                 game_type[1],
-                [[player.id for player in party] for party in self.play_party]
+                play_parties_to_struct([[player.id for player in party] for party in self.play_party])
                 if game_type[0] != Gametype.SAUSPIEL
                 else None,
             )
@@ -270,7 +270,7 @@ class Game:
         await self.__broadcast(
             GameEndUpdate(
                 [winner.id for winner in game_winner],
-                [[player.id for player in party] for party in self.play_party],
+                play_parties_to_struct([[player.id for player in party] for party in self.play_party]),
                 points_distribution,
             )
         )
@@ -321,7 +321,7 @@ class Game:
             ):
                 await self.__broadcast(
                     AnnouncePlayPartyUpdate(
-                        [[player.id for player in party] for party in self.play_party]
+                        play_parties_to_struct([[player.id for player in party] for party in self.play_party])
                     )
                 )
 

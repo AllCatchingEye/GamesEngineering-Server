@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from state.card import Card
 from state.hand import Hand
 from state.money import Money
+from typing_extensions import deprecated
 
 
 class PlayerId(str):
@@ -46,3 +47,32 @@ class Player:
 
     def __repr__(self) -> str:
         return f"Player {self.id}"
+
+
+@dataclass
+class PlayPartiesStruct:
+    team0: list[PlayerId]
+    team1: list[PlayerId]
+    team2: list[PlayerId]
+    team3: list[PlayerId]
+
+
+@deprecated("Adjust to new datatype. Method only quickfix")
+def play_parties_to_struct(play_parties: list[list[PlayerId]]) -> PlayPartiesStruct:
+    res: PlayPartiesStruct = PlayPartiesStruct([], [], [], [])
+    for i, party in enumerate(play_parties):
+        match i:
+            case 0:
+                res.team0 = party
+            case 1:
+                res.team1 = party
+            case 2:
+                res.team2 = party
+            case 3:
+                res.team3 = party
+    return res
+
+
+@deprecated("Adjust to new datatype. Method only quickfix")
+def struct_play_parties(play_parties: PlayPartiesStruct) -> list[list[PlayerId]]:
+    return [play_parties.team0, play_parties.team1, play_parties.team2, play_parties.team3]
