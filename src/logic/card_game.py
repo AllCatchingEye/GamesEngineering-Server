@@ -10,7 +10,7 @@ from state.card import Card
 from state.event import Event, GametypeDeterminedUpdate
 from state.gametypes import Gametype
 from state.hand import Hand
-from state.player import Player, PlayerId
+from state.player import Player, PlayerId, play_parties_to_struct
 from state.ranks import Rank
 from state.suits import Suit
 
@@ -71,7 +71,7 @@ class CardGame:
                     None,
                     Gametype.RAMSCH,
                     None,
-                    [[player.id for player in party] for party in self.game.play_party],
+                    play_parties_to_struct([[player.id for player in party] for party in self.game.play_party]),
                 )
             )
             return
@@ -110,7 +110,7 @@ class CardGame:
                 self.main_player,
                 self.game.gametype,
                 self.game.suit,
-                [[player.id for player in party] for party in self.game.play_party],
+                play_parties_to_struct([[player.id for player in party] for party in self.game.play_party]),
             )
         )
 
