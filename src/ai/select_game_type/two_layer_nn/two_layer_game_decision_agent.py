@@ -92,7 +92,7 @@ class SelectGameAgent(ISelectGameAgent):
         for idx, val in enumerate(self.decision_tensor.tolist()[0]):
             gametype = code_to_game_type(idx)
             if val > max_val and gametype in choosable_game_types:
-                max_val = val
+                max_val: float = val
                 best_gametype = gametype
         assert best_gametype is not None, (
             "No playable gametype found"
@@ -107,7 +107,7 @@ class SelectGameAgent(ISelectGameAgent):
             game_group = game_type_to_game_group(game_type[0])
             if val > max_val and game_group in available_groups:
                 best_game_group = game_group
-                max_val = val
+                max_val:float = val
         assert best_game_group is not None, (
             "best game group not found"
         )
