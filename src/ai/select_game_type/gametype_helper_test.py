@@ -1,6 +1,6 @@
 import unittest
 
-from ai.select_game_type.neuronal_network.agent.gametype_helper import (
+from ai.select_game_type.gametype_helper import (
     game_type_to_game_group,
 )
 from state.gametypes import GameGroup, Gametype

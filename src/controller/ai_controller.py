@@ -2,13 +2,8 @@ import os
 
 from ai.select_card.simple_deep_q_learning.sdql_agent import SDQLAgent, SDQLAgentConfig
 from ai.select_card.simple_deep_q_learning.sdql_agent_trainer import SDQLAgentTrainer
-from ai.select_game_type.neuronal_network.agent.gametype_helper import (
-    game_type_to_game_group,
-)
-from ai.select_game_type.neuronal_network.agent.nn_game_decision_agent import (
-    NNAgent,
-    NNAgentConfig,
-)
+from ai.select_game_type.two_layer_nn.two_layer_game_decision_agent import NNAgentConfig, SelectGameAgent
+
 from controller.player_controller import PlayerController
 from state.card import Card
 from state.event import Event, GameStartUpdate
@@ -25,25 +20,35 @@ class AiController(PlayerController):
         self.player_id: PlayerId | None
 
         from_here = os.path.dirname(os.path.abspath(__file__))
-
-        nn_agents_model_params_path = os.path.join(
+        
+        should_play_params_path = os.path.join(
             from_here,
             "..",
             "ai",
             "select_game_type",
-            "neuronal_network",
-            "model",
-            "params.pth",
+            "two_layer_nn",
+            "models",
+            "binary_classifier.pth",
         )
-        nn_agent_config = NNAgentConfig(model_params_path=nn_agents_model_params_path)
-        self.select_game_agent = NNAgent(nn_agent_config)
+
+        select_game_params_path = os.path.join(
+            from_here,
+            "..",
+            "ai",
+            "select_game_type",
+            "two_layer_nn",
+            "models",
+            "game_classifier.pth",
+        )
+        nn_agent_config = NNAgentConfig(should_play_params_path, select_game_params_path)
+        self.select_game_agent = SelectGameAgent(nn_agent_config)
 
         rl_agents_model_params_path = os.path.join(
             from_here,
             "..",
             "ai",
-            "select_card",
             "simple_deep_q_learning",
+            "two_layer_nn",
             "model",
         )
         rl_agent_config = SDQLAgentConfig(
@@ -109,10 +114,8 @@ class AiController(PlayerController):
 
     async def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
         """Choose the highest game group you would play"""
-        assert (
-            self.select_game_agent.targeted_game_type is not None
-        ), "First ask the ai controller if it wants to play, then ask for the game group"
-        return game_type_to_game_group(self.select_game_agent.targeted_game_type[0])
+        
+        return self.select_game_agent.choose_game_group(available_groups)
 
     def persist_training_results(self):
         assert isinstance(
