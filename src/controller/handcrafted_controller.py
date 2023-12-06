@@ -1,7 +1,10 @@
+import math
 from typing import Callable
 
 from controller.player_controller import PlayerController
+from logic.gamemodes.gamemode import GameMode
 from logic.gamemodes.gamemode_geier import GameModeGeier
+from logic.gamemodes.gamemode_ramsch import GameModeRamsch
 from logic.gamemodes.gamemode_sauspiel import GameModeSauspiel
 from logic.gamemodes.gamemode_solo import GameModeSolo
 from logic.gamemodes.gamemode_wenz import GameModeWenz
@@ -21,6 +24,7 @@ class HandcraftedController(PlayerController):
     ally: list[Player]
     current_gametype: Gametype
     current_suit: Suit
+    current_gamemode: GameMode
     highest_gamegroup = GameGroup | None
     valid_gamemodes: list[(Gametype, Suit)]
     play_card_gamemode: Callable
@@ -357,11 +361,14 @@ class HandcraftedController(PlayerController):
         return fehl_farben
 
     def get_fehl_asse(self, hand: list[Card], trumps: list[Card]) -> list[Card]:
-        fehl_asse = []
+        return self.get_fehl_cards_of_rank(hand, trumps, Rank.ASS)
+
+    def get_fehl_cards_of_rank(self, hand: list[Card], trumps: list[Card], rank: Rank) -> list[Card]:
+        fehl_cards_of_rank = []
         for card in hand:
-            if card not in trumps and card.rank == Rank.ASS:
-                fehl_asse.append(card)
-        return fehl_asse
+            if card not in trumps and card.rank == rank:
+                fehl_cards_of_rank.append(card)
+        return fehl_cards_of_rank
 
     def get_running_cards(self, trumps: list[Card]) -> int:
         running_cards = 0
@@ -403,7 +410,57 @@ class HandcraftedController(PlayerController):
         pass
 
     def play_card_ramsch(self, stack: Stack, playable_cards: list[Card]) -> Card:
-        pass
+        # free to play any card
+        trumps = self.current_gamemode.get_trump_cards()
+        if len(playable_cards) == len(self.hand.get_all_cards()):
+            ass_with_least_suit_cards = self.search_fehl_card_of_rank_with_least_suit_cards(trumps, Rank.ASS)
+            if ass_with_least_suit_cards is not None:
+                return ass_with_least_suit_cards
+            zehn_with_least_suit_cards = self.search_fehl_card_of_rank_with_least_suit_cards(trumps, Rank.ZEHN)
+            if zehn_with_least_suit_cards is not None:
+                return zehn_with_least_suit_cards
+            if len(stack.get_played_cards()) > 1:
+                # check points if you are willing to get this stitch
+                if stack.get_value() < 6:
+                    highest_trump = self.highest_existing_trump()
+                    if highest_trump.get_rank().value < 6:
+                        return highest_trump
+            koenig_with_least_suit_cards = self.search_fehl_card_of_rank_with_least_suit_cards(trumps, Rank.KOENIG)
+            if koenig_with_least_suit_cards is not None:
+                return koenig_with_least_suit_cards
+            fehl_farben = self.get_fehl_farben(self.hand.get_all_cards(), trumps)
+            suit_cards_with_fehl_farbe = math.inf
+            fehl_farbe_least_suit_cards = None
+            for fehl_farbe in fehl_farben:
+                fehl_farbe_cards = self.hand.get_all_cards_for_suit(fehl_farbe, trumps)
+                if len(fehl_farbe_cards) < suit_cards_with_fehl_farbe:
+                    fehl_farbe_least_suit_cards = fehl_farbe_cards
+                    suit_cards_with_fehl_farbe = len(fehl_farbe_least_suit_cards)
+
+            for card in fehl_farbe_least_suit_cards:
+
+    def search_fehl_card_of_rank_with_least_suit_cards(self, trumps: list[Card], rank: Rank) -> Card:
+        fehl_cards_of_rank = self.get_fehl_cards_of_rank(self.hand.get_all_cards(), trumps, rank)
+        if len(fehl_cards_of_rank) > 0:
+            suit_cards_with_card_of_rank = math.inf
+            used_card = None
+            for card in fehl_cards_of_rank:
+                if used_card is None or len(
+                        self.hand.get_all_cards_for_suit(card.suit, trumps)) < suit_cards_with_card_of_rank:
+                    used_card = card
+            return used_card
+
+    def highest_existing_trump_in_hand(self) -> Card:
+        trumps = self.current_gamemode.get_trump_cards()
+        for trump in trumps:
+            if trump in self.hand.get_all_cards():
+                return trump
+
+    def highest_existing_trump(self) -> Card:
+        trumps = self.current_gamemode.get_trump_cards()
+        for trump in trumps:
+            if trump not in self.played_cards:
+                return trump
 
     async def on_game_event(self, event: Event) -> None:
         match event:
@@ -413,6 +470,22 @@ class HandcraftedController(PlayerController):
             case GametypeDeterminedUpdate():
                 self.current_gametype = event.gametype
                 self.current_suit = event.suit
+                match self.current_gametype:
+                    case Gametype.SOLO:
+                        self.current_gamemode = GameModeSolo(self.current_suit)
+                    case Gametype.WENZ:
+                        self.current_gamemode = GameModeWenz(self.current_suit)
+                    case Gametype.GEIER:
+                        self.current_gamemode = GameModeGeier(self.current_suit)
+                    case Gametype.FARBWENZ:
+                        self.current_gamemode = GameModeWenz(self.current_suit)
+                    case Gametype.FARBGEIER:
+                        self.current_gamemode = GameModeGeier(self.current_suit)
+                    case Gametype.SAUSPIEL:
+                        self.current_gamemode = GameModeSauspiel(self.current_suit)
+                    case Gametype.RAMSCH:
+                        self.current_gamemode = GameModeRamsch()
+
                 match self.current_gametype:
                     case Gametype.RAMSCH:
                         self.play_card_gamemode = self.play_card_ramsch
@@ -430,6 +503,8 @@ class HandcraftedController(PlayerController):
                     if self.player in party:
                         self.ally = party
             case CardPlayedUpdate():
+                if event.player == self.player_id:
+                    self.hand.remove_card(event.card)
                 self.played_cards.append(event.card)
             case AnnouncePlayPartyUpdate():
                 for party in event.parties:
