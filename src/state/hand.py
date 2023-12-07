@@ -60,6 +60,14 @@ class Hand:
                 available_trumps.append(card)
         return available_trumps
 
+    def get_all_non_trumps_in_deck(self, trumps: list[Card]) -> list[Card]:
+        """Returns all non trumps in the hand that do not match the given trumps list."""
+        non_trumps: list[Card] = []
+        for card in self.cards:
+            if card not in trumps:
+                non_trumps.append(card)
+        return non_trumps
+
     def __str__(self) -> str:
         return str(self.cards)
 
