@@ -79,10 +79,10 @@ class Game:
         """Determine the game type based on player choices."""
         await self.__distribute_cards()
         await self.announce_hands()
-        
+
         if self.gametype is not None:
             return self.gametype
-        
+
         player, game_group = await self.__get_player()
         return await self.__select_gametype(player, game_group)
 
@@ -91,7 +91,7 @@ class Game:
         # check if the first player already has cards
         if len(self.players[0].hand.cards) > 0:
             return
-        
+
         deck: list[Card] = self.deck.get_full_deck()
         self.rng.shuffle(deck)
 
@@ -104,9 +104,9 @@ class Game:
         player.hand = hand
 
         deck = deck[HAND_SIZE:]
-        
+
         return deck
-    
+
     async def announce_hands(self) -> None:
         for player in self.players:
             await self.controllers[player.slot_id].on_game_event(
@@ -190,7 +190,9 @@ class Game:
                     None,
                     Gametype.RAMSCH,
                     None,
-                    play_parties_to_struct([[player.id for player in party] for party in self.play_party]),
+                    play_parties_to_struct(
+                        [[player.id for player in party] for party in self.play_party]
+                    ),
                 )
             )
             self.gamemode = GameModeRamsch()
@@ -245,7 +247,9 @@ class Game:
                 self.players[game_player.turn_order].id,
                 game_type[0],
                 game_type[1],
-                play_parties_to_struct([[player.id for player in party] for party in self.play_party])
+                play_parties_to_struct(
+                    [[player.id for player in party] for party in self.play_party]
+                )
                 if game_type[0] != Gametype.SAUSPIEL
                 else None,
             )
@@ -270,7 +274,9 @@ class Game:
         await self.__broadcast(
             GameEndUpdate(
                 [winner.id for winner in game_winner],
-                play_parties_to_struct([[player.id for player in party] for party in self.play_party]),
+                play_parties_to_struct(
+                    [[player.id for player in party] for party in self.play_party]
+                ),
                 points_distribution,
             )
         )
@@ -321,7 +327,12 @@ class Game:
             ):
                 await self.__broadcast(
                     AnnouncePlayPartyUpdate(
-                        play_parties_to_struct([[player.id for player in party] for party in self.play_party])
+                        play_parties_to_struct(
+                            [
+                                [player.id for player in party]
+                                for party in self.play_party
+                            ]
+                        )
                     )
                 )
 
