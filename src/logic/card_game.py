@@ -71,7 +71,12 @@ class CardGame:
                     None,
                     Gametype.RAMSCH,
                     None,
-                    play_parties_to_struct([[player.id for player in party] for party in self.game.play_party]),
+                    play_parties_to_struct(
+                        [
+                            [player.id for player in party]
+                            for party in self.game.play_party
+                        ]
+                    ),
                 )
             )
             return
@@ -110,7 +115,9 @@ class CardGame:
                 self.main_player,
                 self.game.gametype,
                 self.game.suit,
-                play_parties_to_struct([[player.id for player in party] for party in self.game.play_party]),
+                play_parties_to_struct(
+                    [[player.id for player in party] for party in self.game.play_party]
+                ),
             )
         )
 
