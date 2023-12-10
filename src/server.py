@@ -4,8 +4,10 @@ import logging
 import os
 
 from websockets import Data, WebSocketServerProtocol, serve
+from controller.delayed_controller import DelayedController
 
 from controller.random_controller import RandomController
+from controller.passive_controller import PassiveController
 from controller.websocket_controller import WebSocketController
 from logic.game import Game
 
@@ -61,9 +63,9 @@ def create_single_player_game(ws: WebSocketServerProtocol) -> Game:
     game: Game = Game()
     game.controllers = [
         WebSocketController(ws),
-        RandomController(),
-        RandomController(),
-        RandomController(),
+        DelayedController(RandomController()),
+        DelayedController(PassiveController()),
+        DelayedController(PassiveController()),
     ]
     return game
 
