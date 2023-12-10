@@ -1,4 +1,5 @@
 from typing import Callable
+
 from state.card import Card
 from state.ranks import Rank
 from state.suits import Suit

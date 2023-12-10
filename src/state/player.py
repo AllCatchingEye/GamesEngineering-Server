@@ -1,10 +1,11 @@
 import uuid
 from dataclasses import dataclass
 
+from typing_extensions import deprecated
+
 from state.card import Card
 from state.hand import Hand
 from state.money import Money
-from typing_extensions import deprecated
 
 
 class PlayerId(str):
@@ -75,4 +76,9 @@ def play_parties_to_struct(play_parties: list[list[PlayerId]]) -> PlayPartiesStr
 
 @deprecated("Adjust to new datatype. Method only quickfix")
 def struct_play_parties(play_parties: PlayPartiesStruct) -> list[list[PlayerId]]:
-    return [play_parties.team0, play_parties.team1, play_parties.team2, play_parties.team3]
+    return [
+        play_parties.team0,
+        play_parties.team1,
+        play_parties.team2,
+        play_parties.team3,
+    ]

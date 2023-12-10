@@ -9,9 +9,8 @@ from websockets import Data
 from state.card import Card
 from state.gametypes import GameGroup, Gametype, GametypeWithSuit
 from state.money import Money
-from state.player import PlayerId
+from state.player import PlayerId, PlayPartiesStruct
 from state.suits import Suit
-from state.player import PlayPartiesStruct
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
