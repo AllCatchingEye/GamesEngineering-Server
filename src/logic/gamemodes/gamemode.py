@@ -50,7 +50,7 @@ class GameMode(ABC):
         strongest_played_card = stack.get_played_cards()[0]
         for played_card in stack.get_played_cards()[1:]:
             if self.__card_is_stronger_than(
-                played_card.get_card(), strongest_played_card.get_card()
+                    played_card.get_card(), strongest_played_card.get_card()
             ):
                 strongest_played_card = played_card
         stitch_winner = strongest_played_card.get_player()
@@ -59,7 +59,7 @@ class GameMode(ABC):
         return stitch_winner
 
     def get_game_winner(
-        self, play_party: list[list[Player]]
+            self, play_party: list[list[Player]]
     ) -> tuple[list[Player], list[int]]:
         """Determine the winner of the entire game."""
         party_points: list[int] = [0] * len(play_party)
@@ -78,7 +78,7 @@ class GameMode(ABC):
                 return self.trumps.index(card_one) < self.trumps.index(card_two)
             # Trump-Card wins over regular card
             return True
-        if card_one.get_suit() == card_two.get_suit():
+        if card_one.get_suit() == card_two.get_suit() and card_two not in self.trumps_set:
             # Compare two cards of the same suit
             return card_one.get_rank().value > card_two.get_rank().value
         # Other card does not fulfill the leading suit
