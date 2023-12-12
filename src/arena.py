@@ -6,7 +6,7 @@ from typing import Callable, TypeVar
 import pandas as pd
 from tqdm import tqdm
 
-from controller.ai_controller import AiController
+from controller.handcrafted_controller import HandcraftedController
 from controller.passive_controller import PassiveController
 from controller.player_controller import PlayerController
 from logic.game import Game
@@ -31,7 +31,7 @@ def increment_money(dictionary: dict[T, Money], key: T, value: Money) -> None:
 
 @dataclass
 class ArenaConfig:
-    games: int = 1000
+    games: int = 10000
     rounds_per_game: int = 10
     rng_seed: int | None = None
 
@@ -78,7 +78,7 @@ class ArenaController(PlayerController):
         return await self.actual_controller.wants_to_play(current_lowest_gamegroup)
 
     async def select_gametype(
-        self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
+            self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
         return await self.actual_controller.select_gametype(choosable_gametypes)
 
@@ -237,7 +237,7 @@ class Arena:
 
 if __name__ == "__main__":
     arena = Arena()
-    arena.add_bot(AiController)
+    arena.add_bot(HandcraftedController)
     arena.add_bot(PassiveController)
     arena.add_bot(PassiveController)
     arena.add_bot(PassiveController)
