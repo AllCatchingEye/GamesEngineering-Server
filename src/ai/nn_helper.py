@@ -1,18 +1,18 @@
 from state.card import Card
 from state.gametypes import Gametype
-from state.player import PlayerId
 from state.ranks import Rank, get_all_ranks
-from state.stack import PlayedCard
 from state.suits import Suit, get_all_suits
 
-ranks = get_all_ranks()
-suits = get_all_suits()
+RANKS = get_all_ranks()
+SUITS = get_all_suits()
 
-NUM_RANKS = len(ranks)
-NUM_SUITS = len(suits)
+NUM_RANKS = len(RANKS)
+NUM_SUITS = len(SUITS)
 NUM_CARDS = NUM_RANKS * NUM_SUITS
+NUM_STACK_CARDS = 4
+NUM_ROUNDS = 8
 
-rank_values = {
+RANK_VALUES = {
     Rank.OBER: 0,
     Rank.UNTER: 1,
     Rank.ASS: 2,
@@ -24,68 +24,39 @@ rank_values = {
 }
 
 
-def card_to_suit_offset(suit: Suit) -> int:
+def get_suit_value(suit: Suit) -> int:
     return suit.value
 
 
-def card_to_rank_value(rank: Rank) -> int:
-    value = rank_values.get(rank)
+def get_rank_value(rank: Rank) -> int:
+    value = RANK_VALUES.get(rank)
     assert value is not None, "The given Rank " + rank.name + " could not be found"
     return value
 
 
-def card_to_nn_input_values_index(card: Card) -> int:
-    suit_offset = card_to_suit_offset(card.get_suit())
-    rank_value = card_to_rank_value(card.get_rank())
-    return suit_offset * NUM_RANKS + rank_value
+def one_hot_encode_card(card: Card) -> list[int]:
+    result = [0] * NUM_CARDS
+    suit_offset = get_suit_value(card.get_suit())
+    rank_value = get_rank_value(card.get_rank())
+    index = suit_offset * NUM_RANKS + rank_value
+    result[index] = 0
+
+    return result
 
 
-def card_to_action(card: Card) -> int:
-    return card.get_suit().value * NUM_RANKS + card_to_rank_value(card.get_rank())
+def get_one_hot_encoding_index_from_card(card: Card) -> int:
+    return get_suit_value(card.get_suit()) * NUM_RANKS + get_rank_value(card.get_rank())
 
 
-def action_to_card(action: int) -> Card:
-    suit_code = action // NUM_RANKS
-    rank_code = action % NUM_RANKS
-    return Card(suits[suit_code], list(rank_values.keys())[rank_code])
-
-
-def card_to_nn_input_values(hand_cards: list[Card]) -> list[int]:
-    nn_input = [0] * NUM_CARDS
+def one_hot_encode_cards(hand_cards: list[Card]) -> list[int]:
+    result = [0] * NUM_CARDS
     for card in hand_cards:
-        card_index = card_to_nn_input_values_index(card)
-        nn_input[card_index] = 1
-    return nn_input
+        encoded_card = one_hot_encode_card(card)
+        result = [old_val | encoded_card[index] for old_val, index in enumerate(result)]
+    return result
 
 
-def allied_card_nn_input(
-    stack: list[tuple[Card, PlayerId]], allies: list[PlayerId]
-) -> list[int]:
-    ally_ids = [id for id in allies]
-    nn_input = [0] * NUM_CARDS
-    for played_card, player_id in stack:
-        card_index = card_to_nn_input_values_index(played_card)
-        nn_input[card_index] = 1 if player_id in ally_ids else 0
-    return nn_input
-
-
-def encode_dqn_input(
-    stack: list[tuple[Card, PlayerId]],
-    allies: list[PlayerId],
-    playable_cards: list[Card],
-) -> list[int]:
-    encoded_input: list[int] = []
-    played_cards = [played_card for (played_card, _) in stack]
-    encoded_stack_input = card_to_nn_input_values(played_cards)
-    encoded_ally_input = allied_card_nn_input(stack, allies)
-    encoded_playable_cards = card_to_nn_input_values(playable_cards)
-    encoded_input.extend(encoded_stack_input)
-    encoded_input.extend(encoded_ally_input)
-    encoded_input.extend(encoded_playable_cards)
-    return encoded_input
-
-
-def code_to_game_type(game_type_code: int) -> tuple[Gametype, Suit | None]:
+def decode_game_type(game_type_code: int) -> tuple[Gametype, Suit | None]:
     match game_type_code:
         case 0:
             return (Gametype.FARBGEIER, Suit.EICHEL)
