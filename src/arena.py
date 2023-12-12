@@ -9,6 +9,7 @@ from tqdm import tqdm
 from controller.handcrafted_controller import HandcraftedController
 from controller.passive_controller import PassiveController
 from controller.player_controller import PlayerController
+from controller.random_controller import RandomController
 from logic.game import Game
 from state.card import Card
 from state.event import Event, GameStartUpdate, GametypeDeterminedUpdate, MoneyUpdate
@@ -238,7 +239,7 @@ class Arena:
 if __name__ == "__main__":
     arena = Arena()
     arena.add_bot(HandcraftedController)
-    arena.add_bot(PassiveController)
+    arena.add_bot(RandomController)
     arena.add_bot(PassiveController)
     arena.add_bot(PassiveController)
     asyncio.run(arena.run())
