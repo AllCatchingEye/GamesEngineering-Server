@@ -1,9 +1,8 @@
 import logging
-from abc import ABC, abstractmethod
-from os import path
 
 import torch
 
+from ai.select_card.models.model_interface import ModelInterface
 from ai.select_card.rl_agent import RLBaseAgent
 from state.card import Card
 from state.event import Event, GametypeDeterminedUpdate
@@ -12,70 +11,84 @@ from state.player import PlayerId
 from state.stack import Stack
 
 
-class DRLAgent(RLBaseAgent, ABC):
+class DRLAgent(RLBaseAgent):
     __logger = logging.getLogger("DRLAgent")
 
-    def __init__(self, policy_model: torch.nn.Module):
+    def __init__(self, policy_model: ModelInterface):
         super().__init__()
         self.model = policy_model
         self._device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.game_type: Gametype | None
 
-    @abstractmethod
-    def apply_parameters_to_model(self, model: torch.nn.Module, model_path: str):
-        """Loads the model's parameters"""
+    def get_game_type_safe(self):
+        if self.game_type is None:
+            raise ValueError("game_type is not defined, yet.")
 
-    @abstractmethod
-    def get_model_path(self, game_type: Gametype) -> str:
-        """Computes the path where the model's parameters were persisted"""
+        return self.game_type
 
-    def initialize_model(self, model_path: str):
-        self.apply_parameters_to_model(self.model, model_path)
+    def initialize_model(self):
+        self.model.init_params(self.get_game_type_safe())
         self.model.eval()
 
     def reset(self):
-        super()._reset_allies()
+        super()._reset()
 
-    @abstractmethod
     def encode_state(
         self,
-        stack: list[tuple[Card, PlayerId]],
+        player_id: PlayerId,
+        play_order: list[PlayerId],
+        current_stack: list[tuple[Card, PlayerId]],
+        previous_stacks: list[list[tuple[Card, PlayerId]]],
         allies: list[PlayerId],
         playable_cards: list[Card],
     ) -> torch.Tensor:
-        """Returns the input values as input tensor"""
+        return self.model.encode_input(
+            player_id,
+            play_order,
+            current_stack,
+            previous_stacks,
+            allies,
+            playable_cards,
+        )
 
-    @abstractmethod
     def decode_card(self, output: torch.Tensor, playable_cards: list[Card]) -> Card:
-        """Returns the valid card to play"""
+        return self.model.decode_output(output, playable_cards)
 
-    def _compute_best_card(self, stack: Stack, playable_cards: list[Card]):
+    def _compute_best_card(
+        self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
+    ):
         with torch.no_grad():
             transformed_state = [
                 (card.card, card.player.id) for card in stack.played_cards
             ]
-            input_tensor = self.encode_state(
-                transformed_state, self.allies, playable_cards
+            return self.model.forward(
+                player_id,
+                self.get_play_order_safe(),
+                transformed_state,
+                self.previous_stacks,
+                self.get_allies(),
+                playable_cards,
             )
-            output: torch.Tensor = self.model(input_tensor)
-            return self.decode_card(output, playable_cards)
 
-    def select_card(self, stack: Stack, playable_cards: list[Card]):
-        best_card = self._compute_best_card(stack, playable_cards)
+    def select_card(
+        self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
+    ):
+        best_card = self._compute_best_card(player_id, stack, playable_cards)
         self.__logger.debug("🃏 Selected card %s", best_card)
         return best_card
 
     def __handle_model_initialization_on_demand(self, event: Event):
         if isinstance(event, GametypeDeterminedUpdate):
             self.game_type = event.gametype
-            model_path = self.get_model_path(event.gametype)
-            if path.exists(model_path):
-                self.__logger.debug(
-                    "🤖 Initialize model parameters for game type %s from %s",
-                    event.gametype,
-                    model_path,
-                )
-                self.initialize_model(model_path)
+            self.__logger.debug(
+                "🤖 Load parameters for game type %s and for policy model",
+                event.gametype.name,
+            )
+            try:
+                self.model.init_params(event.gametype)
+                self.__logger.debug("🤖 Use existing model parameters for policy model")
+            except ValueError:
+                self.__logger.debug("🤖 Use initial model parameters for policy model")
 
     def on_game_event(self, event: Event, player_id: PlayerId):
         super().on_game_event(event, player_id)

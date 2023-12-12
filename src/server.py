@@ -6,6 +6,8 @@ import os
 from websockets import Data, WebSocketServerProtocol, serve
 from controller.delayed_controller import DelayedController
 
+from controller.delayed_controller import DelayedController
+from controller.passive_controller import PassiveController
 from controller.random_controller import RandomController
 from controller.passive_controller import PassiveController
 from controller.websocket_controller import WebSocketController

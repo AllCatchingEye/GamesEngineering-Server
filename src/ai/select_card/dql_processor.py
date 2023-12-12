@@ -3,28 +3,32 @@ from collections import deque, namedtuple
 
 import torch
 
+from state.gametypes import Gametype
+
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
 
 class ReplayMemory(object):
     def __init__(self, capacity: int):
-        initial_transitions: list[Transition] = []
-        self.memory = deque(initial_transitions, maxlen=capacity)
+        self.memory: dict[Gametype, deque[Transition]] = {}
+        for game_type in Gametype:
+            initial_transitions: list[Transition] = []
+            self.memory[game_type] = deque(initial_transitions, maxlen=capacity)
 
-    def push(self, *args: Transition):
-        self.memory.append(Transition(*args))
+    def push(self, game_type: Gametype, *args: Transition):
+        self.memory[game_type].append(Transition(*args))
 
-    def get(self, index: int):
-        return self.memory[index]
+    def get(self, game_type: Gametype, index: int):
+        return self.memory[game_type][index]
 
-    def update(self, index: int, *args: Transition):
-        self.memory[index] = Transition(*args)
+    def update(self, game_type: Gametype, index: int, *args: Transition):
+        self.memory[game_type][index] = Transition(*args)
 
-    def sample(self, batch_size: int):
-        return random.sample(self.memory, batch_size)
+    def sample(self, game_type: Gametype, batch_size: int):
+        return random.sample(self.memory[game_type], batch_size)
 
-    def __len__(self):
-        return len(self.memory)
+    def length(self, game_type: Gametype):
+        return len(self.memory[game_type])
 
 
 class DQLProcessor:
@@ -49,15 +53,16 @@ class DQLProcessor:
 
     def memoize_state(
         self,
+        game_type: Gametype,
         state: torch.Tensor,
         action: torch.Tensor,
         reward: torch.Tensor,
         next_state: torch.Tensor,
     ):
-        self.__memory.push(state, action, next_state, reward)
+        self.__memory.push(game_type, state, action, next_state, reward)
 
-    def optimize_model(self):
-        if len(self.__memory) < self.__batch_size:
+    def optimize_model(self, game_type: Gametype):
+        if self.__memory.length(game_type) < self.__batch_size:
             return
 
         # create optimizer
@@ -65,7 +70,7 @@ class DQLProcessor:
             self.policy_model.parameters(), lr=self.__lr, amsgrad=True
         )
         # sample transitions based on replay memory
-        transitions = self.__memory.sample(self.__batch_size)
+        transitions = self.__memory.sample(game_type, self.__batch_size)
         # create a batch of transitions
         batch = Transition(*zip(*transitions))
 
@@ -114,6 +119,7 @@ class DQLProcessor:
         torch.nn.utils.clip_grad.clip_grad_value_(self.policy_model.parameters(), 100)
         optimizer.step()
         # print("Loss %f" % loss.item())
+        return loss.item()
 
     def update_network(self):
         target_net_state_dict = self.target_model.state_dict()
