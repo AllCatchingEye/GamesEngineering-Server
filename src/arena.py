@@ -206,6 +206,7 @@ class Arena:
         total_games = self.config.games * self.config.rounds_per_game
         dfs = []
         for i in range(len(self.bot_creators)):
+            print(self.bot_creators[i])
             df = pd.DataFrame(
                 columns=[
                     "Gamemode",
