@@ -254,6 +254,11 @@ class Game:
                 else None,
             )
         )
+        if game_type[0] != Gametype.SAUSPIEL:
+            for player in self.players:
+                if Card(game_type[1], Rank.ASS) in player.hand.get_all_cards():
+                    await self.controllers[player.slot_id].on_game_event(AnnouncePlayPartyUpdate(play_parties_to_struct(
+                        [[player.id for player in party] for party in self.play_party])))
         return game_type[0]
 
     async def __new_game(self) -> None:
@@ -370,7 +375,7 @@ class Game:
                 running_team_cards = self.__get_running_cards(team)
                 if self.gamemode is GameModeGeier or self.gamemode is GameModeWenz:
                     stakes_added = (
-                        running_team_cards - RunningCardsStart.GEIER_WENZ.value
+                            running_team_cards - RunningCardsStart.GEIER_WENZ.value
                     )
                 else:
                     stakes_added = running_team_cards - RunningCardsStart.STANDARD.value
