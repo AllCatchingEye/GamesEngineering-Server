@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
-from ai.nn_helper import card_to_nn_input_values, code_to_game_type
+from ai.nn_helper import one_hot_encode_card, decode_game_type
 from ai.select_game_type.agent import ISelectGameAgent
 from ai.select_game_type.gametype_helper import (
     game_type_to_game_group,
@@ -56,7 +56,7 @@ class SelectGameAgent(ISelectGameAgent):
         self, hand_cards: list[Card], current_lowest_gamegroup: GameGroup
     ) -> bool:
         """Invoked to receive a decision if the agent would play"""
-        input_values = card_to_nn_input_values(hand_cards)
+        input_values = one_hot_encode_card(hand_cards)
         input_tensor = torch.tensor(np.array([input_values]).astype(np.float32))
         output = self.model_should_play(input_tensor)
         selected_game_type_code = torch.max(output, 1).indices[0].item()
@@ -66,7 +66,7 @@ class SelectGameAgent(ISelectGameAgent):
         return should_play
 
     def update_decision_tensor(self, hand_cards: list[Card]):
-        input_values = card_to_nn_input_values(hand_cards)
+        input_values = one_hot_encode_card(hand_cards)
         input_tensor = torch.tensor(np.array([input_values]).astype(np.float32))
         self.decision_tensor = self.model_select_game_type(input_tensor)
 
@@ -90,7 +90,7 @@ class SelectGameAgent(ISelectGameAgent):
         best_gametype: tuple[Gametype, Suit | None] | None = None
         max_val = float('-inf')
         for idx, val in enumerate(self.decision_tensor.tolist()[0]):
-            gametype = code_to_game_type(idx)
+            gametype = decode_game_type(idx)
             if val > max_val and gametype in choosable_game_types:
                 max_val: float = val
                 best_gametype = gametype

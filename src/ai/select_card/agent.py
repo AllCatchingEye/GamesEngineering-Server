@@ -15,7 +15,9 @@ class ISelectCardAgent(ABC):
         """Invoked to reset the agent's internal state"""
 
     @abstractmethod
-    def select_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
+    def select_card(
+        self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
+    ) -> Card:
         """Select card via drl algorithm based on stack and playable cards"""
 
     @abstractmethod

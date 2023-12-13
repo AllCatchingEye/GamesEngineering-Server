@@ -4,7 +4,7 @@ from math import floor
 import numpy as np
 import torch
 
-from ai.nn_helper import card_to_nn_input_values, code_to_game_type
+from ai.nn_helper import decode_game_type, one_hot_encode_cards
 from ai.select_game_type.agent import ISelectGameAgent
 from ai.select_game_type.gametype_helper import (
     game_type_to_game_group,
@@ -45,11 +45,11 @@ class NNAgent(ISelectGameAgent):
         self, hand_cards: list[Card], current_lowest_gamegroup: GameGroup
     ) -> bool:
         """Invoked to receive a decision if the agent would play"""
-        input_values = card_to_nn_input_values(hand_cards)
+        input_values = one_hot_encode_cards(hand_cards)
         input_tensor = torch.tensor(np.array([input_values]).astype(np.float32))
         output = self.model(input_tensor)
         selected_game_type_code = torch.max(output, 1).indices[0].item()
-        self.targeted_game_type = code_to_game_type(floor(selected_game_type_code))
+        self.targeted_game_type = decode_game_type(floor(selected_game_type_code))
         return (
             self.targeted_game_type[0] != Gametype.RAMSCH
             and game_type_to_game_group(self.targeted_game_type[0]).value
