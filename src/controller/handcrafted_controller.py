@@ -729,7 +729,7 @@ class HandcraftedController(PlayerController):
         return self.search_lowest_card_of_suit(lowest_suit)
 
     def secure_stitch(self, stack: Stack, playable_cards: list[Card], trumps: list[Card], highest_trump_hand: Card, card_to_stitch: Card) -> Card | None:
-        first_card = stack[0]
+        first_card = stack.get_played_cards()[0].get_card()
         if card_to_stitch in trumps:
             trump_to_stitch = self.stitch_with_trump(stack, playable_cards, trumps, 12, highest_trump_hand,
                                                      card_to_stitch)
