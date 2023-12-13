@@ -7,7 +7,6 @@ from ai.select_card.drl_agent import DRLAgent
 from ai.select_card.drl_agent_trainer import DRLAgentTrainer
 from ai.select_card.models.iteration_02.model import ModelIter02
 
-
 from controller.player_controller import PlayerController
 from state.card import Card
 from state.event import Event, GameStartUpdate
@@ -17,7 +16,6 @@ from state.stack import Stack
 from state.suits import Suit
 
 USED_MODEL = ModelIter02
-
 
 class AiController(PlayerController):
     def __init__(self, train: bool = False):
