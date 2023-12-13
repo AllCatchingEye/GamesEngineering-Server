@@ -17,6 +17,7 @@ from state.event import (
     GametypeDeterminedUpdate,
     RoundResultUpdate,
 )
+from state.gametypes import Gametype
 from state.player import PlayerId
 from state.stack import Stack
 
@@ -83,6 +84,7 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
         self._state: torch.Tensor | None
         self._played_card: Card | None
         self.__steps_done = 0
+        self.former_game_type: Gametype | None = None
 
     def persist_trained_policy(self):
         self.agent.model.persist_parameters(self.agent.get_game_type_safe())
@@ -149,15 +151,19 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
 
     def __handle_model_initialization_on_demand(self, event: Event):
         if isinstance(event, GametypeDeterminedUpdate):
-            self.__logger.debug(
-                "🤖 Load parameters for game type %s and target model",
-                event.gametype.name,
-            )
-            try:
-                self._target_net.init_params(event.gametype)
-                self.__logger.debug("🤖 Use existing model parameters for target model")
-            except ValueError:
-                self.__logger.debug("🤖 Use initial model parameters for target model")
+            if self.former_game_type != event.gametype:
+                self.former_game_type = event.gametype
+                self.__logger.debug(
+                    "🤖 Load parameters for game type %s and target model",
+                    event.gametype.name,
+                )
+                try:
+                    self._target_net.init_params(event.gametype)
+                    self.__logger.debug("🤖 Use existing model parameters for target model")
+                except ValueError:
+                    self.__logger.debug("🤖 Use initial model parameters for target model")
+            else:
+                self.__logger.debug("🤖 Use loaded model parameters for target model since the game type hasn't changed")
 
     def __memoize_step_on_demand(self, event: Event, player_id: PlayerId):
         if isinstance(event, GameEndUpdate) or isinstance(event, RoundResultUpdate):
