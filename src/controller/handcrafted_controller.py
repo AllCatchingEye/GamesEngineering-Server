@@ -918,9 +918,8 @@ class HandcraftedController(PlayerController):
                 return trump
         return None
 
-    def highest_existing_trump_of_enemy(self) -> Card | None:
-        own_trumps = self.hand.get_all_trumps_in_deck(self.current_gamemode.get_trump_cards())
-        trumps = self.current_gamemode.trumps
+    def highest_existing_trump_of_enemy(self, own_trumps: list[Card]) -> Card | None:
+        trumps = self.current_gamemode.get_trump_cards()
         for trump in trumps:
             if trump not in self.played_cards and trump not in own_trumps:
                 return trump
