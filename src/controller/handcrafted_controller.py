@@ -761,8 +761,12 @@ class HandcraftedController(PlayerController):
         min_val = min(card_values)
         min_val_cards = [playable_card for playable_card in playable_cards if
                          get_value_of(playable_card.rank) == min_val]
-        if min_val == 2 or min_val == 3:
+        if ((min_val == 2 and isinstance(self.current_gamemode, GameModeWenz))
+                or (min_val == 3 and isinstance(self.current_gamemode, GameModeGeier))
+                or ((min_val == 2 or min_val == 3) and isinstance(self.current_gamemode, GameModeWenz) and isinstance(self.current_gamemode, GameModeGeier))):
             for play_card in min_val_cards:
+                if play_card not in trumps:
+                    raise ValueError("play card not in trumps")
                 if lowest_card is None or trumps.index(play_card) > trumps.index(lowest_card):
                     lowest_card = play_card
         else:
@@ -774,7 +778,7 @@ class HandcraftedController(PlayerController):
                         play_card_suit_count == lowest_card_suit_count and play_card.get_rank().value < lowest_card.rank
                         .value):
                     lowest_card = play_card
-                    lowest_card_suit_count = play_card_suit_count
+                    lowest_card_suit_count = play_card_suit_count if play_card not in trumps else math.inf
         return lowest_card
 
     def search_highest_non_stitching_card(self, trumps: list[Card], stack: Stack,
@@ -885,8 +889,9 @@ class HandcraftedController(PlayerController):
                 return trump
         return None
 
-    def highest_existing_trump_of_enemy(self, own_trumps: list[Card]) -> Card | None:
-        trumps = self.current_gamemode.get_trump_cards()
+    def highest_existing_trump_of_enemy(self) -> Card | None:
+        own_trumps = self.hand.get_all_trumps_in_deck(self.current_gamemode.get_trump_cards())
+        trumps = self.current_gamemode.trumps
         for trump in trumps:
             if trump not in self.played_cards and trump not in own_trumps:
                 return trump
