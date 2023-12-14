@@ -763,7 +763,7 @@ class HandcraftedController(PlayerController):
                          get_value_of(playable_card.rank) == min_val]
         if ((min_val == 2 and isinstance(self.current_gamemode, GameModeWenz))
                 or (min_val == 3 and isinstance(self.current_gamemode, GameModeGeier))
-                or ((min_val == 2 or min_val == 3) and isinstance(self.current_gamemode, GameModeWenz) and isinstance(self.current_gamemode, GameModeGeier))):
+                or ((min_val == 2 or min_val == 3) and not isinstance(self.current_gamemode, GameModeWenz) and not isinstance(self.current_gamemode, GameModeGeier))):
             for play_card in min_val_cards:
                 if play_card not in trumps:
                     raise ValueError("play card not in trumps")
