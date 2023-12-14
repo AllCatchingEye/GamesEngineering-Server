@@ -241,9 +241,9 @@ class Arena:
 if __name__ == "__main__":
     arena = Arena()
     arena.add_bot(HandcraftedController)
-    arena.add_bot(RandomController)
-    arena.add_bot(PassiveController)
-    arena.add_bot(PassiveController)
+    arena.add_bot(AiController)
+    arena.add_bot(AiController)
+    arena.add_bot(AiController)
     asyncio.run(arena.run())
 
     print("Overview")
