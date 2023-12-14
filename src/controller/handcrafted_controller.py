@@ -1,8 +1,6 @@
 import math
 import random
 
-from mypyc.irbuild import function
-
 from controller.player_controller import PlayerController
 from logic.gamemodes.gamemode import GameMode
 from logic.gamemodes.gamemode_geier import GameModeGeier
@@ -12,14 +10,14 @@ from logic.gamemodes.gamemode_solo import GameModeSolo
 from logic.gamemodes.gamemode_wenz import GameModeWenz
 from state.card import Card
 from state.deck import DECK
-from state.event import Event, GameStartUpdate, GametypeDeterminedUpdate, CardPlayedUpdate, AnnouncePlayPartyUpdate, \
-    GameEndUpdate
+from state.event import Event, GameStartUpdate, GametypeDeterminedUpdate, CardPlayedUpdate, AnnouncePlayPartyUpdate, GameEndUpdate
 from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
 from state.player import PlayerId, struct_play_parties
 from state.ranks import Rank, get_value_of
 from state.stack import Stack
 from state.suits import Suit, get_all_suits
+from typing import Callable
 
 
 class HandcraftedController(PlayerController):
@@ -32,7 +30,7 @@ class HandcraftedController(PlayerController):
     current_gamemode: GameMode
     highest_gamegroup = GameGroup | None
     valid_gamemodes: list[(Gametype, Suit | None)]
-    play_card_gamemode: function
+    play_card_gamemode: Callable
     player_announcer: PlayerId
 
     def __init__(self):
