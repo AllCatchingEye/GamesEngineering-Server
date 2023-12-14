@@ -33,6 +33,7 @@ class HandcraftedController(PlayerController):
     highest_gamegroup = GameGroup | None
     valid_gamemodes: list[(Gametype, Suit)]
     play_card_gamemode: function
+    player_announcer: PlayerId
 
     def __init__(self):
         super().__init__()
@@ -420,8 +421,52 @@ class HandcraftedController(PlayerController):
         return rng.choice(playable_cards)
 
     def play_card_anti_solo(self, stack: Stack, playable_cards: list[Card]) -> Card | None:
-        rng = random.Random()
-        return rng.choice(playable_cards)
+        trumps = self.current_gamemode.trumps
+        fehl_farben = self.get_fehl_farben(self.hand.get_all_cards(), trumps)
+        highest_trump_hand = self.highest_existing_trump_in_hand()
+
+        if len(stack.get_played_cards()) > 0:
+            first_card = stack.get_played_cards()[0].get_card()
+            current_stitching_player = self.current_gamemode.determine_stitch_winner(stack)
+            current_stitching_card = None
+            for played_card in stack.get_played_cards():
+                if played_card.get_player().id == current_stitching_player.id:
+                    current_stitching_card = played_card.get_card()
+
+            if current_stitching_player in self.ally:
+                enemy_has_already_played = False
+                for player_card in stack.get_played_cards():
+                    enemy_has_already_played = player_card.get_player() == self.player_announcer
+                if enemy_has_already_played:
+                    #schmieren
+                    return self.schmieren(playable_cards)
+                else:
+                    if first_card in trumps:
+                        highest_trump_enemy = self.highest_existing_trump_of_enemy()
+                        if trumps.index(highest_trump_enemy) < trumps.index(current_stitching_card):
+                            self.stitch_with_trump(stack, playable_cards, trumps, 5, highest_trump_hand, highest_trump_enemy)
+                        else:
+                            #schmieren
+                            return self.schmieren(playable_cards)
+                    else:
+                        remaining_card_suit = self.search_remaining_suit_cards(first_card.suit)
+                        if len(remaining_card_suit) > 1:
+                            if current_stitching_card in trumps:
+                                return self.schmieren(playable_cards)
+                            else:
+                                highest_suit_card_enemy = self.search_highest_card_of_suit_enemy(first_card.suit)
+                                if highest_suit_card_enemy.get_rank().value > current_stitching_card.get_rank().value:
+                                    return self.secure_stitch(stack, playable_cards, trumps, highest_trump_hand, highest_suit_card_enemy)
+                                else:
+                                    return self.schmieren(playable_cards)
+                        else:
+                            return self.stitch_with_trump(stack, playable_cards, trumps, 12, highest_trump_hand, self.highest_existing_trump_of_enemy())
+            # enemy currently stitching
+            else:
+                return self.secure_stitch(stack, playable_cards, trumps, highest_trump_hand, current_stitching_card)
+        # play first card
+        else:
+            return self.play_highest_suit_most_remaining_suit(fehl_farben, playable_cards)
 
     def play_card_sauspiel(self, stack: Stack, playable_cards: list[Card]) -> Card | None:
         trumps = self.current_gamemode.trumps
@@ -607,18 +652,7 @@ class HandcraftedController(PlayerController):
                         return self.secure_stitch(stack, playable_cards, trumps, highest_trump_hand, current_stitching_card)
             else:
                 # play out first card no trump
-                suit_count = -1
-                highest_remaining_suit = None
-                for suit in fehl_farben:
-                    remaining_suit_cards = self.search_remaining_suit_cards(suit)
-                    if len(remaining_suit_cards) > suit_count:
-                        suit_count = len(remaining_suit_cards)
-                        highest_remaining_suit = suit
-                if highest_remaining_suit is not None:
-                    if Card(highest_remaining_suit, Rank.ASS) in playable_cards:
-                        return Card(highest_remaining_suit, Rank.ASS)
-                else:
-                    return highest_trump_hand
+                return self.play_highest_suit_most_remaining_suit(fehl_farben, playable_cards)
 
     def play_card_ramsch(self, stack: Stack, playable_cards: list[Card]) -> Card:
         trumps = self.current_gamemode.trumps
@@ -670,6 +704,22 @@ class HandcraftedController(PlayerController):
                 # play the lowest card
                 return self.search_lowest_card_value(trumps, playable_cards)
 
+    def play_highest_suit_most_remaining_suit(self, fehl_farben: list[Suit], playable_cards: list[Card]):
+        suit_count = -1
+        highest_remaining_suit = None
+        for suit in fehl_farben:
+            remaining_suit_cards = self.search_remaining_suit_cards(suit)
+            if len(remaining_suit_cards) > suit_count:
+                suit_count = len(remaining_suit_cards)
+                highest_remaining_suit = suit
+        if highest_remaining_suit is not None:
+            if Card(highest_remaining_suit, Rank.ASS) in playable_cards:
+                return Card(highest_remaining_suit, Rank.ASS)
+            else:
+                return self.play_suit_card_of_least_suit_cards(fehl_farben)
+        else:
+            return self.search_highest_card_of_suit(highest_remaining_suit)
+
     def play_fehl_ass_most_suit_cards_remaining(self, fehl_asse) -> Card:
         if len(fehl_asse) == 0:
             raise ValueError('Cannot determine fehl_ass from empty list')
@@ -700,8 +750,7 @@ class HandcraftedController(PlayerController):
         if card_to_stitch in trumps:
             trump_to_stitch = self.stitch_with_trump(stack, playable_cards, trumps, 12, highest_trump_hand,
                                                      card_to_stitch)
-            if trump_to_stitch is not None:
-                return trump_to_stitch
+            return trump_to_stitch
         else:
             remaining_suit_cards = self.search_remaining_suit_cards(first_card.suit)
             if len(remaining_suit_cards) > 1:
@@ -713,20 +762,17 @@ class HandcraftedController(PlayerController):
                     # free to play
                     if stack.get_value() >= 10:
                         highest_low_trump_hand = self.search_highest_card_of_trump_suit_without_high_trumps(
-                            trumps, Suit.HERZ)
-                        if highest_low_trump_hand is not None:
-                            return highest_low_trump_hand
+                            trumps, self.current_gamemode.get_trump_suit())
+                        return highest_low_trump_hand
             else:
                 if stack.get_value() > 11 and highest_trump_hand in playable_cards:
                     return highest_trump_hand
-        return None
 
     def stitch_with_trump(self, stack: Stack, playable_cards: list[Card], trumps: list[Card], stack_min_worth: int, highest_trump_hand: Card, card_to_stitch: Card) -> Card | None:
         if stack.get_value() >= stack_min_worth:
             if highest_trump_hand is not None and trumps.index(highest_trump_hand) < trumps.index(
                     card_to_stitch) and highest_trump_hand in playable_cards:
                 return highest_trump_hand
-        return None
 
     def schmieren(self, playable_cards: list[Card]) -> Card | None:
         trumps = self.current_gamemode.get_trump_cards()
@@ -903,6 +949,7 @@ class HandcraftedController(PlayerController):
                 self.player_id = event.player
                 self.hand = Hand(event.hand)
             case GametypeDeterminedUpdate():
+                self.player_announcer = event.player
                 self.current_gametype = event.gametype
                 self.current_suit = event.suit
                 match self.current_gametype:

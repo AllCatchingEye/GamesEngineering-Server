@@ -83,3 +83,6 @@ class GameMode(ABC):
             return card_one.get_rank().value > card_two.get_rank().value
         # Other card does not fulfill the leading suit
         return False
+
+    def get_trump_suit(self) -> Suit:
+        return self.suit
