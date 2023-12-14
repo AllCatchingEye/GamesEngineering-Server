@@ -2,7 +2,7 @@ from abc import ABC
 
 from state.card import Card
 from state.hand import Hand
-from state.player import Player
+from state.player import Player, PlayerId
 from state.stack import Stack
 from state.suits import Suit
 
@@ -45,7 +45,7 @@ class GameMode(ABC):
         """Returns a list of all trump cards"""
         return self.trumps_set
 
-    def determine_stitch_winner(self, stack: Stack) -> Player:
+    def determine_stitch_winner(self, stack: Stack) -> PlayerId:
         """Returns the player who won the current stitch"""
         strongest_played_card = stack.get_played_cards()[0]
         for played_card in stack.get_played_cards()[1:]:
@@ -53,10 +53,8 @@ class GameMode(ABC):
                     played_card.get_card(), strongest_played_card.get_card()
             ):
                 strongest_played_card = played_card
-        stitch_winner = strongest_played_card.get_player()
-        for card in stack.get_played_cards():
-            stitch_winner.stitches.append(card.get_card())
-        return stitch_winner
+        stitch_winner_id = strongest_played_card.get_player()
+        return stitch_winner_id
 
     def get_game_winner(
             self, play_party: list[list[Player]]
@@ -66,8 +64,7 @@ class GameMode(ABC):
         for i, party in enumerate(play_party):
             for player in party:
                 party_points[i] += player.points
-
-        game_winner_index = party_points.index(max(party_points))
+        game_winner_index = len(party_points) - 1 - party_points[::-1].index(max(party_points))
         return play_party[game_winner_index], party_points
 
     def __card_is_stronger_than(self, card_one: Card, card_two: Card) -> bool:

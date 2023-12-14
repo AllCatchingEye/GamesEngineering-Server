@@ -1,18 +1,18 @@
 from dataclasses import dataclass
 
 from state.card import Card
-from state.player import Player
 from state.ranks import Rank, get_value_of
 from state.suits import Suit
+from state.player import PlayerId
 
 
 @dataclass
 class PlayedCard:
     card: Card
-    player: Player
+    player: PlayerId
     """Represents a card played by a player during the game."""
 
-    def __init__(self, card: Card, player: Player) -> None:
+    def __init__(self, card: Card, player: PlayerId) -> None:
         """
         Initialize a PlayedCard instance.
 
@@ -32,11 +32,11 @@ class PlayedCard:
     def get_rank(self) -> Rank:
         return self.card.get_rank()
 
-    def get_player(self) -> Player:
+    def get_player(self) -> PlayerId:
         return self.player
 
     def __str__(self) -> str:
-        return f"{self.card} by player {self.player.id}"
+        return f"{self.card} by player {self.player}"
 
     def __repr__(self) -> str:
         return str(self)
@@ -58,7 +58,7 @@ class Stack:
         self.played_cards: list[PlayedCard] = []
         self.value = 0
 
-    def add_card(self, card: Card, player: Player) -> None:
+    def add_card(self, card: Card, player: PlayerId) -> None:
         """
         Add a card played by a player to the stack.
 

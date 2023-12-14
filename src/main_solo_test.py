@@ -7,7 +7,6 @@ from logic.game import Game
 from state.card import Card
 from state.event import *
 from state.gametypes import Gametype
-from state.player import Player
 from state.ranks import Rank
 from state.stack import PlayedCard, Stack
 from state.suits import Suit
@@ -92,7 +91,7 @@ class TestClass(unittest.TestCase):
         self.assertEqual(
             end_events[0].winner, [self.player0.id, self.player1.id, self.player2.id]
         )
-        self.assertEqual(end_events[0].points, [31, 89])
+        self.assertEqual(end_events[0].points, [60, 60])
         self.assertEqual(money_pay_event[0].player, self.player0.id)
         self.assertEqual(money_pay_event[0].money.cent, 500)
 

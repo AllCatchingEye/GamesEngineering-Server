@@ -426,7 +426,7 @@ class HandcraftedController(PlayerController):
             current_stitching_player = self.current_gamemode.determine_stitch_winner(stack)
             current_stitching_card = None
             for played_card in stack.get_played_cards():
-                if played_card.get_player().id == current_stitching_player.id:
+                if played_card.get_player() == current_stitching_player:
                     current_stitching_card = played_card.get_card()
 
             return self.secure_stitch(stack, playable_cards, trumps, highest_trump_hand, current_stitching_card)
@@ -446,7 +446,7 @@ class HandcraftedController(PlayerController):
             current_stitching_player = self.current_gamemode.determine_stitch_winner(stack)
             current_stitching_card = None
             for played_card in stack.get_played_cards():
-                if played_card.get_player().id == current_stitching_player.id:
+                if played_card.get_player() == current_stitching_player:
                     current_stitching_card = played_card.get_card()
 
             if first_card in trumps:
@@ -467,13 +467,15 @@ class HandcraftedController(PlayerController):
             current_stitching_player = self.current_gamemode.determine_stitch_winner(stack)
             current_stitching_card = None
             for played_card in stack.get_played_cards():
-                if played_card.get_player().id == current_stitching_player.id:
+                if played_card.get_player() == current_stitching_player:
                     current_stitching_card = played_card.get_card()
 
             if current_stitching_player in self.ally:
                 enemy_has_already_played = False
                 for player_card in stack.get_played_cards():
-                    enemy_has_already_played = player_card.get_player() == self.player_announcer
+                    if player_card.get_player() == self.player_announcer:
+                        enemy_has_already_played = True
+                        break
                 if enemy_has_already_played:
                     # schmieren
                     return self.schmieren(playable_cards)
@@ -520,7 +522,7 @@ class HandcraftedController(PlayerController):
             first_card = stack.get_played_cards()[0].get_card()
             current_stitching_player = self.current_gamemode.determine_stitch_winner(stack)
             for played_card in stack.get_played_cards():
-                if played_card.get_player().id == current_stitching_player.id:
+                if played_card.get_player() == current_stitching_player:
                     current_stitching_card = played_card.get_card()
 
         if self.ally is None:
@@ -576,7 +578,7 @@ class HandcraftedController(PlayerController):
                             highest_suit_card_enemy = self.search_highest_card_of_suit_enemy(first_card.suit)
                             if highest_suit_card_enemy is not None and current_stitching_card.rank.value < highest_suit_card_enemy.get_rank().value:
                                 highest_suit_card_hand = self.search_highest_card_of_suit(first_card.suit)
-                                if highest_suit_card_hand is not None and highest_suit_card_hand.rank.value > highest_suit_card_enemy.get_rank():
+                                if highest_suit_card_hand is not None and highest_suit_card_hand.rank.value > highest_suit_card_enemy.get_rank().value:
                                     return highest_suit_card_hand
                                 else:
                                     if stack.get_value() >= 10:
@@ -639,7 +641,7 @@ class HandcraftedController(PlayerController):
             current_stitching_player = self.current_gamemode.determine_stitch_winner(stack)
             current_stitching_card = None
             for played_card in stack.get_played_cards():
-                if played_card.get_player().id == current_stitching_player.id:
+                if played_card.get_player() == current_stitching_player:
                     current_stitching_card = played_card.get_card()
 
         if self.ally is None:
@@ -664,7 +666,7 @@ class HandcraftedController(PlayerController):
         else:
             # try to play together
             if len(stack.get_played_cards()) > 0:
-                if current_stitching_player.id in self.ally:
+                if current_stitching_player in self.ally:
                     if len(stack.get_played_cards()) < 3:
                         if current_stitching_card in trumps:
                             highest_existing_enemy_trump = self.highest_existing_trump_of_enemy()
@@ -806,23 +808,21 @@ class HandcraftedController(PlayerController):
                                                      card_to_stitch)
             return trump_to_stitch
         else:
-            remaining_suit_cards = self.search_remaining_suit_cards(first_card.suit)
-            if len(remaining_suit_cards) > 1:
-                highest_suit_card_hand = self.search_highest_card_of_suit(first_card.suit)
-                if highest_suit_card_hand is not None:
-                    if highest_suit_card_hand.rank.value > card_to_stitch.rank.value:
-                        return highest_suit_card_hand
-                else:
-                    # free to play
-                    if stack.get_value() >= 10:
-                        if self.current_gamemode.get_trump_suit() is not None:
-                            return self.search_highest_card_of_trump_suit_without_high_trumps(trumps,
-                                                                                              self.current_gamemode.get_trump_suit())
-                        else:
-                            return self.lowest_existing_trump_in_hand()
+            highest_suit_card_hand = self.search_highest_card_of_suit(first_card.suit)
+            if highest_suit_card_hand is not None:
+                if highest_suit_card_hand.rank.value > card_to_stitch.rank.value:
+                    return highest_suit_card_hand
             else:
-                if stack.get_value() > 11 and highest_trump_hand in playable_cards:
-                    return highest_trump_hand
+                # free to play
+                if stack.get_value() >= 10:
+                    if self.current_gamemode.get_trump_suit() is not None:
+                        return self.search_highest_card_of_trump_suit_without_high_trumps(trumps,
+                                                                                              self.current_gamemode.get_trump_suit())
+                    else:
+                        if stack.get_value() > 11 and highest_trump_hand in playable_cards:
+                            return highest_trump_hand
+                        return self.lowest_existing_trump_in_hand()
+
 
     def stitch_with_trump(self, stack: Stack, playable_cards: list[Card], trumps: list[Card], stack_min_worth: int,
                           highest_trump_hand: Card, card_to_stitch: Card) -> Card | None:
@@ -893,7 +893,7 @@ class HandcraftedController(PlayerController):
             current_stitching_card = None
             highest_non_stitching_card = None
             for played_card in stack.get_played_cards():
-                if played_card.get_player().id == current_stitching_player.id:
+                if played_card.get_player() == current_stitching_player:
                     current_stitching_card = played_card.get_card()
             if current_stitching_card is not None:
                 for card in playable_cards:
@@ -911,9 +911,10 @@ class HandcraftedController(PlayerController):
 
     def search_remaining_suit_cards(self, suit: Suit) -> list[Card]:
         remaining_suit_cards = []
-        own_suit_cards = self.hand.get_all_cards_for_suit(suit, self.current_gamemode.get_trump_cards())
+        trumps = self.current_gamemode.get_trump_cards()
+        own_suit_cards = self.hand.get_all_cards_for_suit(suit, trumps)
         for card in DECK.get_cards_by_suit(suit):
-            if card not in own_suit_cards + self.played_cards:
+            if card not in own_suit_cards + self.played_cards and card not in trumps:
                 remaining_suit_cards.append(card)
         return remaining_suit_cards
 

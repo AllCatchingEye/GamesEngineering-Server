@@ -33,6 +33,7 @@ from state.running_cards_start import RunningCardsStart
 from state.stack import Stack
 from state.stakes import Stake
 from state.suits import Suit
+from state.player import PlayerId
 
 HAND_SIZE = 8
 ROUNDS = 8
@@ -321,7 +322,7 @@ class Game:
                     f"Illegal card played, tried to play {card} from {player.hand} but only {playable_cards} are allowed"
                 )
             player.lay_card(card)
-            stack.add_card(card, player)
+            stack.add_card(card, player.id)
             await self.__broadcast(CardPlayedUpdate(player.id, card))
 
             # Announce that the searched ace had been played and teams are known
@@ -347,8 +348,13 @@ class Game:
         """Finish the current round and determine the winner."""
         winner = self.gamemode.determine_stitch_winner(stack)
         stack_value = stack.get_value()
-        winner.points += stack_value
-        await self.__broadcast(RoundResultUpdate(winner.id, stack_value))
+        for player in self.players:
+            if player.id == winner:
+                player.points += stack_value
+                for card in stack.get_played_cards():
+                    player.stitches.append(card.get_card())
+                break
+        await self.__broadcast(RoundResultUpdate(winner, stack_value))
         self.__change_player_order(winner)
 
     async def __get_or_pay_money(
@@ -410,16 +416,16 @@ class Game:
                     break
         return running_cards
 
-    def __change_player_order(self, winner: Player) -> None:
+    def __change_player_order(self, winner: PlayerId) -> None:
         """Change the order of players based on the round winner."""
         winner_index = self.__get_winner_index(winner)
         self.__swap_players(winner_index)
 
-    def __get_winner_index(self, winner: Player) -> int:
+    def __get_winner_index(self, winner: PlayerId) -> int:
         """Find the index of the player who won"""
         winner_index = 0
         for index, player in enumerate(self.players):
-            if player.id == winner.id:
+            if player.id == winner:
                 winner_index = index
         return winner_index
 
