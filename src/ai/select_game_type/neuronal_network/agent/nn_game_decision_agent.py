@@ -4,7 +4,7 @@ from math import floor
 import numpy as np
 import torch
 
-from ai.nn_helper import card_to_nn_input_values, code_to_game_type
+from ai.nn_helper import decode_game_type, one_hot_encode_cards
 from ai.select_game_type.agent import ISelectGameAgent
 from ai.select_game_type.neuronal_network.agent.gametype_helper import (
     game_type_to_game_group,
@@ -12,6 +12,7 @@ from ai.select_game_type.neuronal_network.agent.gametype_helper import (
 from ai.select_game_type.neuronal_network.agent.select_game_nn import SelectGameNN
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
+from state.ranks import Rank
 from state.suits import Suit
 
 
@@ -45,16 +46,41 @@ class NNAgent(ISelectGameAgent):
         self, hand_cards: list[Card], current_lowest_gamegroup: GameGroup
     ) -> bool:
         """Invoked to receive a decision if the agent would play"""
-        input_values = card_to_nn_input_values(hand_cards)
+        input_values = one_hot_encode_cards(hand_cards)
         input_tensor = torch.tensor(np.array([input_values]).astype(np.float32))
-        output = self.model(input_tensor)
+        output: torch.Tensor = self.model(input_tensor)
         selected_game_type_code = torch.max(output, 1).indices[0].item()
-        self.targeted_game_type = code_to_game_type(floor(selected_game_type_code))
+
+        self.targeted_game_type = decode_game_type(floor(selected_game_type_code))
+        if self.targeted_game_type[0] is Gametype.SAUSPIEL:
+            sauspiel = self.get_best_sauspiel(output.tolist()[0], hand_cards)
+            if sauspiel is not None:
+                self.targeted_game_type = sauspiel
+            else:
+                # weiter if there is no valid sauspiel
+                return False
         return (
             self.targeted_game_type[0] != Gametype.RAMSCH
             and game_type_to_game_group(self.targeted_game_type[0]).value
-            > current_lowest_gamegroup.value
+            <= current_lowest_gamegroup.value
         )
+
+    def get_best_sauspiel(self, tensor: list[float], hand_cards: list[Card]) -> tuple[Gametype, Suit | None] | None:
+        max_value = float("-inf")
+        sauspiel = None
+        for idx, value in enumerate(tensor):
+            game_type = decode_game_type(floor(idx))
+            if game_type[0] is Gametype.SAUSPIEL:
+                if value > max_value and self.is_valid_sauspiel(game_type, hand_cards):
+                    max_value = value
+                    sauspiel = game_type
+        return sauspiel
+
+    def is_valid_sauspiel(self, sauspiel: tuple[Gametype, Suit | None], hand_cards: list[Card]) -> bool:
+        hand_suits = list(map(lambda card: card.suit, hand_cards))
+        if sauspiel[1] is not None:
+            return Card(sauspiel[1], Rank.ASS) not in hand_cards and sauspiel[1] in hand_suits
+        return False
 
     def select_game_type(
         self,

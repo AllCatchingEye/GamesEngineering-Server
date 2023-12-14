@@ -8,8 +8,8 @@ from state.suits import Suit
 
 class DealerSolo(Dealer):
     def deal(self, suit: Suit | None) -> tuple[list[Card], list[list[Card]]]:
-        if suit is None or suit is Suit.HERZ:
-            raise ValueError("Suit must be one of EICHEL, GRAS, or SCHELLEN")
+        if suit is None:
+            raise ValueError("Suit must be specified for solo game")
 
         trumps = GameModeSolo(suit).trumps
 

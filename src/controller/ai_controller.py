@@ -1,7 +1,8 @@
 import os
 
-from ai.select_card.simple_deep_q_learning.sdql_agent import SDQLAgent, SDQLAgentConfig
-from ai.select_card.simple_deep_q_learning.sdql_agent_trainer import SDQLAgentTrainer
+from ai.select_card.drl_agent import DRLAgent
+from ai.select_card.drl_agent_trainer import DRLAgentTrainer
+from ai.select_card.models.iteration_02.model import ModelIter02
 from ai.select_game_type.neuronal_network.agent.gametype_helper import (
     game_type_to_game_group,
 )
@@ -16,6 +17,8 @@ from state.gametypes import GameGroup, Gametype
 from state.player import PlayerId
 from state.stack import Stack
 from state.suits import Suit
+
+USED_MODEL = ModelIter02
 
 
 class AiController(PlayerController):
@@ -38,22 +41,13 @@ class AiController(PlayerController):
         nn_agent_config = NNAgentConfig(model_params_path=nn_agents_model_params_path)
         self.select_game_agent = NNAgent(nn_agent_config)
 
-        rl_agents_model_params_path = os.path.join(
-            from_here,
-            "..",
-            "ai",
-            "select_card",
-            "simple_deep_q_learning",
-            "model",
-        )
-        rl_agent_config = SDQLAgentConfig(
-            policy_model_base_path=rl_agents_model_params_path
-        )
-        self.play_game_agent = (
-            SDQLAgentTrainer(rl_agent_config)
-            if train is True
-            else SDQLAgent(rl_agent_config)
-        )
+        drl_agent = DRLAgent(USED_MODEL())
+        if train is True:
+            self.play_game_agent = DRLAgentTrainer(
+                agent=drl_agent, target_model=USED_MODEL()
+            )
+        else:
+            self.play_game_agent = drl_agent
 
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
@@ -67,8 +61,11 @@ class AiController(PlayerController):
         )
 
     async def play_card(self, stack: Stack, playable_cards: list[Card]) -> Card:
+        if self.player_id is None:
+            raise ValueError("Player ID is not defined, yet")
+
         selected_card = self.play_game_agent.select_card(
-            stack=stack, playable_cards=playable_cards
+            player_id=self.player_id, stack=stack, playable_cards=playable_cards
         )
 
         if self.hand_cards is None:
@@ -115,8 +112,9 @@ class AiController(PlayerController):
         return game_type_to_game_group(self.select_game_agent.targeted_game_type[0])
 
     def persist_training_results(self):
-        assert isinstance(
-            self.play_game_agent, SDQLAgentTrainer
-        ), "The controller doesn't get trained."
+        if not isinstance(self.play_game_agent, DRLAgentTrainer):
+            raise ValueError(
+                "The controller doesn't get trained so the parameters can't be persisted."
+            )
 
         self.play_game_agent.persist_trained_policy()

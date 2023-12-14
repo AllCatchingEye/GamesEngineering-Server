@@ -11,6 +11,7 @@ from controller.passive_controller import PassiveController
 from controller.player_controller import PlayerController
 from controller.random_controller import RandomController
 from logic.game import Game
+from controller.ai_controller import AiController
 from state.card import Card
 from state.event import Event, GameStartUpdate, GametypeDeterminedUpdate, MoneyUpdate
 from state.gametypes import GameGroup, Gametype, GametypeWithSuit
@@ -32,7 +33,7 @@ def increment_money(dictionary: dict[T, Money], key: T, value: Money) -> None:
 
 @dataclass
 class ArenaConfig:
-    games: int = 10000
+    games: int = 1000
     rounds_per_game: int = 10
     rng_seed: int | None = None
 
