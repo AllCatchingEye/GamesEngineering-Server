@@ -18,7 +18,7 @@ class DRLAgent(RLBaseAgent):
         super().__init__()
         self.model = policy_model
         self._device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.game_type: Gametype | None
+        self.game_type: Gametype | None = None
 
     def get_game_type_safe(self):
         if self.game_type is None:
@@ -79,16 +79,19 @@ class DRLAgent(RLBaseAgent):
 
     def __handle_model_initialization_on_demand(self, event: Event):
         if isinstance(event, GametypeDeterminedUpdate):
-            self.game_type = event.gametype
-            self.__logger.debug(
-                "🤖 Load parameters for game type %s and for policy model",
-                event.gametype.name,
-            )
-            try:
-                self.model.init_params(event.gametype)
-                self.__logger.debug("🤖 Use existing model parameters for policy model")
-            except ValueError:
-                self.__logger.debug("🤖 Use initial model parameters for policy model")
+            if self.game_type != event.gametype:
+                self.game_type = event.gametype
+                self.__logger.debug(
+                    "🤖 Load parameters for game type %s and for policy model",
+                    event.gametype.name,
+                )
+                try:
+                    self.model.init_params(event.gametype)
+                    self.__logger.debug("🤖 Use existing model parameters for policy model")
+                except ValueError:
+                    self.__logger.debug("🤖 Use initial model parameters for policy model")
+            else:
+                self.__logger.debug("🤖 Use loaded model parameters for policy model since the game type hasn't changed")
 
     def on_game_event(self, event: Event, player_id: PlayerId):
         super().on_game_event(event, player_id)
