@@ -482,7 +482,7 @@ class HandcraftedController(PlayerController):
                 else:
                     if first_card in trumps:
                         highest_trump_enemy = self.highest_existing_trump_of_enemy()
-                        if trumps.index(highest_trump_enemy) < trumps.index(current_stitching_card):
+                        if highest_trump_enemy is not None and trumps.index(highest_trump_enemy) < trumps.index(current_stitching_card):
                             self.stitch_with_trump(stack, playable_cards, trumps, 5, highest_trump_hand,
                                                    highest_trump_enemy)
                         else:
@@ -501,8 +501,12 @@ class HandcraftedController(PlayerController):
                                 else:
                                     return self.schmieren(playable_cards)
                         else:
-                            return self.stitch_with_trump(stack, playable_cards, trumps, 12, highest_trump_hand,
-                                                          self.highest_existing_trump_of_enemy())
+                            highest_trump_enemy = self.highest_existing_trump_of_enemy()
+                            if highest_trump_enemy is not None:
+                                return self.stitch_with_trump(stack, playable_cards, trumps, 12, highest_trump_hand, highest_trump_enemy)
+                            else:
+                                if self.current_gametype != Gametype.GEIER and self.current_gametype != Gametype.WENZ:
+                                    return self.search_highest_card_of_trump_suit_without_high_trumps(trumps, self.current_gamemode.get_trump_suit())
             # enemy currently stitching
             else:
                 return self.secure_stitch(stack, playable_cards, trumps, highest_trump_hand, current_stitching_card)
