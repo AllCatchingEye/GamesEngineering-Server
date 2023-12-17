@@ -6,7 +6,7 @@ import torch
 
 from ai.nn_helper import decode_game_type, one_hot_encode_cards
 from ai.select_game_type.agent import ISelectGameAgent
-from ai.select_game_type.neuronal_network.agent.gametype_helper import (
+from ai.select_game_type.gametype_helper import (
     game_type_to_game_group,
 )
 from ai.select_game_type.neuronal_network.agent.select_game_nn import SelectGameNN

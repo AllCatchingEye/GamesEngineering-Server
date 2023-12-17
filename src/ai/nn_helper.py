@@ -39,7 +39,7 @@ def one_hot_encode_card(card: Card) -> list[int]:
     suit_offset = get_suit_value(card.get_suit())
     rank_value = get_rank_value(card.get_rank())
     index = suit_offset * NUM_RANKS + rank_value
-    result[index] = 0
+    result[index] = 1
 
     return result
 
@@ -52,7 +52,7 @@ def one_hot_encode_cards(hand_cards: list[Card]) -> list[int]:
     result = [0] * NUM_CARDS
     for card in hand_cards:
         encoded_card = one_hot_encode_card(card)
-        result = [old_val | encoded_card[index] for old_val, index in enumerate(result)]
+        result = [old_val | encoded_card[index] for index, old_val in enumerate(result)]
     return result
 
 
