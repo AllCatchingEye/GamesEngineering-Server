@@ -1,6 +1,6 @@
 from controller.player_controller import PlayerController
 from state.card import Card
-from state.event import Event
+from state.event import Event, GameStartUpdate
 from state.gametypes import GameGroup, Gametype
 from state.stack import Stack
 from state.suits import Suit
@@ -24,8 +24,14 @@ class CombiController(PlayerController):
         return await self.play_card_contoller.play_card(stack, playable_cards)
 
     async def on_game_event(self, event: Event) -> None:
-        await self.wants_to_play_contoller.on_game_event(event)
-        await self.play_card_contoller.on_game_event(event)
+        if isinstance(event, GameStartUpdate):
+            await self.wants_to_play_contoller.on_game_event(
+                GameStartUpdate(event.player, event.hand.copy(), event.play_order))
+            await self.play_card_contoller.on_game_event(
+                GameStartUpdate(event.player, event.hand.copy(), event.play_order))
+        else:
+            await self.wants_to_play_contoller.on_game_event(event)
+            await self.play_card_contoller.on_game_event(event)
 
     async def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
         return await self.wants_to_play_contoller.choose_game_group(available_groups)

@@ -34,13 +34,13 @@ class DRLAgent(RLBaseAgent):
         super()._reset()
 
     def encode_state(
-        self,
-        player_id: PlayerId,
-        play_order: list[PlayerId],
-        current_stack: list[tuple[Card, PlayerId]],
-        previous_stacks: list[list[tuple[Card, PlayerId]]],
-        allies: list[PlayerId],
-        playable_cards: list[Card],
+            self,
+            player_id: PlayerId,
+            play_order: list[PlayerId],
+            current_stack: list[tuple[Card, PlayerId]],
+            previous_stacks: list[list[tuple[Card, PlayerId]]],
+            allies: list[PlayerId],
+            playable_cards: list[Card],
     ) -> torch.Tensor:
         return self.model.encode_input(
             player_id,
@@ -55,11 +55,11 @@ class DRLAgent(RLBaseAgent):
         return self.model.decode_output(output, playable_cards)
 
     def _compute_best_card(
-        self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
+            self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
     ):
         with torch.no_grad():
             transformed_state = [
-                (card.card, card.player.id) for card in stack.played_cards
+                (card.card, card.player) for card in stack.played_cards
             ]
             return self.model.forward(
                 player_id,
@@ -71,7 +71,7 @@ class DRLAgent(RLBaseAgent):
             )
 
     def select_card(
-        self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
+            self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
     ):
         best_card = self._compute_best_card(player_id, stack, playable_cards)
         self.__logger.debug("🃏 Selected card %s", best_card)

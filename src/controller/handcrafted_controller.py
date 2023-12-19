@@ -1,5 +1,7 @@
 import math
 import random
+import warnings
+from typing import Callable
 
 from controller.player_controller import PlayerController
 from logic.gamemodes.gamemode import GameMode
@@ -10,14 +12,14 @@ from logic.gamemodes.gamemode_solo import GameModeSolo
 from logic.gamemodes.gamemode_wenz import GameModeWenz
 from state.card import Card
 from state.deck import DECK
-from state.event import Event, GameStartUpdate, GametypeDeterminedUpdate, CardPlayedUpdate, AnnouncePlayPartyUpdate, GameEndUpdate
+from state.event import Event, GameStartUpdate, GametypeDeterminedUpdate, CardPlayedUpdate, AnnouncePlayPartyUpdate, \
+    GameEndUpdate
 from state.gametypes import GameGroup, Gametype
 from state.hand import Hand
 from state.player import PlayerId, struct_play_parties
 from state.ranks import Rank, get_value_of
 from state.stack import Stack
 from state.suits import Suit, get_all_suits
-from typing import Callable
 
 
 class HandcraftedController(PlayerController):
@@ -415,6 +417,10 @@ class HandcraftedController(PlayerController):
         if len(playable_cards) == 1:
             return playable_cards[0]
         lowest_card_hand = self.search_lowest_card_value(self.current_gamemode.trumps, playable_cards)
+        best_card = self.play_card_gamemode(stack, playable_cards)
+        if best_card is not None and best_card not in playable_cards:
+            warnings.warn(f"Best card {best_card} not in playable cards {playable_cards}")
+            return lowest_card_hand
         return self.play_card_gamemode(stack, playable_cards) or lowest_card_hand
 
     def play_card_wenz_geier(self, stack: Stack, playable_cards: list[Card]) -> Card | None:
@@ -482,7 +488,8 @@ class HandcraftedController(PlayerController):
                 else:
                     if first_card in trumps:
                         highest_trump_enemy = self.highest_existing_trump_of_enemy()
-                        if highest_trump_enemy is not None and trumps.index(highest_trump_enemy) < trumps.index(current_stitching_card):
+                        if highest_trump_enemy is not None and trumps.index(highest_trump_enemy) < trumps.index(
+                                current_stitching_card):
                             self.stitch_with_trump(stack, playable_cards, trumps, 5, highest_trump_hand,
                                                    highest_trump_enemy)
                         else:
@@ -503,10 +510,13 @@ class HandcraftedController(PlayerController):
                         else:
                             highest_trump_enemy = self.highest_existing_trump_of_enemy()
                             if highest_trump_enemy is not None:
-                                return self.stitch_with_trump(stack, playable_cards, trumps, 12, highest_trump_hand, highest_trump_enemy)
+                                return self.stitch_with_trump(stack, playable_cards, trumps, 12, highest_trump_hand,
+                                                              highest_trump_enemy)
                             else:
                                 if self.current_gametype != Gametype.GEIER and self.current_gametype != Gametype.WENZ:
-                                    return self.search_highest_card_of_trump_suit_without_high_trumps(trumps, self.current_gamemode.get_trump_suit())
+                                    return self.search_highest_card_of_trump_suit_without_high_trumps(trumps,
+                                                                                                      self.current_gamemode.get_trump_suit(),
+                                                                                                      playable_cards)
             # enemy currently stitching
             else:
                 return self.secure_stitch(stack, playable_cards, trumps, highest_trump_hand, current_stitching_card)
@@ -544,7 +554,8 @@ class HandcraftedController(PlayerController):
                         else:
                             # free to play
                             if stack.get_value() >= 10:
-                                return self.search_highest_card_of_trump_suit_without_high_trumps(trumps, Suit.HERZ)
+                                return self.search_highest_card_of_trump_suit_without_high_trumps(trumps, Suit.HERZ,
+                                                                                                  playable_cards)
                     else:
                         if stack.get_value() > 11 and highest_trump_hand in playable_cards:
                             return highest_trump_hand
@@ -588,7 +599,7 @@ class HandcraftedController(PlayerController):
                                     if stack.get_value() >= 10:
                                         if len(remaining_suit_cards) > 1:
                                             highest_non_high_trump = self.search_highest_card_of_trump_suit_without_high_trumps(
-                                                trumps, Suit.HERZ)
+                                                trumps, Suit.HERZ, playable_cards)
                                             if highest_non_high_trump in playable_cards:
                                                 return highest_non_high_trump
                                         else:
@@ -617,7 +628,7 @@ class HandcraftedController(PlayerController):
                             if stack.get_value() >= 10:
                                 if len(remaining_suit_cards) > 1:
                                     highest_non_high_trump = self.search_highest_card_of_trump_suit_without_high_trumps(
-                                        trumps, Suit.HERZ)
+                                        trumps, Suit.HERZ, playable_cards)
                                     if highest_non_high_trump in playable_cards:
                                         return highest_non_high_trump
                                 else:
@@ -821,12 +832,12 @@ class HandcraftedController(PlayerController):
                 if stack.get_value() >= 10:
                     if self.current_gamemode.get_trump_suit() is not None:
                         return self.search_highest_card_of_trump_suit_without_high_trumps(trumps,
-                                                                                              self.current_gamemode.get_trump_suit())
+                                                                                          self.current_gamemode.get_trump_suit(),
+                                                                                          playable_cards)
                     else:
                         if stack.get_value() > 11 and highest_trump_hand in playable_cards:
                             return highest_trump_hand
                         return self.lowest_existing_trump_in_hand()
-
 
     def stitch_with_trump(self, stack: Stack, playable_cards: list[Card], trumps: list[Card], stack_min_worth: int,
                           highest_trump_hand: Card, card_to_stitch: Card) -> Card | None:
@@ -954,7 +965,8 @@ class HandcraftedController(PlayerController):
         return lowest_card
 
     def search_highest_card_of_trump_suit_without_high_trumps(self, trumps: list[Card],
-                                                              trump_suit: Suit) -> Card | None:
+                                                              trump_suit: Suit,
+                                                              playable_cards: list[Card]) -> Card | None:
         index_highest_non_high_trump = trumps.index(Card(trump_suit, Rank.ASS))
         highest_non_high_trump_index = math.inf
         highest_non_high_trump = None
@@ -963,7 +975,8 @@ class HandcraftedController(PlayerController):
             if index_highest_non_high_trump <= trump_index < highest_non_high_trump_index:
                 highest_non_high_trump_index = trump_index
                 highest_non_high_trump = trump
-        return highest_non_high_trump
+        if highest_non_high_trump in playable_cards:
+            return highest_non_high_trump
 
     def search_fehl_card_of_rank_with_least_suit_cards(self, trumps: list[Card], rank: Rank) -> Card:
         fehl_cards_of_rank = self.get_fehl_cards_of_rank(self.hand.get_all_cards(), trumps, rank)
