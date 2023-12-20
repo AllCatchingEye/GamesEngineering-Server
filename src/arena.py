@@ -7,6 +7,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from controller.ai_controller import AiController
+from controller.combi_contoller import CombiController
+from controller.handcrafted_controller import HandcraftedController
 from controller.passive_controller import PassiveController
 from controller.player_controller import PlayerController
 from logic.game import Game
@@ -78,7 +80,7 @@ class ArenaController(PlayerController):
         return await self.actual_controller.wants_to_play(current_lowest_gamegroup)
 
     async def select_gametype(
-        self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
+            self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
         return await self.actual_controller.select_gametype(choosable_gametypes)
 
@@ -205,6 +207,7 @@ class Arena:
         total_games = self.config.games * self.config.rounds_per_game
         dfs = []
         for i in range(len(self.bot_creators)):
+            print(self.bot_creators[i])
             df = pd.DataFrame(
                 columns=[
                     "Gamemode",
@@ -236,10 +239,14 @@ class Arena:
 
 
 if __name__ == "__main__":
+    def combi_creator() -> PlayerController:
+        return CombiController(HandcraftedController(), AiController())
+
+
     arena = Arena()
+    arena.add_bot(HandcraftedController)
+    arena.add_bot(combi_creator)
     arena.add_bot(AiController)
-    arena.add_bot(PassiveController)
-    arena.add_bot(PassiveController)
     arena.add_bot(PassiveController)
     asyncio.run(arena.run())
 

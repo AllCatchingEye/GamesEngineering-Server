@@ -45,3 +45,6 @@ class GameModeSauspiel(GameMode):
             return playable_cards
 
         return super().get_playable_cards(stack, hand)
+
+    def get_trump_suit(self) -> Suit:
+        return Suit.HERZ
