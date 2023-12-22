@@ -6,8 +6,10 @@ import websockets
 from websockets import WebSocketClientProtocol
 
 from state.event import (
+    CreateLobbyRequest,
     GameEndUpdate,
-    LobbyInformationPlayerUpdate,
+    JoinLobbyRequest,
+    LobbyInformationUpdate,
     PlayerChooseGameGroupAnswer,
     PlayerChooseGameGroupQuery,
     PlayerPlayCardAnswer,
@@ -16,6 +18,7 @@ from state.event import (
     PlayerSelectGameTypeQuery,
     PlayerWantsToPlayAnswer,
     PlayerWantsToPlayQuery,
+    StartLobbyRequest,
     parse_as,
 )
 
@@ -29,19 +32,21 @@ async def start_client() -> None:
 
 
 async def run_client(websocket: WebSocketClientProtocol) -> None:
-    i = input("single, multi or lobbyId?")
-    if i == "single":
-        await start(websocket, "single")
-    elif i == "multi":
-        await start(websocket, "multi")
+    i = input("create or lobby_id?\n")
+    if i == "":
+        await start(websocket)
     else:
         await join(websocket, i)
 
 
-async def start(websocket: WebSocketClientProtocol, game_mode: str) -> None:
-    print(f"Asking server to start {game_mode} player game")
-    response: dict[str, object] = {"id": "lobby_host", "lobby_type": game_mode}
-    await websocket.send(json.dumps(response))
+async def start(websocket: WebSocketClientProtocol) -> None:
+    await websocket.send(CreateLobbyRequest().to_json())
+    data = await websocket.recv()
+    lobby_id = parse_as(data, LobbyInformationUpdate).lobby_id
+    print(f"Created lobby with id {lobby_id}")
+
+    input("Press enter to start the lobby...")
+    await websocket.send(StartLobbyRequest(lobby_id).to_json())
 
     await play(websocket)
 
@@ -49,9 +54,7 @@ async def start(websocket: WebSocketClientProtocol, game_mode: str) -> None:
 
 
 async def join(websocket: WebSocketClientProtocol, lobby_id: str) -> None:
-    print("Asking server to join game")
-    response: dict[str, object] = {"id": "lobby_join", "lobby_id": lobby_id}
-    await websocket.send(json.dumps(response))
+    await websocket.send(JoinLobbyRequest(lobby_id).to_json())
 
     await play(websocket)
 
@@ -100,9 +103,9 @@ async def play(ws: WebSocketClientProtocol) -> None:
                 print(event)
                 print("GAME ENDED")
                 sys.exit(0)
-            case LobbyInformationPlayerUpdate.__name__:
-                event = parse_as(message, LobbyInformationPlayerUpdate)
-                print(event)
+            case LobbyInformationUpdate.__name__:
+                event = parse_as(message, LobbyInformationUpdate)
+                print(f"Lobby {event.lobby_id} has {event.size} players")
             case _:
                 print(dct)
 

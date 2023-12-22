@@ -105,26 +105,22 @@ class MoneyUpdate(Event):
 class PlayOrderUpdate(Event):
     order: list[PlayerId]
 
+@dataclass
+class CreateLobbyRequest(Event):
+    pass
 
 @dataclass
-class LobbyInformationPlayerUpdate(Event):
+class JoinLobbyRequest(Event):
     lobby_id: str
-    player: PlayerId
-    slot_id: int
-
 
 @dataclass
-class LobbyInformationPlayerLeftUpdate(Event):
+class StartLobbyRequest(Event):
     lobby_id: str
-    player: PlayerId
-
 
 @dataclass
-class LobbyInformationPlayerReadyUpdate(Event):
-    player: PlayerId
+class LobbyInformationUpdate(Event):
     lobby_id: str
-    player_is_ready: bool
-
+    size: int
 
 @dataclass
 class PlayerWantsToPlayQuery(Event):
