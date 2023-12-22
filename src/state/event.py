@@ -107,12 +107,7 @@ class PlayOrderUpdate(Event):
 
 
 @dataclass
-class LobbyInformationUpdate(Event):
-    lobby_id: str
-
-
-@dataclass
-class LobbyInformationPlayerJoinedUpdate(Event):
+class LobbyInformationPlayerUpdate(Event):
     lobby_id: str
     player: PlayerId
     slot_id: int
