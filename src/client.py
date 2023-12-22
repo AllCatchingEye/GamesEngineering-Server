@@ -1,6 +1,7 @@
 import asyncio
 import json
 import sys
+import threading
 
 import websockets
 from websockets import WebSocketClientProtocol
@@ -45,8 +46,12 @@ async def start(websocket: WebSocketClientProtocol) -> None:
     lobby_id = parse_as(data, LobbyInformationUpdate).lobby_id
     print(f"Created lobby with id {lobby_id}")
 
-    input("Press enter to start the lobby...")
-    await websocket.send(StartLobbyRequest(lobby_id).to_json())
+    # wait for input() in thread and then send start lobyy request
+    def wait_for_input():
+        input("Press enter to start lobby...\n")
+        asyncio.run(websocket.send(StartLobbyRequest(lobby_id).to_json()))
+
+    threading.Thread(target=wait_for_input).start()
 
     await play(websocket)
 
