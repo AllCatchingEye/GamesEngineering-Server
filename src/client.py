@@ -7,6 +7,7 @@ from websockets import WebSocketClientProtocol
 
 from state.event import (
     GameEndUpdate,
+    LobbyInformationPlayerUpdate,
     PlayerChooseGameGroupAnswer,
     PlayerChooseGameGroupQuery,
     PlayerPlayCardAnswer,
@@ -19,25 +20,37 @@ from state.event import (
 )
 
 
-async def start_client(game_mode: str) -> None:
+async def start_client() -> None:
     uri = "ws://localhost:8765"
 
     async with websockets.connect(uri) as websocket:
         print("Starting client...")
-        while True:
-            await run_client(websocket, game_mode)
+        await run_client(websocket)
 
 
-async def run_client(websocket: WebSocketClientProtocol, game_mode: str) -> None:
-    if game_mode == "single":
-        await start(websocket, game_mode)
+async def run_client(websocket: WebSocketClientProtocol) -> None:
+    i = input("single, multi or lobbyId?")
+    if i == "single":
+        await start(websocket, "single")
+    elif i == "multi":
+        await start(websocket, "multi")
     else:
-        raise NotImplementedError(f"Game mode {game_mode} not implemented")
+        await join(websocket, i)
 
 
 async def start(websocket: WebSocketClientProtocol, game_mode: str) -> None:
-    print("Asking server to start single player game")
+    print(f"Asking server to start {game_mode} player game")
     response: dict[str, object] = {"id": "lobby_host", "lobby_type": game_mode}
+    await websocket.send(json.dumps(response))
+
+    await play(websocket)
+
+    await websocket.wait_closed()
+
+
+async def join(websocket: WebSocketClientProtocol, lobby_id: str) -> None:
+    print("Asking server to join game")
+    response: dict[str, object] = {"id": "lobby_join", "lobby_id": lobby_id}
     await websocket.send(json.dumps(response))
 
     await play(websocket)
@@ -87,9 +100,12 @@ async def play(ws: WebSocketClientProtocol) -> None:
                 print(event)
                 print("GAME ENDED")
                 sys.exit(0)
+            case LobbyInformationPlayerUpdate.__name__:
+                event = parse_as(message, LobbyInformationPlayerUpdate)
+                print(event)
             case _:
                 print(dct)
 
 
 if __name__ == "__main__":
-    asyncio.run(start_client("single"))
+    asyncio.run(start_client())

@@ -44,6 +44,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
                 await single_player(ws)
             elif lobby_type == "multi":
                 await create_lobby(ws)
+                await ws.wait_closed()
             else:
                 await ws.send("Unknown lobby type")
         case "lobby_join":
@@ -52,6 +53,8 @@ async def handler(ws: WebSocketServerProtocol) -> None:
 
             if len(LOBBIES[lobby_id].controllers) == 4:
                 await start_lobby(lobby_id)
+            else:
+                await ws.wait_closed()
         case _:
             msg = {key: "input_error", "message": "Unknown message"}
             await ws.send(msg)
