@@ -6,9 +6,7 @@ import torch
 
 from ai.nn_helper import decode_game_type, one_hot_encode_cards
 from ai.select_game_type.agent import ISelectGameAgent
-from ai.select_game_type.gametype_helper import (
-    game_type_to_game_group,
-)
+from ai.select_game_type.gametype_helper import game_type_to_game_group
 from ai.select_game_type.neuronal_network.agent.select_game_nn import SelectGameNN
 from state.card import Card
 from state.gametypes import GameGroup, Gametype
@@ -65,7 +63,9 @@ class NNAgent(ISelectGameAgent):
             <= current_lowest_gamegroup.value
         )
 
-    def get_best_sauspiel(self, tensor: list[float], hand_cards: list[Card]) -> tuple[Gametype, Suit | None] | None:
+    def get_best_sauspiel(
+        self, tensor: list[float], hand_cards: list[Card]
+    ) -> tuple[Gametype, Suit | None] | None:
         max_value = float("-inf")
         sauspiel = None
         for idx, value in enumerate(tensor):
@@ -76,10 +76,15 @@ class NNAgent(ISelectGameAgent):
                     sauspiel = game_type
         return sauspiel
 
-    def is_valid_sauspiel(self, sauspiel: tuple[Gametype, Suit | None], hand_cards: list[Card]) -> bool:
+    def is_valid_sauspiel(
+        self, sauspiel: tuple[Gametype, Suit | None], hand_cards: list[Card]
+    ) -> bool:
         hand_suits = list(map(lambda card: card.suit, hand_cards))
         if sauspiel[1] is not None:
-            return Card(sauspiel[1], Rank.ASS) not in hand_cards and sauspiel[1] in hand_suits
+            return (
+                Card(sauspiel[1], Rank.ASS) not in hand_cards
+                and sauspiel[1] in hand_suits
+            )
         return False
 
     def select_game_type(

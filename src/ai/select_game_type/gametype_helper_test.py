@@ -1,8 +1,6 @@
 import unittest
 
-from ai.select_game_type.gametype_helper import (
-    game_type_to_game_group,
-)
+from ai.select_game_type.gametype_helper import game_type_to_game_group
 from state.gametypes import GameGroup, Gametype
 
 

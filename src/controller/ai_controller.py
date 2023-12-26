@@ -1,12 +1,12 @@
 import os
 
-
-from ai.select_game_type.two_layer_nn.two_layer_game_decision_agent import NNAgentConfig, SelectGameAgent
-
 from ai.select_card.drl_agent import DRLAgent
 from ai.select_card.drl_agent_trainer import DRLAgentTrainer
 from ai.select_card.models.iteration_02.model import ModelIter02
-
+from ai.select_game_type.two_layer_nn.two_layer_game_decision_agent import (
+    NNAgentConfig,
+    SelectGameAgent,
+)
 from controller.player_controller import PlayerController
 from state.card import Card
 from state.event import Event, GameStartUpdate
@@ -15,16 +15,15 @@ from state.player import PlayerId
 from state.stack import Stack
 from state.suits import Suit
 
-USED_MODEL = ModelIter02
 
 class AiController(PlayerController):
-    def __init__(self, train: bool = False):
+    def __init__(self, net_layers: list[int], train: bool = False):
         super().__init__()
         self.hand_cards: list[Card] | None
         self.player_id: PlayerId | None
 
         from_here = os.path.dirname(os.path.abspath(__file__))
-        
+
         should_play_params_path = os.path.join(
             from_here,
             "..",
@@ -44,13 +43,15 @@ class AiController(PlayerController):
             "models",
             "game_classifier.pth",
         )
-        nn_agent_config = NNAgentConfig(should_play_params_path, select_game_params_path)
+        nn_agent_config = NNAgentConfig(
+            should_play_params_path, select_game_params_path
+        )
         self.select_game_agent = SelectGameAgent(nn_agent_config)
 
-        drl_agent = DRLAgent(USED_MODEL())
+        drl_agent = DRLAgent(ModelIter02(net_layers))
         if train is True:
             self.play_game_agent = DRLAgentTrainer(
-                agent=drl_agent, target_model=USED_MODEL()
+                agent=drl_agent, target_model=ModelIter02(net_layers)
             )
         else:
             self.play_game_agent = drl_agent
@@ -112,7 +113,7 @@ class AiController(PlayerController):
 
     async def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
         """Choose the highest game group you would play"""
-        
+
         return self.select_game_agent.choose_game_group(available_groups)
 
     def persist_training_results(self):

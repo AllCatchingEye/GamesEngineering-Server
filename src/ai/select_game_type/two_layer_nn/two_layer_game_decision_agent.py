@@ -5,9 +5,7 @@ import torch
 
 from ai.nn_helper import decode_game_type, one_hot_encode_cards
 from ai.select_game_type.agent import ISelectGameAgent
-from ai.select_game_type.gametype_helper import (
-    game_type_to_game_group,
-)
+from ai.select_game_type.gametype_helper import game_type_to_game_group
 from ai.select_game_type.two_layer_nn.select_game_type_nn import SelectGameTypeNN
 from ai.select_game_type.two_layer_nn.should_play_nn import ShouldPlayNN
 from state.card import Card
@@ -27,14 +25,18 @@ class SelectGameAgent(ISelectGameAgent):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model_select_game_type = SelectGameTypeNN()
         self.model_should_play = ShouldPlayNN()
-        
+
         self.decision_tensor: torch.Tensor | None = None
         self.initialize()
 
     def initialize(self):
         """Invoked to initialize the neuronal network which the agent will use for its decisions"""
-        should_play_params = self.load_model_params(self.config.model_should_play_params_path)  
-        select_game_params = self.load_model_params(self.config.model_select_gametype_params_path)
+        should_play_params = self.load_model_params(
+            self.config.model_should_play_params_path
+        )
+        select_game_params = self.load_model_params(
+            self.config.model_select_gametype_params_path
+        )
         self.model_should_play.load_state_dict(should_play_params)
         self.model_select_game_type.load_state_dict(select_game_params)
         self.model_should_play.eval()
@@ -75,40 +77,34 @@ class SelectGameAgent(ISelectGameAgent):
         hand_cards: list[Card],
         choosable_game_types: list[tuple[Gametype, Suit | None]],
     ):
-        assert self.decision_tensor is not None, (
-            "SelectGameNN was not executed"
-        )
+        assert self.decision_tensor is not None, "SelectGameNN was not executed"
         return self.get_best_game_type(choosable_game_types)
 
     def choose_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
-        assert self.decision_tensor is not None, (
-            "SelectGameNN was not executed"
-        )
+        assert self.decision_tensor is not None, "SelectGameNN was not executed"
         return self.get_best_game_group(available_groups)
 
-    def get_best_game_type(self, choosable_game_types: list[tuple[Gametype, Suit | None]]) -> tuple[Gametype, Suit | None]:
+    def get_best_game_type(
+        self, choosable_game_types: list[tuple[Gametype, Suit | None]]
+    ) -> tuple[Gametype, Suit | None]:
         best_gametype: tuple[Gametype, Suit | None] | None = None
-        max_val = float('-inf')
+        max_val = float("-inf")
         for idx, val in enumerate(self.decision_tensor.tolist()[0]):
             gametype = decode_game_type(idx)
             if val > max_val and gametype in choosable_game_types:
                 max_val = val
                 best_gametype = gametype
-        assert best_gametype is not None, (
-            "No playable gametype found"
-        )
+        assert best_gametype is not None, "No playable gametype found"
         return best_gametype
 
     def get_best_game_group(self, available_groups: list[GameGroup]) -> GameGroup:
         best_game_group: GameGroup | None = None
-        max_val = float('-inf')
+        max_val = float("-inf")
         for idx, val in enumerate(self.decision_tensor.tolist()[0]):
             game_type: tuple[Gametype, Suit | None] = decode_game_type(idx)
             game_group = game_type_to_game_group(game_type[0])
             if val > max_val and game_group in available_groups:
                 best_game_group = game_group
                 max_val = val
-        assert best_game_group is not None, (
-            "best game group not found"
-        )
+        assert best_game_group is not None, "best game group not found"
         return best_game_group

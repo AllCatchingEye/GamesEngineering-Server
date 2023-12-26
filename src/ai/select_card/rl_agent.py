@@ -8,7 +8,7 @@ from state.event import (
     AnnouncePlayPartyUpdate,
     CardPlayedUpdate,
     Event,
-    GameStartUpdate,
+    GameEndUpdate,
     GametypeDeterminedUpdate,
     PlayOrderUpdate,
     RoundResultUpdate,
@@ -41,10 +41,12 @@ class RLBaseAgent(ISelectCardAgent, ABC):
                 return party
         return []
 
-    def _reset(self):
-        self.__logger.debug("Reset allies")
+    def reset(self):
+        self.__logger.debug("👬 Reset allies")
         self.allies = []
+        self.__logger.debug("📝 Reset previous stacks")
         self.previous_stacks = []
+        self.__logger.debug("🔄 Reset play order")
         self.play_order = None
 
     def get_previous_stacks(self):
@@ -68,10 +70,6 @@ class RLBaseAgent(ISelectCardAgent, ABC):
             raise ValueError("Game type is not defined, yet")
         return self.game_type
 
-    def __handle_reset_on_demand(self, event: Event):
-        if isinstance(event, GameStartUpdate):
-            self.reset()
-
     def __handle_allies_on_demand(self, event: Event, player_id: PlayerId):
         if (
             isinstance(event, GametypeDeterminedUpdate)
@@ -88,8 +86,13 @@ class RLBaseAgent(ISelectCardAgent, ABC):
                 struct_play_parties(event.parties), player_id
             )
 
+    def __handle_reset_on_demand(self, event: Event):
+        if isinstance(event, GameEndUpdate):
+            self.reset()
+
     def __handle_player_order_on_demand(self, event: Event):
         if isinstance(event, PlayOrderUpdate):
+            self.__logger.debug("🔄 Set play order: %s", event.order)
             self.play_order = event.order
 
     def set_hand_cards(self, hand_cards: list[Card]):
@@ -105,12 +108,16 @@ class RLBaseAgent(ISelectCardAgent, ABC):
             self.round_cards.append((event.card, event.player))
 
         if isinstance(event, RoundResultUpdate):
-            self.__logger.debug("🃏 Clear last played cards")
             self.previous_stacks.append(self.round_cards)
+            self.__logger.debug(
+                "📝 Append last stack to previous stacks. New length: %i",
+                len(self.previous_stacks),
+            )
             self.round_cards.clear()
+            self.__logger.debug("🃏 Clear last played cards")
 
     def on_game_event(self, event: Event, player_id: PlayerId):
-        self.__handle_reset_on_demand(event)
         self.__handle_player_order_on_demand(event)
         self.__handle_allies_on_demand(event, player_id)
         self.__update_last_played_card_on_demand(event)
+        self.__handle_reset_on_demand(event)

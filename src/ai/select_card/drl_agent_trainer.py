@@ -32,7 +32,7 @@ BATCH_SIZE = 1
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
-EPS_DECAY = 1000
+EPS_DECAY = 10_000
 TAU = 0.005
 LR = 1e-4
 
@@ -83,14 +83,14 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
         self._device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self._state: torch.Tensor | None
         self._played_card: Card | None
-        self.__steps_done = 0
+        self.steps_done = 0
         self.former_game_type: Gametype | None = None
 
     def persist_trained_policy(self):
         self.agent.model.persist_parameters(self.agent.get_game_type_safe())
 
-    def __get_eps_threshold(self, steps_done: int) -> float:
-        return self.config.exploration_rate_decay + (
+    def get_eps_threshold(self, steps_done: int) -> float:
+        return self.config.exploration_rate_end + (
             self.config.exploration_rate_start - self.config.exploration_rate_end
         ) * math.exp(-1.0 * steps_done / self.config.exploration_rate_decay)
 
@@ -110,8 +110,8 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
         )
         self._state = encoded_state
         sample = random.random()
-        eps_threshold = self.__get_eps_threshold(self.__steps_done)
-        self.__steps_done += 1
+        eps_threshold = self.get_eps_threshold(self.steps_done)
+        self.steps_done += 1
 
         if sample > eps_threshold:
             card = self.agent.select_card(player_id, stack, playable_cards)
@@ -122,25 +122,6 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
 
         self._played_card = card
         return card
-
-    def _encode_state(
-        self,
-        player_id: PlayerId,
-        play_order: list[PlayerId],
-        current_stack: list[tuple[Card, PlayerId]],
-        previous_stacks: list[list[tuple[Card, PlayerId]]],
-        allies: list[PlayerId],
-        playable_cards: list[Card],
-    ) -> torch.Tensor:
-        state = self.agent.encode_state(
-            player_id,
-            play_order,
-            current_stack,
-            previous_stacks,
-            allies,
-            playable_cards,
-        )
-        return torch.tensor([state], dtype=torch.float, device=self._device)
 
     def _encode_card(self, card: Card) -> torch.Tensor:
         action = get_one_hot_encoding_index_from_card(card)
@@ -159,11 +140,17 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
                 )
                 try:
                     self._target_net.init_params(event.gametype)
-                    self.__logger.debug("🤖 Use existing model parameters for target model")
+                    self.__logger.debug(
+                        "🤖 Use existing model parameters for target model"
+                    )
                 except ValueError:
-                    self.__logger.debug("🤖 Use initial model parameters for target model")
+                    self.__logger.debug(
+                        "🤖 Use initial model parameters for target model"
+                    )
             else:
-                self.__logger.debug("🤖 Use loaded model parameters for target model since the game type hasn't changed")
+                self.__logger.debug(
+                    "🤖 Use loaded model parameters for target model since the game type hasn't changed"
+                )
 
     def __memoize_step_on_demand(self, event: Event, player_id: PlayerId):
         if isinstance(event, GameEndUpdate) or isinstance(event, RoundResultUpdate):
@@ -197,14 +184,12 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
     def __apply_training_on_demand(self, event: Event):
         if isinstance(event, GameEndUpdate) or isinstance(event, RoundResultUpdate):
             self.__logger.debug("🤖 Optimize agent's model")
-            loss = self.dql_processor.optimize_model(self.agent.get_game_type_safe())
-            if loss is not None:
-                self.metric.append(loss)
+            self.dql_processor.optimize_model(self.agent.get_game_type_safe())
             self.__logger.debug("🤖 Update target network")
             self.dql_processor.update_network()
 
     def on_game_event(self, event: Event, player_id: PlayerId):
-        super().on_game_event(event, player_id)
         self.__handle_model_initialization_on_demand(event)
         self.__memoize_step_on_demand(event, player_id)
         self.__apply_training_on_demand(event)
+        super().on_game_event(event, player_id)
