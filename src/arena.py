@@ -1,3 +1,4 @@
+from ast import Pass
 import asyncio
 import random
 from dataclasses import dataclass
@@ -6,11 +7,14 @@ from typing import Callable, TypeVar
 import pandas as pd
 from tqdm import tqdm
 
+from ai.dealer.dealer_factory import DealerFactory
 from controller.ai_controller import AiController
 from controller.combi_contoller import CombiController
 from controller.handcrafted_controller import HandcraftedController
 from controller.passive_controller import PassiveController
 from controller.player_controller import PlayerController
+from controller.random_controller import RandomController
+from logic.card_game import CardGame
 from logic.game import Game
 from state.card import Card
 from state.event import Event, GameStartUpdate, GametypeDeterminedUpdate, MoneyUpdate
@@ -21,6 +25,26 @@ from state.stack import Stack
 from state.suits import Suit
 
 T = TypeVar("T")
+
+ALL_SUITS = [Suit.EICHEL, Suit.GRAS, Suit.HERZ, Suit.SCHELLEN]
+ALL_GAME_TYPES = [
+    Gametype.SAUSPIEL,
+    Gametype.RAMSCH,
+    Gametype.SOLO,
+    Gametype.WENZ,
+    Gametype.FARBWENZ,
+    Gametype.GEIER,
+    Gametype.FARBGEIER,
+]
+TRAINING_CONFIG = {
+    Gametype.SAUSPIEL.name: [Suit.EICHEL, Suit.GRAS, Suit.SCHELLEN],
+    Gametype.RAMSCH.name: None,
+    Gametype.SOLO.name: ALL_SUITS,
+    Gametype.WENZ.name: None,
+    Gametype.FARBWENZ.name: ALL_SUITS,
+    Gametype.GEIER.name: None,
+    Gametype.FARBGEIER.name: ALL_SUITS,
+}
 
 
 def increment(dictionary: dict[T, int], key: T, value: int = 1) -> None:
@@ -33,7 +57,7 @@ def increment_money(dictionary: dict[T, Money], key: T, value: Money) -> None:
 
 @dataclass
 class ArenaConfig:
-    games: int = 1000
+    games: int = 5000
     rounds_per_game: int = 10
     rng_seed: int | None = None
 
@@ -146,6 +170,41 @@ class Arena:
         self.money_per_gamemode.append({})
         self.wins_per_gamemode.append({})
 
+    async def get_new_game(
+        self,
+        game_type: Gametype,
+        playable_suits: list[Suit] | None,
+    ):
+        suit = None if playable_suits is None else random.sample(playable_suits, 1)[0]
+        dealer = DealerFactory.get_dealer(game_type)
+        good_cards, other_cards = dealer.deal(suit)
+        hands = [good_cards]
+        hands.extend(other_cards)
+
+        card_game = CardGame()
+        mapped_controllers = {
+            i: ArenaController(bot_creator())
+            for i, bot_creator in enumerate(self.bot_creators)
+        }
+        new_controllers = [mapped_controllers[i] for i in range(len(self.bot_creators))]
+        card_game.game.controllers = new_controllers
+
+        main_player_id = card_game.game.players[0].id
+        await card_game.game.announce_hands()
+        card_game.set_player_hands(main_player_id, hands)
+        await card_game.set_game_type(game_type, suit)
+
+        return (card_game.game, mapped_controllers)
+
+    async def run_game_type(self, game_type: Gametype):
+        for game in tqdm(range(self.config.games), desc="Games", unit="game", ncols=80):
+            game, mapped_controllers = await self.get_new_game(
+                game_type, TRAINING_CONFIG[game_type.name]
+            )
+            await game.run(games_to_play=1)
+            await self.update_money(mapped_controllers)
+            await self.update_played_gamemodes(mapped_controllers)
+
     async def run(self) -> None:
         rng = random.Random(self.config.rng_seed)
         for game in tqdm(range(self.config.games), desc="Games", unit="game", ncols=80):
@@ -158,31 +217,35 @@ class Arena:
             rng.shuffle(controllers)
             game.controllers = controllers
             await game.run(games_to_play=self.config.rounds_per_game)
+            await self.update_money(mapped_controllers)
+            await self.update_played_gamemodes(mapped_controllers)
 
-            # Update money
-            for i, controller in mapped_controllers.items():
-                self.money[i] += controller.money
-                self.wins[i] += controller.wins
+    async def update_played_gamemodes(
+        self, mapped_controllers: dict[int, ArenaController]
+    ):
+        for i, controller in mapped_controllers.items():
+            for gamemode, played in controller.played_gamemodes.items():
+                increment(
+                    self.played_gamemodes[i],
+                    GametypeWithSuit(gamemode.gametype, gamemode.suit),
+                    played,
+                )
+                increment(
+                    self.played_gamemmodes_with_announcer[i],
+                    gamemode,
+                    played,
+                )
 
-                for gamemode, money in controller.money_per_gamemode.items():
-                    increment_money(self.money_per_gamemode[i], gamemode, money)
+    async def update_money(self, mapped_controllers: dict[int, ArenaController]):
+        for i, controller in mapped_controllers.items():
+            self.money[i] += controller.money
+            self.wins[i] += controller.wins
 
-                for gamemode, wins in controller.wins_per_gamemode.items():
-                    increment(self.wins_per_gamemode[i], gamemode, wins)
+            for gamemode, money in controller.money_per_gamemode.items():
+                increment_money(self.money_per_gamemode[i], gamemode, money)
 
-            # Update played gamemodes
-            for i, controller in mapped_controllers.items():
-                for gamemode, played in controller.played_gamemodes.items():
-                    increment(
-                        self.played_gamemodes[i],
-                        GametypeWithSuit(gamemode.gametype, gamemode.suit),
-                        played,
-                    )
-                    increment(
-                        self.played_gamemmodes_with_announcer[i],
-                        gamemode,
-                        played,
-                    )
+            for gamemode, wins in controller.wins_per_gamemode.items():
+                increment(self.wins_per_gamemode[i], gamemode, wins)
 
     def results_overview(self) -> pd.DataFrame:
         total_games = self.config.games * self.config.rounds_per_game
@@ -238,15 +301,19 @@ class Arena:
         return dfs
 
 
+def get_ai_ctrl_256_256_256_256_256() -> AiController:
+    return AiController([256, 256, 256, 256, 256])
+
+
 if __name__ == "__main__":
     def combi_creator() -> PlayerController:
-        return CombiController(HandcraftedController(), AiController())
+        return CombiController(HandcraftedController(), get_ai_ctrl_256_256_256_256_256())
 
 
     arena = Arena()
     arena.add_bot(HandcraftedController)
     arena.add_bot(combi_creator)
-    arena.add_bot(AiController)
+    arena.add_bot(get_ai_ctrl_256_256_256_256_256)
     arena.add_bot(PassiveController)
     asyncio.run(arena.run())
 

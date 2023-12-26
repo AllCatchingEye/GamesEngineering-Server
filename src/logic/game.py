@@ -111,7 +111,11 @@ class Game:
     async def announce_hands(self) -> None:
         for player in self.players:
             await self.controllers[player.slot_id].on_game_event(
-                GameStartUpdate(player.id, player.hand.get_all_cards(), [player.id for player in self.players])
+                GameStartUpdate(
+                    player.id,
+                    player.hand.get_all_cards(),
+                    [player.id for player in self.players],
+                )
             )
 
     async def __get_player(self) -> tuple[Player | None, list[GameGroup]]:

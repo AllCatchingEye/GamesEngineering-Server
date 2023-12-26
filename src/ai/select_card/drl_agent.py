@@ -30,9 +30,6 @@ class DRLAgent(RLBaseAgent):
         self.model.init_params(self.get_game_type_safe())
         self.model.eval()
 
-    def reset(self):
-        super()._reset()
-
     def encode_state(
             self,
             player_id: PlayerId,
@@ -79,6 +76,7 @@ class DRLAgent(RLBaseAgent):
 
     def __handle_model_initialization_on_demand(self, event: Event):
         if isinstance(event, GametypeDeterminedUpdate):
+            self.__logger.debug("🎯 Announced Game Type: %s", event.gametype)
             if self.game_type != event.gametype:
                 self.game_type = event.gametype
                 self.__logger.debug(
@@ -87,11 +85,17 @@ class DRLAgent(RLBaseAgent):
                 )
                 try:
                     self.model.init_params(event.gametype)
-                    self.__logger.debug("🤖 Use existing model parameters for policy model")
+                    self.__logger.debug(
+                        "🤖 Use existing model parameters for policy model"
+                    )
                 except ValueError:
-                    self.__logger.debug("🤖 Use initial model parameters for policy model")
+                    self.__logger.debug(
+                        "🤖 Use initial model parameters for policy model"
+                    )
             else:
-                self.__logger.debug("🤖 Use loaded model parameters for policy model since the game type hasn't changed")
+                self.__logger.debug(
+                    "🤖 Use loaded model parameters for policy model since the game type hasn't changed"
+                )
 
     def on_game_event(self, event: Event, player_id: PlayerId):
         super().on_game_event(event, player_id)

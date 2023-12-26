@@ -1,3 +1,4 @@
+import logging
 import os
 
 import numpy as np
@@ -62,18 +63,17 @@ rank_values = {
 
 
 class PolicyNN(nn.Module):
-    def __init__(self):
+    def __init__(self, layers: list[int]):
         super().__init__()
         self.flatten = nn.Flatten()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(INPUT_SIZE, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, OUTPUT_SIZE),
-        )
+        all_layers = [INPUT_SIZE] + layers + [OUTPUT_SIZE]
+        self.linear_relu_stack = nn.Sequential()
+
+        for index, layer in enumerate(all_layers):
+            if index <= len(all_layers) - 1 - 1:
+                self.linear_relu_stack.append(nn.Linear(layer, all_layers[index + 1]))
+            if index <= len(all_layers) - 1 - 2:
+                self.linear_relu_stack.append(nn.ReLU())
 
     def forward(self, x: Tensor):
         x = self.flatten(x)
@@ -82,8 +82,11 @@ class PolicyNN(nn.Module):
 
 
 class ModelIter02(ModelInterface):
-    def __init__(self):
-        self.model = PolicyNN()
+    __logger = logging.getLogger("ModelIter02")
+
+    def __init__(self, layers: list[int]):
+        self.layers = layers
+        self.model = PolicyNN(layers)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     def get_raw_model(self):
@@ -162,8 +165,10 @@ class ModelIter02(ModelInterface):
     def __encode_stacks(
         self, stacks: list[list[tuple[Card, PlayerId]]], allies: list[PlayerId]
     ) -> list[int]:
-        if len(stacks) >= NUM_ROUNDS:
-            raise ValueError("Provided more than %i previous stacks" % len(stacks))
+        if len(stacks) > NUM_ROUNDS:
+            raise ValueError(
+                "Provided more than %i previous stacks: %i" % (NUM_ROUNDS, len(stacks))
+            )
 
         result: list[int] = []
         for index in range(NUM_ROUNDS - 1):
@@ -196,7 +201,14 @@ class ModelIter02(ModelInterface):
 
     def get_model_params_path(self, game_type: Gametype) -> str:
         from_here = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(from_here, "params", as_params_file(game_type.name.lower()))
+        params_path = ["params", "x".join([str(it) for it in self.layers])]
+        folder_path = from_here
+        for path_segment in params_path:
+            folder_path = os.path.join(folder_path, path_segment)
+            if not os.path.exists(folder_path):
+                self.__logger.debug("Create directory %s", folder_path)
+                os.mkdir(folder_path)
+        return os.path.join(folder_path, as_params_file(game_type.name.lower()))
 
     def init_params(self, game_type: Gametype):
         path = self.get_model_params_path(game_type)

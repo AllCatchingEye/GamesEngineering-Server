@@ -21,6 +21,6 @@ def pick_highest_valid_card(output: Tensor, playable_cards: list[Card]):
             best_card = decoded_card
 
     if best_card is None:
-        raise ValueError("No playable card found")
+        raise ValueError("No playable card found. Playable cards: %s" % (playable_cards))
 
     return best_card
