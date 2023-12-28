@@ -57,7 +57,6 @@ class RLBaseAgentTrainer(ISelectCardAgent, ABC):
     def __handle_reset_on_demand(self, event: Event):
         if isinstance(event, GameEndUpdate):
             self.reset()
-
     def on_game_event(self, event: Event, player_id: PlayerId):
         self.__update_reward_on_demand(event, player_id)
         self.__handle_reset_on_demand(event)

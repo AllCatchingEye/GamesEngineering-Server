@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import logging
 from math import floor
 
 import numpy as np
@@ -20,6 +21,8 @@ class NNAgentConfig:
 
 
 class NNAgent(ISelectGameAgent):
+    __logger = logging.getLogger("NNAgent")
+    
     def __init__(self, config: NNAgentConfig):
         self.config = config
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -56,12 +59,15 @@ class NNAgent(ISelectGameAgent):
                 self.targeted_game_type = sauspiel
             else:
                 # weiter if there is no valid sauspiel
+                self.__logger.debug("🤷‍♂️ Should play: False")
                 return False
-        return (
+        should_play = (
             self.targeted_game_type[0] != Gametype.RAMSCH
             and game_type_to_game_group(self.targeted_game_type[0]).value
             <= current_lowest_gamegroup.value
         )
+        self.__logger.debug("🤷‍♂️ Should play: %s", str(should_play))
+        return should_play
 
     def get_best_sauspiel(
         self, tensor: list[float], hand_cards: list[Card]
@@ -96,4 +102,5 @@ class NNAgent(ISelectGameAgent):
         assert (
             self.targeted_game_type != None
         ), "The agents decision if agent would play wasn't made, yet. Invoke `should_play` to do so."
+        self.__logger.debug("🗣️ Select game type %s", self.targeted_game_type)
         return self.targeted_game_type
