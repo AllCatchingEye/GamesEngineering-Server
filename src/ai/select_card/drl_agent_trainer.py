@@ -28,13 +28,13 @@ from state.stack import Stack
 # EPS_DECAY controls the rate of exponential decay of epsilon, higher means a slower decay
 # TAU is the update rate of the target network
 # LR is the learning rate of the ``AdamW`` optimizer
-BATCH_SIZE = 1
+BATCH_SIZE = 100
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 10_000
 TAU = 0.005
-LR = 1e-4
+LR = 1e-6
 
 
 @dataclass
@@ -101,7 +101,7 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
             player_id=player_id,
             play_order=self.agent.get_play_order_safe(),
             current_stack=[
-                (played_card.card, played_card.player.id)
+                (played_card.card, player_id)
                 for played_card in stack.get_played_cards()
             ],
             previous_stacks=self.agent.get_previous_stacks(),

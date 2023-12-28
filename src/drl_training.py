@@ -7,6 +7,7 @@ from typing import Sequence
 from tqdm import tqdm
 
 from ai.dealer.dealer_factory import DealerFactory
+from ai.select_card.drl_agent_trainer import DRLAgentTrainer
 from ai.nn_layout_helper import (
     compute_layers_combinations,
     get_combination_details,
@@ -43,7 +44,7 @@ TRAINING_CONFIG = {
 }
 
 # Modify this array to train only certain game types.
-GAME_TYPES_TO_TRAIN: list[Gametype] = ALL_GAME_TYPES
+GAME_TYPES_TO_TRAIN: list[Gametype] = [Gametype.SAUSPIEL]#ALL_GAME_TYPES
 
 NUM_EPOCHS = 100_000
 EPOCHS_UNTIL_APPLYING_TRAINING = 250
@@ -55,9 +56,9 @@ EPOCHS_UNTIL_ARENA_EVALUATION = 1_000
 
 # NET_COMBINATIONS = compute_layers(neurons=256, layers=5)
 NET_COMBINATIONS = compute_layers_combinations(
-    neurons_range=(64, 256),
+    neurons_range=(256, 256),
     neurons_increment=lambda x: x * 2,
-    layers_range=(5, 20),
+    layers_range=(4, 20),
     layers_increment=lambda x: x + 5,
     auto_encoder_threshold=8,
     auto_encoder_neurons_range=(10, 40),
@@ -69,6 +70,7 @@ logger = logging.getLogger("DRL-Trainings-Loop")
 
 async def get_new_game(
     game_type: Gametype,
+    is_player: bool,
     playable_suits: list[Suit] | None,
     net_layers: list[int],
     reused_controllers: tuple[AiController, list[PlayerController]] | None = None,
@@ -94,7 +96,7 @@ async def get_new_game(
         ]
         card_game.game.controllers = new_controllers
 
-    main_player_id = card_game.game.players[0].id
+    main_player_id = card_game.game.players[0 if is_player else random.randint(1, 3)].id
     card_game.set_player_hands(main_player_id, hands)
     await card_game.game.announce_hands()
     await card_game.set_game_type(game_type, suit)
@@ -131,19 +133,17 @@ async def main():
                 ),
                 unit="epochs",
             ):
+                is_player = bool(random.getrandbits(1))
                 if (
                     epoch % EPOCHS_UNTIL_APPLYING_TRAINING == 0
                     or last_controllers is None
                 ):
                     if last_controllers is not None:
                         last_controllers[0].persist_training_results()
-                    game, trained_ai_controller, other_controllers = await get_new_game(
-                        game_type, playable_suits, list(net_layers)
-                    )
+                    game, trained_ai_controller, other_controllers = await get_new_game(game_type, is_player,playable_suits, list(net_layers), last_controllers)
                 else:
-                    game, trained_ai_controller, other_controllers = await get_new_game(
-                        game_type, playable_suits, list(net_layers), last_controllers
-                    )
+                    game, trained_ai_controller, other_controllers = await get_new_game(game_type, is_player,playable_suits, list(net_layers), last_controllers)
+
 
                 last_controllers = (trained_ai_controller, other_controllers)
                 agent = trained_ai_controller.play_game_agent

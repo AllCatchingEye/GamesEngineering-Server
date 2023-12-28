@@ -169,7 +169,6 @@ class ModelIter02(ModelInterface):
             raise ValueError(
                 "Provided more than %i previous stacks: %i" % (NUM_ROUNDS, len(stacks))
             )
-
         result: list[int] = []
         for index in range(NUM_ROUNDS - 1):
             if index < len(stacks):

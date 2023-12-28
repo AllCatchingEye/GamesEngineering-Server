@@ -1,6 +1,13 @@
 import unittest
 
-from ai.nn_helper import decode_game_type, get_one_hot_encoding_index_from_card
+from ai.nn_helper import (
+    NUM_CARDS,
+    NUM_RANKS,
+    decode_game_type,
+    get_one_hot_encoding_index_from_card,
+    one_hot_encode_card,
+    one_hot_encode_cards,
+)
 from state.card import Card
 from state.gametypes import Gametype
 from state.ranks import Rank
@@ -89,3 +96,72 @@ class TestClass(unittest.TestCase):
     def test_card_to_action(self):
         for action, card in CARD_ACTION_MAPPING.items():
             self.assertEqual(get_one_hot_encoding_index_from_card(card), action)
+
+    def test_one_hot_encode_card(self):
+        plain_target = [0] * NUM_CARDS
+        target = plain_target.copy()
+        target[NUM_RANKS * 0 + 0] = 1
+        self.assertListEqual(one_hot_encode_card(Card(Suit.EICHEL, Rank.OBER)), target)
+        target = plain_target.copy()
+        target[NUM_RANKS * 1 + 0] = 1
+        self.assertListEqual(one_hot_encode_card(Card(Suit.GRAS, Rank.OBER)), target)
+        target = plain_target.copy()
+        target[NUM_RANKS * 2 + 0] = 1
+        self.assertListEqual(one_hot_encode_card(Card(Suit.HERZ, Rank.OBER)), target)
+        target = plain_target.copy()
+        target[NUM_RANKS * 3 + 0] = 1
+        self.assertListEqual(
+            one_hot_encode_card(Card(Suit.SCHELLEN, Rank.OBER)), target
+        )
+        target = plain_target.copy()
+        target[NUM_RANKS * 0 + 1] = 1
+        self.assertListEqual(one_hot_encode_card(Card(Suit.EICHEL, Rank.UNTER)), target)
+        target = plain_target.copy()
+        target[NUM_RANKS * 0 + 2] = 1
+        self.assertListEqual(one_hot_encode_card(Card(Suit.EICHEL, Rank.ASS)), target)
+        target = plain_target.copy()
+        target[NUM_RANKS * 0 + 3] = 1
+        self.assertListEqual(one_hot_encode_card(Card(Suit.EICHEL, Rank.ZEHN)), target)
+        target = plain_target.copy()
+        target[NUM_RANKS * 0 + 4] = 1
+        self.assertListEqual(
+            one_hot_encode_card(Card(Suit.EICHEL, Rank.KOENIG)), target
+        )
+        target = plain_target.copy()
+        target[NUM_RANKS * 0 + 5] = 1
+        self.assertListEqual(one_hot_encode_card(Card(Suit.EICHEL, Rank.NEUN)), target)
+        target = plain_target.copy()
+        target[NUM_RANKS * 0 + 6] = 1
+        self.assertListEqual(one_hot_encode_card(Card(Suit.EICHEL, Rank.ACHT)), target)
+        target = plain_target.copy()
+        target[NUM_RANKS * 0 + 7] = 1
+        self.assertListEqual(
+            one_hot_encode_card(Card(Suit.EICHEL, Rank.SIEBEN)), target
+        )
+
+    def test_one_hot_encode_cards(self):
+        plain_target = [0] * NUM_CARDS
+        target = plain_target
+        self.assertListEqual(one_hot_encode_cards([]), target)
+        target[NUM_RANKS * 0 + 0] = 1
+        self.assertListEqual(
+            one_hot_encode_cards([Card(Suit.EICHEL, Rank.OBER)]), target
+        )
+        target[NUM_RANKS * 0 + 1] = 1
+        self.assertListEqual(
+            one_hot_encode_cards(
+                [Card(Suit.EICHEL, Rank.OBER), Card(Suit.EICHEL, Rank.UNTER)]
+            ),
+            target,
+        )
+        target[NUM_RANKS * 1 + 0] = 1
+        self.assertListEqual(
+            one_hot_encode_cards(
+                [
+                    Card(Suit.EICHEL, Rank.OBER),
+                    Card(Suit.EICHEL, Rank.UNTER),
+                    Card(Suit.GRAS, Rank.OBER),
+                ]
+            ),
+            target,
+        )

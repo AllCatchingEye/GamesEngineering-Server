@@ -18,7 +18,7 @@ class DealerSolo(Dealer):
 
         good_cards: list[Card] = []
 
-        good_cards.extend(take_trumps(deck, trumps, 4))
+        good_cards.extend(take_trumps(deck, trumps, 6))
 
         good_cards.extend(take(deck, 8 - len(good_cards)))
 
