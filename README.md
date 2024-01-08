@@ -42,6 +42,10 @@ Reason: It may be the case that your shell uses anaconda's python environment wh
 
 How to fix? Run `conda deactivate` and try it again.
 
+#### Python cannot be found
+
+When I tried to execute the scripts, python could not be found. Not sure, if it was actually the reason, but I've installed an python version manager `pyenv` and with it the python version `3.12`. If you use pyenv, make sure to not forget to execute `eval "$(pyenv init -)"`. Then, I've ran all setup steps mentioned above. In the end it worked again. 
+
 ### Run sample server
 
 1. Start server with command `python src/sample_server.py`
