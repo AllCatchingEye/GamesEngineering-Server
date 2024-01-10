@@ -50,7 +50,7 @@ async def play(ws: WebSocketClientProtocol) -> None:
         print("")
         print("")
         dct = json.loads(message)
-        key = "iD" if dct["iD"] else "id"
+        key = "iD" if "iD" in dct else "id"
         match dct[key]:
             case PlayerWantsToPlayQuery.__name__:
                 event = parse_as(message, PlayerWantsToPlayQuery)

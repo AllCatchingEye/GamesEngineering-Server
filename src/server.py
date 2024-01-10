@@ -30,7 +30,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
 
     CLIENTS.add(ws)
 
-    key = "iD" if message["iD"] else "id"
+    key = "iD" if message.get("iD") else "id"
     match message[key]:
         case "lobby_host":
             lobby_type = message["lobby_type"]
