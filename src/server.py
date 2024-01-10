@@ -30,7 +30,8 @@ async def handler(ws: WebSocketServerProtocol) -> None:
 
     CLIENTS.add(ws)
 
-    match message["id"]:
+    key = "iD" if message["iD"] else "id"
+    match message[key]:
         case "lobby_host":
             lobby_type = message["lobby_type"]
 
@@ -48,7 +49,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
         case "lobby_join":
             raise NotImplementedError("Multiplayer not implemented")
         case _:
-            msg = {"id": "input_error", "message": "Unknown message"}
+            msg = {key: "input_error", "message": "Unknown message"}
             await ws.send(msg)
 
 

@@ -50,7 +50,8 @@ async def play(ws: WebSocketClientProtocol) -> None:
         print("")
         print("")
         dct = json.loads(message)
-        match dct["id"]:
+        key = "iD" if dct["iD"] else "id"
+        match dct[key]:
             case PlayerWantsToPlayQuery.__name__:
                 event = parse_as(message, PlayerWantsToPlayQuery)
                 print(f"You have to play atleast {event.current_lowest_gamegroup}")
