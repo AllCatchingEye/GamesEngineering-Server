@@ -30,8 +30,11 @@ class Lobby:
         controllers: list[PlayerController] = []
         for client in self.clients:
             controllers.append(WebSocketController(client))
-
+            
         while len(controllers) < 4:
             controllers.append(DelayedController(RandomController()))
+        
+        random.shuffle(controllers)
+        
         game.controllers = controllers
         await game.run()
