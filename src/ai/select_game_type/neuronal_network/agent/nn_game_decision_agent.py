@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from math import floor
 
 import numpy as np
@@ -22,7 +22,7 @@ class NNAgentConfig:
 
 class NNAgent(ISelectGameAgent):
     __logger = logging.getLogger("NNAgent")
-    
+
     def __init__(self, config: NNAgentConfig):
         self.config = config
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

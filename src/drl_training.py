@@ -7,7 +7,6 @@ from typing import Sequence
 from tqdm import tqdm
 
 from ai.dealer.dealer_factory import DealerFactory
-from ai.select_card.drl_agent_trainer import DRLAgentTrainer
 from ai.nn_layout_helper import (
     compute_layers_combinations,
     get_combination_details,
@@ -44,7 +43,7 @@ TRAINING_CONFIG = {
 }
 
 # Modify this array to train only certain game types.
-GAME_TYPES_TO_TRAIN: list[Gametype] = [Gametype.SAUSPIEL]#ALL_GAME_TYPES
+GAME_TYPES_TO_TRAIN: list[Gametype] = [Gametype.SAUSPIEL]  # ALL_GAME_TYPES
 
 NUM_EPOCHS = 100_000
 EPOCHS_UNTIL_APPLYING_TRAINING = 250
@@ -140,10 +139,21 @@ async def main():
                 ):
                     if last_controllers is not None:
                         last_controllers[0].persist_training_results()
-                    game, trained_ai_controller, other_controllers = await get_new_game(game_type, is_player,playable_suits, list(net_layers), last_controllers)
+                    game, trained_ai_controller, other_controllers = await get_new_game(
+                        game_type,
+                        is_player,
+                        playable_suits,
+                        list(net_layers),
+                        last_controllers,
+                    )
                 else:
-                    game, trained_ai_controller, other_controllers = await get_new_game(game_type, is_player,playable_suits, list(net_layers), last_controllers)
-
+                    game, trained_ai_controller, other_controllers = await get_new_game(
+                        game_type,
+                        is_player,
+                        playable_suits,
+                        list(net_layers),
+                        last_controllers,
+                    )
 
                 last_controllers = (trained_ai_controller, other_controllers)
                 agent = trained_ai_controller.play_game_agent
@@ -164,7 +174,13 @@ async def main():
 
                 if epoch % 1_000 == 0:
                     if isinstance(agent, DRLAgentTrainer):
-                        logger.debug("\nFirst Parameter: %s", agent.agent.model.get_raw_model().parameters().__next__().tolist()[0][0])
+                        logger.debug(
+                            "\nFirst Parameter: %s",
+                            agent.agent.model.get_raw_model()
+                            .parameters()
+                            .__next__()
+                            .tolist()[0][0],
+                        )
 
             if last_controllers is not None:
                 last_controllers[0].persist_training_results()
@@ -172,10 +188,10 @@ async def main():
     logger.info("Training complete.")
 
 
-
 async def run_arena(game_type: Gametype, layers: Sequence[int], epoch: int):
     def get_ai_ctrl() -> AiController:
         return AiController(list(layers))
+
     logger.info("Arena Evaluation: ")
     arena = Arena()
     arena.add_bot(get_ai_ctrl)

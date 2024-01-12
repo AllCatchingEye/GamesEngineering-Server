@@ -94,18 +94,19 @@ class DQLProcessor:
         #
         # input of net: the state
         # output of net: the q-value for every possible action
-        state_action_values = torch.softmax(self.policy_model(state_batch), dim=1).gather(1, action_batch)
-        
+        state_action_values = torch.softmax(
+            self.policy_model(state_batch), dim=1
+        ).gather(1, action_batch)
 
         # Now compute the expected optimal q*(s,a) values approximated by our target_net and based on a deterministic policy (arg-max)
         next_state_values = torch.zeros(self.__batch_size, device=self.__device)
         with torch.no_grad():
             # compute the optimal state value (v-value) by picking the reward of the action with the largest reward
             # v*(s) = max(q*(s, a)) where q*(s, a) is approximated by our target_net
-            next_state_values[non_final_mask] = torch.softmax(self.target_model(
-                non_final_next_states
-            ), dim=1).max(1)[0]
-            
+            next_state_values[non_final_mask] = torch.softmax(
+                self.target_model(non_final_next_states), dim=1
+            ).max(1)[0]
+
         # Compute expected optimal state action values (q-values) based on state values (v-value) of next state, gamma (discount rate) and the reward
         # q*(s, a) = reward + gamma * v*(s)
         expected_state_action_values = reward_batch + (self.__gamma * next_state_values)

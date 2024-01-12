@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
 from state.card import Card
+from state.player import PlayerId
 from state.ranks import Rank, get_value_of
 from state.suits import Suit
-from state.player import PlayerId
 
 
 @dataclass

@@ -154,6 +154,11 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
 
     def __memoize_step_on_demand(self, event: Event, player_id: PlayerId):
         if isinstance(event, GameEndUpdate) or isinstance(event, RoundResultUpdate):
+            self.__logger.debug(
+                "🧠 Memoize step including played card %s, reward %f and more",
+                self._played_card,
+                self._reward,
+            )
             if self._state is None:
                 raise ValueError(
                     "state is None but must be not None to memoize the step."
@@ -189,7 +194,10 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
             self.dql_processor.update_network()
 
     def on_game_event(self, event: Event, player_id: PlayerId):
-        self.__handle_model_initialization_on_demand(event)
+        super().on_game_event(event, player_id)
         self.__memoize_step_on_demand(event, player_id)
         self.__apply_training_on_demand(event)
-        super().on_game_event(event, player_id)
+
+    def on_pre_game_event(self, event: Event, player_id: PlayerId) -> None:
+        super().on_pre_game_event(event, player_id)
+        self.__handle_model_initialization_on_demand(event)

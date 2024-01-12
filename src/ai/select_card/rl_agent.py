@@ -70,6 +70,10 @@ class RLBaseAgent(ISelectCardAgent, ABC):
             raise ValueError("Game type is not defined, yet")
         return self.game_type
 
+    def __handle_reset_on_demand(self, event: Event):
+        if isinstance(event, GameEndUpdate):
+            self.reset()
+
     def __handle_allies_on_demand(self, event: Event, player_id: PlayerId):
         if (
             isinstance(event, GametypeDeterminedUpdate)
@@ -108,16 +112,20 @@ class RLBaseAgent(ISelectCardAgent, ABC):
             self.round_cards.append((event.card, event.player))
 
         if isinstance(event, RoundResultUpdate):
-            self.previous_stacks.append(self.round_cards)
             self.__logger.debug(
                 "📝 Append last stack to previous stacks. New length: %i",
                 len(self.previous_stacks),
             )
-            self.round_cards.clear()
+            self.previous_stacks.append(self.round_cards.copy())
             self.__logger.debug("🃏 Clear last played cards")
+            self.round_cards = []
 
     def on_game_event(self, event: Event, player_id: PlayerId):
-        self.__handle_player_order_on_demand(event)
         self.__handle_allies_on_demand(event, player_id)
         self.__update_last_played_card_on_demand(event)
+
+    def on_pre_game_event(self, event: Event, player_id: PlayerId) -> None:
+        self.__handle_player_order_on_demand(event)
+
+    def on_post_game_event(self, event: Event, player_id: PlayerId):
         self.__handle_reset_on_demand(event)
