@@ -27,13 +27,12 @@ from state.event import (
 from state.gametypes import GameGroup, Gametype, stake_for_gametype
 from state.hand import Hand
 from state.money import Money
-from state.player import Player, play_parties_to_struct
+from state.player import Player, PlayerId, play_parties_to_struct
 from state.ranks import Rank
 from state.running_cards_start import RunningCardsStart
 from state.stack import Stack
 from state.stakes import Stake
 from state.suits import Suit
-from state.player import PlayerId
 
 HAND_SIZE = 8
 ROUNDS = 8
@@ -144,7 +143,7 @@ class Game:
             return None, current_game_group
 
         if current_player_index < 3:
-            for player in self.players[current_player_index + 1:]:
+            for player in self.players[current_player_index + 1 :]:
                 # High-Solo has been called, there is no higher game group
                 if len(current_game_group) == 1:
                     break
@@ -181,7 +180,7 @@ class Game:
         return current_player, current_game_group
 
     async def __select_gametype(
-            self, game_player: Player | None, minimum_game_group: list[GameGroup]
+        self, game_player: Player | None, minimum_game_group: list[GameGroup]
     ) -> Gametype:
         if game_player is None:
             self.play_party = [
@@ -262,8 +261,16 @@ class Game:
         if game_type[0] != Gametype.SAUSPIEL:
             for player in self.players:
                 if Card(game_type[1], Rank.ASS) in player.hand.get_all_cards():
-                    await self.controllers[player.slot_id].on_game_event(AnnouncePlayPartyUpdate(play_parties_to_struct(
-                        [[player.id for player in party] for party in self.play_party])))
+                    await self.controllers[player.slot_id].on_game_event(
+                        AnnouncePlayPartyUpdate(
+                            play_parties_to_struct(
+                                [
+                                    [player.id for player in party]
+                                    for party in self.play_party
+                                ]
+                            )
+                        )
+                    )
         return game_type[0]
 
     async def __new_game(self) -> None:
@@ -331,9 +338,9 @@ class Game:
 
             # Announce that the searched ace had been played and teams are known
             if (
-                    isinstance(self.gamemode, GameModeSauspiel)
-                    and self.gamemode.suit
-                    and card == Card(self.gamemode.suit, Rank.ASS)
+                isinstance(self.gamemode, GameModeSauspiel)
+                and self.gamemode.suit
+                and card == Card(self.gamemode.suit, Rank.ASS)
             ):
                 await self.__broadcast(
                     AnnouncePlayPartyUpdate(
@@ -362,7 +369,7 @@ class Game:
         self.__change_player_order(winner)
 
     async def __get_or_pay_money(
-            self, game_winner: list[Player], points_distribution: list[int]
+        self, game_winner: list[Player], points_distribution: list[int]
     ) -> None:
         stake: Money = stake_for_gametype[self.gametype].value
         if self.gametype == Gametype.RAMSCH:
@@ -385,7 +392,7 @@ class Game:
                 running_team_cards = self.__get_running_cards(team)
                 if self.gamemode is GameModeGeier or self.gamemode is GameModeWenz:
                     stakes_added = (
-                            running_team_cards - RunningCardsStart.GEIER_WENZ.value
+                        running_team_cards - RunningCardsStart.GEIER_WENZ.value
                     )
                 else:
                     stakes_added = running_team_cards - RunningCardsStart.STANDARD.value
@@ -394,13 +401,13 @@ class Game:
         for player in self.players:
             if player in game_winner:
                 player.money += stake * (
-                        max(len(game_winner), len(self.players) - len(game_winner))
-                        // (len(game_winner))
+                    max(len(game_winner), len(self.players) - len(game_winner))
+                    // (len(game_winner))
                 )
             else:
                 player.money -= stake * (
-                        max(len(game_winner), len(self.players) - len(game_winner))
-                        // (len(self.players) - len(game_winner))
+                    max(len(game_winner), len(self.players) - len(game_winner))
+                    // (len(self.players) - len(game_winner))
                 )
             await self.controllers[player.slot_id].on_game_event(
                 MoneyUpdate(player.id, player.money)

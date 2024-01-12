@@ -5,13 +5,8 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 
-from ai.nn_helper import (
-    NUM_CARDS,
-    NUM_ROUNDS,
-    NUM_STACK_CARDS,
-    get_one_hot_encoding_index_from_card,
-    one_hot_encode_cards,
-)
+from ai.nn_helper import NUM_CARDS, NUM_ROUNDS, NUM_STACK_CARDS, one_hot_encode_cards
+from ai.select_card.models.iteration_02.encoding_helper import encode_stack
 from ai.select_card.models.model_interface import ModelInterface
 from ai.select_card.models.shared.encoding import pick_highest_valid_card
 from ai.select_card.models.shared.nn_state import (
@@ -140,7 +135,7 @@ class ModelIter02(ModelInterface):
         playable_cards: list[Card],
     ) -> list[int]:
         encoded_play_order = self.__encode_play_order(play_order, player_id, allies)
-        encoded_current_stack = self.__encode_stack(current_stack, allies)
+        encoded_current_stack = encode_stack(current_stack, allies)
         encoded_previous_stacks = self.__encode_stacks(previous_stacks, allies)
         encoded_playable_cards = one_hot_encode_cards(playable_cards)
         return (
@@ -172,30 +167,9 @@ class ModelIter02(ModelInterface):
         result: list[int] = []
         for index in range(NUM_ROUNDS - 1):
             if index < len(stacks):
-                result += self.__encode_stack(stacks[index], allies)
+                result += encode_stack(stacks[index], allies)
             else:
                 result += [Encoding.NOT_PLAYED] * NUM_ENCODED_STACK
-        return result
-
-    def __encode_stack(
-        self, stack: list[tuple[Card, PlayerId]], allies: list[PlayerId]
-    ) -> list[int]:
-        # embed the order of the stack + for every card if it was played and in case if from an ally
-        result = [Encoding.NOT_PLAYED] * NUM_ENCODED_STACK
-        for index, [card, player_id] in enumerate(stack):
-            if index >= NUM_STACK_CARDS:
-                raise ValueError(
-                    "The stack contains more cards than allowed: %i vs. max %i"
-                    % (len(stack), NUM_STACK_CARDS)
-                )
-
-            encoded_index = get_one_hot_encoding_index_from_card(card)
-            result[index] = encoded_index
-            result[NUM_STACK_CARDS + index * 2 + 0] = Encoding.PLAYED
-            result[NUM_STACK_CARDS + index * 2 + 1] = (
-                Encoding.ALLY if player_id in allies else Encoding.ENEMY
-            )
-
         return result
 
     def get_model_params_path(self, game_type: Gametype) -> str:

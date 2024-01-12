@@ -25,5 +25,13 @@ class ISelectCardAgent(ABC):
         """Handle game events"""
 
     @abstractmethod
+    def on_pre_game_event(self, event: Event, player_id: PlayerId) -> None:
+        """Handle tearing up game events"""
+
+    @abstractmethod
+    def on_post_game_event(self, event: Event, player_id: PlayerId) -> None:
+        """Handle resetting game events"""
+
+    @abstractmethod
     def set_hand_cards(self, hand_cards: list[Card]):
         """Update hand cards"""

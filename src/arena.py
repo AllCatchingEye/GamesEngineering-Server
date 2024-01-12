@@ -1,6 +1,6 @@
-from ast import Pass
 import asyncio
 import random
+from ast import Pass
 from dataclasses import dataclass
 from typing import Callable, TypeVar
 
@@ -104,7 +104,7 @@ class ArenaController(PlayerController):
         return await self.actual_controller.wants_to_play(current_lowest_gamegroup)
 
     async def select_gametype(
-            self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
+        self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
     ) -> tuple[Gametype, Suit | None]:
         return await self.actual_controller.select_gametype(choosable_gametypes)
 
@@ -306,9 +306,11 @@ def get_ai_ctrl_256_256_256_256_256() -> AiController:
 
 
 if __name__ == "__main__":
-    def combi_creator() -> PlayerController:
-        return CombiController(HandcraftedController(), get_ai_ctrl_256_256_256_256_256())
 
+    def combi_creator() -> PlayerController:
+        return CombiController(
+            HandcraftedController(), get_ai_ctrl_256_256_256_256_256()
+        )
 
     arena = Arena()
     arena.add_bot(HandcraftedController)

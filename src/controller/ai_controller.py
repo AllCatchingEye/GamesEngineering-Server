@@ -100,7 +100,9 @@ class AiController(PlayerController):
 
         if self.player_id is None:
             raise ValueError("Controller's player id is None")
+        self.play_game_agent.on_pre_game_event(event=event, player_id=self.player_id)
         self.play_game_agent.on_game_event(event=event, player_id=self.player_id)
+        self.play_game_agent.on_post_game_event(event=event, player_id=self.player_id)
 
     async def wants_to_play(self, current_lowest_gamegroup: GameGroup):
         if self.hand_cards is None:

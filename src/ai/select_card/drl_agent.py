@@ -31,13 +31,13 @@ class DRLAgent(RLBaseAgent):
         self.model.eval()
 
     def encode_state(
-            self,
-            player_id: PlayerId,
-            play_order: list[PlayerId],
-            current_stack: list[tuple[Card, PlayerId]],
-            previous_stacks: list[list[tuple[Card, PlayerId]]],
-            allies: list[PlayerId],
-            playable_cards: list[Card],
+        self,
+        player_id: PlayerId,
+        play_order: list[PlayerId],
+        current_stack: list[tuple[Card, PlayerId]],
+        previous_stacks: list[list[tuple[Card, PlayerId]]],
+        allies: list[PlayerId],
+        playable_cards: list[Card],
     ) -> torch.Tensor:
         return self.model.encode_input(
             player_id,
@@ -52,7 +52,7 @@ class DRLAgent(RLBaseAgent):
         return self.model.decode_output(output, playable_cards)
 
     def _compute_best_card(
-            self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
+        self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
     ):
         with torch.no_grad():
             transformed_state = [
@@ -68,7 +68,7 @@ class DRLAgent(RLBaseAgent):
             )
 
     def select_card(
-            self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
+        self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
     ):
         best_card = self._compute_best_card(player_id, stack, playable_cards)
         self.__logger.debug("🃏 Selected card %s", best_card)
@@ -97,6 +97,6 @@ class DRLAgent(RLBaseAgent):
                     "🤖 Use loaded model parameters for policy model since the game type hasn't changed"
                 )
 
-    def on_game_event(self, event: Event, player_id: PlayerId):
-        super().on_game_event(event, player_id)
+    def on_pre_game_event(self, event: Event, player_id: PlayerId):
+        super().on_pre_game_event(event, player_id)
         self.__handle_model_initialization_on_demand(event)
