@@ -118,9 +118,8 @@ class JoinLobbyRequest(Event):
 
 @dataclass
 class StartLobbyRequest(Event):
-    from state.bot_types import BotType
     lobby_id: str
-    bots: list[BotType]
+    bots: list[str]
 
 
 @dataclass

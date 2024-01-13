@@ -50,7 +50,8 @@ async def handler(ws: WebSocketServerProtocol) -> None:
             match response[key]:
                 case StartLobbyRequest.__name__:
                     payload = parse_as(received, StartLobbyRequest)
-                    await start_lobby(lobby.id, payload.bots)
+                    bots = [BotType[b] for b in payload.bots]
+                    await start_lobby(lobby.id, bots)
                 case _:
                     msg = {"id": "input_error", "message": "Unknown message"}
                     await ws.send(json.dumps(msg))
