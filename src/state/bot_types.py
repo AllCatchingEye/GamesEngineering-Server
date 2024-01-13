@@ -1,11 +1,6 @@
 from enum import Enum
-from controller.handcrafted_controller import HandcraftedController
-from controller.passive_controller import PassiveController
 
-from controller.player_controller import PlayerController
-from controller.random_controller import RandomController
-
-
+import controller.player_controller as _
 class BotType(Enum):
     """Enumeration of bot types."""
 
@@ -14,12 +9,15 @@ class BotType(Enum):
     HANDCRAFTED = 2
 
 
-def bot_type_to_controller(bot_type: BotType) -> PlayerController:
+def bot_type_to_controller(bot_type: BotType) -> "_.PlayerController":
     """Converts a bot type to a PlayerController."""
     match bot_type:
         case BotType.RANDOM:
+            from controller.random_controller import RandomController
             return RandomController()
         case BotType.PASSIVE:
+            from controller.passive_controller import PassiveController
             return PassiveController()
         case BotType.HANDCRAFTED:
+            from controller.handcrafted_controller import HandcraftedController
             return HandcraftedController()
