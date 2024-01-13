@@ -107,28 +107,28 @@ class PlayOrderUpdate(Event):
 
 
 @dataclass
+class CreateLobbyRequest(Event):
+    pass
+
+
+@dataclass
+class JoinLobbyRequest(Event):
+    lobby_id: str
+
+
+@dataclass
+class StartLobbyRequest(Event):
+    from state.bot_types import BotType
+    lobby_id: str
+    bots: list[BotType]
+
+
+@dataclass
 class LobbyInformationUpdate(Event):
+    from state.bot_types import BotType
     lobby_id: str
-
-
-@dataclass
-class LobbyInformationPlayerJoinedUpdate(Event):
-    lobby_id: str
-    player: PlayerId
-    slot_id: int
-
-
-@dataclass
-class LobbyInformationPlayerLeftUpdate(Event):
-    lobby_id: str
-    player: PlayerId
-
-
-@dataclass
-class LobbyInformationPlayerReadyUpdate(Event):
-    player: PlayerId
-    lobby_id: str
-    player_is_ready: bool
+    size: int
+    available_bots: list[BotType]
 
 
 @dataclass

@@ -1,12 +1,16 @@
 import asyncio
 import json
 import sys
+import threading
 
 import websockets
 from websockets import WebSocketClientProtocol
 
 from state.event import (
+    CreateLobbyRequest,
     GameEndUpdate,
+    JoinLobbyRequest,
+    LobbyInformationUpdate,
     PlayerChooseGameGroupAnswer,
     PlayerChooseGameGroupQuery,
     PlayerPlayCardAnswer,
@@ -15,30 +19,47 @@ from state.event import (
     PlayerSelectGameTypeQuery,
     PlayerWantsToPlayAnswer,
     PlayerWantsToPlayQuery,
+    StartLobbyRequest,
     parse_as,
 )
 
 
-async def start_client(game_mode: str) -> None:
+async def start_client() -> None:
     uri = "ws://localhost:8765"
 
     async with websockets.connect(uri) as websocket:
         print("Starting client...")
-        while True:
-            await run_client(websocket, game_mode)
+        await run_client(websocket)
 
 
-async def run_client(websocket: WebSocketClientProtocol, game_mode: str) -> None:
-    if game_mode == "single":
-        await start(websocket, game_mode)
+async def run_client(websocket: WebSocketClientProtocol) -> None:
+    i = input("create or lobby_id?\n")
+    if i == "":
+        await start(websocket)
     else:
-        raise NotImplementedError(f"Game mode {game_mode} not implemented")
+        await join(websocket, i)
 
 
-async def start(websocket: WebSocketClientProtocol, game_mode: str) -> None:
-    print("Asking server to start single player game")
-    response: dict[str, object] = {"id": "lobby_host", "lobby_type": game_mode}
-    await websocket.send(json.dumps(response))
+async def start(websocket: WebSocketClientProtocol) -> None:
+    await websocket.send(CreateLobbyRequest().to_json())
+    data = await websocket.recv()
+    lobby_id = parse_as(data, LobbyInformationUpdate).lobby_id
+    print(f"Created lobby with id {lobby_id}")
+
+    # wait for input() in thread and then send start lobby request
+    def wait_for_input():
+        input("Press enter to start lobby...\n")
+        asyncio.run(websocket.send(StartLobbyRequest(lobby_id, []).to_json()))
+
+    threading.Thread(target=wait_for_input).start()
+
+    await play(websocket)
+
+    await websocket.wait_closed()
+
+
+async def join(websocket: WebSocketClientProtocol, lobby_id: str) -> None:
+    await websocket.send(JoinLobbyRequest(lobby_id).to_json())
 
     await play(websocket)
 
@@ -87,9 +108,12 @@ async def play(ws: WebSocketClientProtocol) -> None:
                 print(event)
                 print("GAME ENDED")
                 sys.exit(0)
+            case LobbyInformationUpdate.__name__:
+                event = parse_as(message, LobbyInformationUpdate)
+                print(f"Lobby {event.lobby_id} has {event.size} players")
             case _:
                 print(dct)
 
 
 if __name__ == "__main__":
-    asyncio.run(start_client("single"))
+    asyncio.run(start_client())

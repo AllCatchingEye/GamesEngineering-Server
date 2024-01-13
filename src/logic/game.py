@@ -67,7 +67,7 @@ class Game:
         for i in range(PLAYER_COUNT):
             players.append(Player(i, i))
         return players
-
+    
     async def run(self, games_to_play: int = 1) -> None:
         """Start the game."""
         while self.games_played < games_to_play:

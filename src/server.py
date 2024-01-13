@@ -5,14 +5,19 @@ import os
 
 from websockets import Data, WebSocketServerProtocol, serve
 
-from controller.delayed_controller import DelayedController
-from controller.passive_controller import PassiveController
-from controller.random_controller import RandomController
-from controller.websocket_controller import WebSocketController
-from logic.game import Game
+from logic.lobby import Lobby, RunConfig
+from state.bot_types import BotType
+from state.event import (
+    CreateLobbyRequest,
+    JoinLobbyRequest,
+    StartLobbyRequest,
+    parse_as,
+)
 
 TIMEOUT_SECS = 5 * 60  # 5 Minutes timeout
 CLIENTS: set[WebSocketServerProtocol] = set()
+
+LOBBIES: dict[str, Lobby] = {}
 
 
 async def main() -> None:
@@ -32,43 +37,54 @@ async def handler(ws: WebSocketServerProtocol) -> None:
 
     key = "iD" if message.get("iD") else "id"
     match message[key]:
-        case "lobby_host":
-            lobby_type = message["lobby_type"]
+        case CreateLobbyRequest.__name__:
+            lobby = Lobby()
+            if lobby.id in LOBBIES:
+                raise ValueError("Lobby ID already exists")
+            LOBBIES[lobby.id] = lobby
+            await lobby.add_player(ws)
+            received = await ws.recv()
+            response = json.loads(received)
 
-            if lobby_type == "single":
-                ## create single player lobby with 3 bots
-                await single_player_lobby(ws)
+            key = "iD" if message.get("iD") else "id"
+            match response[key]:
+                case StartLobbyRequest.__name__:
+                    payload = parse_as(received, StartLobbyRequest)
+                    await start_lobby(lobby.id, payload.bots)
+                case _:
+                    msg = {"id": "input_error", "message": "Unknown message"}
+                    await ws.send(json.dumps(msg))
+                    await ws.close()
+                    return
+        case JoinLobbyRequest.__name__:
+            # parse message
+            request = parse_as(data, JoinLobbyRequest)
 
-                ## add player to game
+            if request.lobby_id not in LOBBIES:
+                msg = {"id": "input_error", "message": "Lobby does not exist"}
+                await ws.send(json.dumps(msg))
+                await ws.close()
+                return
 
-                ## send back single player lobby information
-            elif lobby_type == "multi":
-                raise NotImplementedError("Multiplayer not implemented")
-            else:
-                await ws.send("Unknown lobby type")
-        case "lobby_join":
-            raise NotImplementedError("Multiplayer not implemented")
+            lobby = LOBBIES[request.lobby_id]
+            if len(lobby.clients) > 3:
+                msg = {"id": "input_error", "message": "Lobby is full"}
+                await ws.send(json.dumps(msg))
+                await ws.close()
+                return
+            await lobby.add_player(ws)
+            await ws.wait_closed()
         case _:
-            msg = {key: "input_error", "message": "Unknown message"}
-            await ws.send(msg)
+            logging.warning(f"Unknown message: {message}")
+            msg = {"id": "input_error", "message": "Unknown message"}
+            await ws.send(json.dumps(msg))
+            await ws.close()
+            return
 
 
-async def single_player_lobby(ws: WebSocketServerProtocol) -> None:
-    game: Game = create_single_player_game(ws)
-
-    await game.run(games_to_play=1)
-    await ws.wait_closed()
-
-
-def create_single_player_game(ws: WebSocketServerProtocol) -> Game:
-    game: Game = Game()
-    game.controllers = [
-        WebSocketController(ws),
-        DelayedController(RandomController()),
-        DelayedController(PassiveController()),
-        DelayedController(PassiveController()),
-    ]
-    return game
+async def start_lobby(lobby_id: str, bots: list[BotType]) -> None:
+    lobby = LOBBIES[lobby_id]
+    await lobby.run(RunConfig(bots))
 
 
 if __name__ == "__main__":
