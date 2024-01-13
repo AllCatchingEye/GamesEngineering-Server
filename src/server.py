@@ -51,7 +51,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
                     await start_lobby(lobby.id, payload.bots)
                 case _:
                     msg = {"id": "input_error", "message": "Unknown message"}
-                    await ws.send(msg)
+                    await ws.send(json.dumps(msg))
                     await ws.close()
                     return
         case JoinLobbyRequest.__name__:
@@ -60,7 +60,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
 
             if request.lobby_id not in LOBBIES:
                 msg = {"id": "input_error", "message": "Lobby does not exist"}
-                await ws.send(msg)
+                await ws.send(json.dumps(msg))
                 await ws.close()
                 return
 
@@ -68,8 +68,9 @@ async def handler(ws: WebSocketServerProtocol) -> None:
             await lobby.add_player(ws)
             await ws.wait_closed()
         case _:
+            logging.warning(f"Unknown message: {message}")
             msg = {"id": "input_error", "message": "Unknown message"}
-            await ws.send(msg)
+            await ws.send(json.dumps(msg))
             await ws.close()
             return
 
