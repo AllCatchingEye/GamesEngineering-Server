@@ -5,7 +5,8 @@ import os
 
 from websockets import Data, WebSocketServerProtocol, serve
 
-from logic.lobby import Lobby
+from logic.lobby import Lobby, RunConfig
+from state.bot_types import BotType
 from state.event import (
     CreateLobbyRequest,
     JoinLobbyRequest,
@@ -45,7 +46,8 @@ async def handler(ws: WebSocketServerProtocol) -> None:
             key = "iD" if message.get("iD") else "id"
             match response[key]:
                 case StartLobbyRequest.__name__:
-                    await start_lobby(lobby.id)
+                    payload = parse_as(response, StartLobbyRequest)
+                    await start_lobby(lobby.id, payload.bots)
                 case _:
                     msg = {"id": "input_error", "message": "Unknown message"}
                     await ws.send(msg)
@@ -71,9 +73,9 @@ async def handler(ws: WebSocketServerProtocol) -> None:
             return
 
 
-async def start_lobby(lobby_id: str) -> None:
+async def start_lobby(lobby_id: str, bots: list[BotType]) -> None:
     lobby = LOBBIES[lobby_id]
-    await lobby.run()
+    await lobby.run(RunConfig(bots))
 
 
 if __name__ == "__main__":
