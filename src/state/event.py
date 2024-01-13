@@ -5,7 +5,6 @@ from enum import Enum
 from typing import Type, TypeVar
 
 from websockets import Data
-from state.bot_types import BotType
 
 from state.card import Card
 from state.gametypes import GameGroup, Gametype, GametypeWithSuit
@@ -119,12 +118,14 @@ class JoinLobbyRequest(Event):
 
 @dataclass
 class StartLobbyRequest(Event):
+    from state.bot_types import BotType
     lobby_id: str
     bots: list[BotType]
 
 
 @dataclass
 class LobbyInformationUpdate(Event):
+    from state.bot_types import BotType
     lobby_id: str
     size: int
     available_bots: list[BotType]

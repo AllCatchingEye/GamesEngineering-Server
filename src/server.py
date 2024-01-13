@@ -41,12 +41,13 @@ async def handler(ws: WebSocketServerProtocol) -> None:
             lobby = Lobby()
             LOBBIES[lobby.id] = lobby
             await lobby.add_player(ws)
-            response = json.loads(await ws.recv())
+            received = await ws.recv()
+            response = json.loads(received)
 
             key = "iD" if message.get("iD") else "id"
             match response[key]:
                 case StartLobbyRequest.__name__:
-                    payload = parse_as(response, StartLobbyRequest)
+                    payload = parse_as(received, StartLobbyRequest)
                     await start_lobby(lobby.id, payload.bots)
                 case _:
                     msg = {"id": "input_error", "message": "Unknown message"}

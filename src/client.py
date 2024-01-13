@@ -49,7 +49,7 @@ async def start(websocket: WebSocketClientProtocol) -> None:
     # wait for input() in thread and then send start lobyy request
     def wait_for_input():
         input("Press enter to start lobby...\n")
-        asyncio.run(websocket.send(StartLobbyRequest(lobby_id).to_json()))
+        asyncio.run(websocket.send(StartLobbyRequest(lobby_id, []).to_json()))
 
     threading.Thread(target=wait_for_input).start()
 
