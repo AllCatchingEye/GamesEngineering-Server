@@ -4,9 +4,9 @@ import controller.player_controller as _
 class BotType(Enum):
     """Enumeration of bot types."""
 
-    RANDOM = 0
-    PASSIVE = 1
-    HANDCRAFTED = 2
+    HANDCRAFTED = 0
+    RANDOM = 1
+    PASSIVE = 2
 
 
 def bot_type_to_controller(bot_type: BotType) -> "_.PlayerController":
