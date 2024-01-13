@@ -66,7 +66,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
 
             lobby = LOBBIES[request.lobby_id]
             if len(lobby.clients) > 3:
-                msg = {"id": "join_error", "message": "Lobby is full"}
+                msg = {"id": "input_error", "message": "Lobby is full"}
                 await ws.send(json.dumps(msg))
                 await ws.close()
                 return
