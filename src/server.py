@@ -39,6 +39,8 @@ async def handler(ws: WebSocketServerProtocol) -> None:
     match message[key]:
         case CreateLobbyRequest.__name__:
             lobby = Lobby()
+            if lobby.id in LOBBIES:
+                raise ValueError("Lobby ID already exists")
             LOBBIES[lobby.id] = lobby
             await lobby.add_player(ws)
             received = await ws.recv()
