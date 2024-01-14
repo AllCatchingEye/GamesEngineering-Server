@@ -52,4 +52,4 @@ class Lobby:
         random.shuffle(controllers)
 
         game.controllers = controllers
-        await game.run()
+        await game.run(games_to_play=20)
