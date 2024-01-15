@@ -18,7 +18,7 @@ class DealerRamsch(Dealer):
 
         bad_cards.extend(
             take_matching(
-                deck, lambda c: c.rank in [Rank.SIEBEN, Rank.ACHT, Rank.NEUN], 4
+                deck, lambda c: c.rank in [Rank.SIEBEN, Rank.ACHT, Rank.NEUN], 2
             )
         )
 
