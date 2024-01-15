@@ -1,14 +1,23 @@
 from ai.dealer.dealer import Dealer
-from ai.dealer.deck_manipulation import take, take_rank, take_trumps
+from ai.dealer.deck_manipulation import take, take_random_good_cards, take_rank, take_trumps
 from logic.gamemodes.gamemode_geier import GameModeGeier
 from state.card import Card
 from state.deck import DECK
 from state.ranks import Rank
 from state.suits import Suit
+import random
 
 
 class DealerGeier(Dealer):
     def deal(self, suit: Suit | None) -> tuple[list[Card], list[list[Card]]]:
+        is_farbgeier = suit is not None
+
+        min_trumps = 3 if is_farbgeier else 2
+        num_good_cards = 6 if is_farbgeier else 4
+
+        num_trumps = random.randint(min_trumps, num_good_cards)
+        num_other_good_cards = num_good_cards - num_trumps
+
         trumps = GameModeGeier(suit).trumps
 
         deck = DECK.get_full_deck()
@@ -16,11 +25,13 @@ class DealerGeier(Dealer):
 
         good_cards: list[Card] = []
 
-        good_cards.append(take_rank(deck, Rank.OBER))
-        good_cards.append(take_rank(deck, Rank.OBER))
-
-        if suit is not None:
-            good_cards.extend(take_trumps(deck, trumps, 2))
+        if is_farbgeier:
+            good_cards.extend(take_trumps(deck, trumps, num_trumps))
+        else:
+            good_cards.extend([take_rank(deck, Rank.OBER)]*num_trumps)
+        
+        other_good_cards = take_random_good_cards(deck, num_other_good_cards)
+        good_cards.extend(other_good_cards)
 
         good_cards.extend(take(deck, 8 - len(good_cards)))
 
