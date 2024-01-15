@@ -43,7 +43,7 @@ TRAINING_CONFIG = {
 }
 
 # Modify this array to train only certain game types.
-GAME_TYPES_TO_TRAIN: list[Gametype] = [Gametype.SAUSPIEL]  # ALL_GAME_TYPES
+GAME_TYPES_TO_TRAIN: list[Gametype] = [Gametype.WENZ]  # ALL_GAME_TYPES
 
 NUM_EPOCHS = 100_000
 EPOCHS_UNTIL_APPLYING_TRAINING = 250

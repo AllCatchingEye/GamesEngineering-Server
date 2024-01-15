@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import torch
 
-from ai.nn_helper import NUM_ROUNDS, get_one_hot_encoding_index_from_card
+from ai.nn_helper import NUM_ROUNDS, get_one_hot_encoding_index_from_card, one_hot_encode_cards
 from ai.select_card.dql_processor import DQLProcessor
 from ai.select_card.drl_agent import DRLAgent
 from ai.select_card.models.model_interface import ModelInterface
@@ -85,6 +85,8 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
         self._played_card: Card | None
         self.steps_done = 0
         self.former_game_type: Gametype | None = None
+        self._allowed_next_states: torch.Tensor | None
+
 
     def persist_trained_policy(self):
         self.agent.model.persist_parameters(self.agent.get_game_type_safe())
@@ -129,6 +131,12 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
 
     def _encode_reward(self, reward: float) -> torch.Tensor:
         return torch.tensor([reward], dtype=torch.float, device=self._device)
+
+    def _encode_final(self, is_final: bool) -> torch.Tensor:
+        return torch.tensor([is_final], dtype=torch.float, device=self._device)
+
+    def _encode_allowed_targets(self, allowed_targets: list[int]) -> torch.Tensor:
+        return torch.tensor([allowed_targets], dtype=torch.float, device=self._device)
 
     def __handle_model_initialization_on_demand(self, event: Event):
         if isinstance(event, GametypeDeterminedUpdate):
@@ -176,14 +184,21 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
                 allies=self.agent.get_allies(),
                 playable_cards=self.agent.get_hand_cards_safe(),
             )
+            allowed_targets = one_hot_encode_cards(self.agent.get_hand_cards_safe())
+            is_final = isinstance(event, GameEndUpdate) or all(element == 0 for element in allowed_targets)
+           
             encoded_card = self._encode_card(self._played_card)
             encoded_reward = self._encode_reward(self._reward)
+            encoded_is_final = self._encode_final(is_final)
+            encoded_allowed_targets = self._encode_allowed_targets(allowed_targets) == 1.0
             self.dql_processor.memoize_state(
                 self.agent.get_game_type_safe(),
                 self._state,
                 encoded_card,
                 encoded_reward,
                 encoded_next_state,
+                encoded_is_final,
+                encoded_allowed_targets
             )
 
     def __apply_training_on_demand(self, event: Event):
