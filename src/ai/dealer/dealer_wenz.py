@@ -1,5 +1,6 @@
+import random
 from ai.dealer.dealer import Dealer
-from ai.dealer.deck_manipulation import take, take_rank, take_trumps
+from ai.dealer.deck_manipulation import take, take_random_good_cards, take_rank, take_suit, take_trumps
 from logic.gamemodes.gamemode_wenz import GameModeWenz
 from state.card import Card
 from state.deck import DECK
@@ -9,19 +10,30 @@ from state.suits import Suit
 
 class DealerWenz(Dealer):
     def deal(self, suit: Suit | None) -> tuple[list[Card], list[list[Card]]]:
-        trumps = GameModeWenz(suit).trumps
 
+        is_farbwenz =  suit is not None
+
+        min_trumps = 3 if is_farbwenz else 2
+        num_good_cards = 6 if is_farbwenz else 4
+
+        num_trumps = random.randint(min_trumps, num_good_cards)
+        num_other_good_cards = num_good_cards - num_trumps
+       
         deck = DECK.get_full_deck()
         self.rng.shuffle(deck)
 
         good_cards: list[Card] = []
 
-        good_cards.append(take_rank(deck, Rank.UNTER))
-        good_cards.append(take_rank(deck, Rank.UNTER))
+        trumps_farbwenz = GameModeWenz(suit).trumps
 
-        if suit is not None:
-            good_cards.extend(take_trumps(deck, trumps, 2))
+        if is_farbwenz:
+            good_cards.extend(take_trumps(deck, trumps_farbwenz, num_trumps))
+        else:
+            good_cards.extend( [take_rank(deck, Rank.UNTER)]*num_trumps)
 
+        other_good_cards = take_random_good_cards(deck, num_other_good_cards)
+        good_cards.extend(other_good_cards)
+            
         good_cards.extend(take(deck, 8 - len(good_cards)))
 
         other_cards: list[list[Card]] = []
