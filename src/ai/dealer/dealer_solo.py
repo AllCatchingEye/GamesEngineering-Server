@@ -4,7 +4,6 @@ from logic.gamemodes.gamemode_solo import GameModeSolo
 from state.card import Card
 from state.deck import DECK
 from state.suits import Suit
-import random
 
 
 class DealerSolo(Dealer):

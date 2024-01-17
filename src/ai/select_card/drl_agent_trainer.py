@@ -28,7 +28,7 @@ from state.stack import Stack
 # EPS_DECAY controls the rate of exponential decay of epsilon, higher means a slower decay
 # TAU is the update rate of the target network
 # LR is the learning rate of the ``AdamW`` optimizer
-BATCH_SIZE = 100
+BATCH_SIZE = 200
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05

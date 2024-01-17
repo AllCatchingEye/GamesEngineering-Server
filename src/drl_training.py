@@ -43,9 +43,9 @@ TRAINING_CONFIG = {
 }
 
 # Modify this array to train only certain game types.
-GAME_TYPES_TO_TRAIN: list[Gametype] = [Gametype.FARBGEIER]  # ALL_GAME_TYPES
-
-NUM_EPOCHS = 100_000
+GAME_TYPES_TO_TRAIN: list[Gametype] = ALL_GAME_TYPES
+# test
+NUM_EPOCHS = 15000
 EPOCHS_UNTIL_APPLYING_TRAINING = 250
 DISPLAY_LOGS = False
 DISPLAY_PROGRESS = True
@@ -55,10 +55,10 @@ EPOCHS_UNTIL_ARENA_EVALUATION = 1_000
 
 # NET_COMBINATIONS = compute_layers(neurons=256, layers=5)
 NET_COMBINATIONS = compute_layers_combinations(
-    neurons_range=(256, 256),
+    neurons_range=(256, 512),
     neurons_increment=lambda x: x * 2,
-    layers_range=(4, 20),
-    layers_increment=lambda x: x + 5,
+    layers_range=(4, 6),
+    layers_increment=lambda x: x + 2,
     auto_encoder_threshold=8,
     auto_encoder_neurons_range=(10, 40),
     auto_encoder_neurons_increment=lambda x: x + 30,

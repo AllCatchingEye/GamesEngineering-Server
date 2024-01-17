@@ -49,7 +49,7 @@ class DQLProcessor:
         self.target_model = target_model
         self.target_model.load_state_dict(policy_model.state_dict())
         self.__device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.__memory = ReplayMemory(1000)
+        self.__memory = ReplayMemory(10000)
 
     def memoize_state(
         self,
