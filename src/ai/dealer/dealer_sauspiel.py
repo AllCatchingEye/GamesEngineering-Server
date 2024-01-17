@@ -19,7 +19,7 @@ class DealerSauspiel(Dealer):
 
         good_cards: list[Card] = []
 
-        good_cards.extend(take_trumps(deck, trumps, 2))
+        good_cards.extend(take_trumps(deck, trumps, 1))
 
         sau = Card(suit, Rank.ASS)
         good_cards.extend(take_any_except(deck, [sau], 8 - len(good_cards)))
