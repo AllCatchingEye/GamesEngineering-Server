@@ -1,74 +1,12 @@
-# Concept
+# Select Card
 
-```js
-const stack = [
-    [card, player],
-    [card, player],
-    [card, player],
-    [card, player],
-    [card, player],
-    [card, player],
-];
-const playable_cards = [card, card, card, card]
+This directory contains all components to make a decision which card to play next during a game. Basically, there are 
+agents and agent trainer. The agent is used during the final game to represent some kind of ai. The agent trainer trains 
+the ai. Under the hood, the agent and the agent trainer use the a model. The model is the neuronal network, where 
+different types of models exist. Some just differ by the number of layers or neurons, other are used in different kinds
+of RL algorithms like PPO or Deep-Q-Learning, where different requirements need to be met.
 
-processed_stack = stack.flatMap((card, player) => [encode_card_as_int(card), isAlly(player)])
-processed_hand_cards = encode_cards_as_one_hot(playable_cards)
+The agents and agent trainer use inheritence to share functionality. The `rl_agent` and `rl_agent_trainer` build the 
+foundation.
 
-const input = [
-    ...processed_stack,
-    ...processed_hand_cards
-]
-
-[
-    2, // enemy
-    0, // us
-    2, // enemy 
-    1, // ally
-
-    0, // card 0
-    1, // is ally
-    2, // card 2
-    1, // is ally
-    13,// card 13
-    0, // is not ally
-    15,// card 15
-    0, // is not ally
-    ...restStack,
-    ...new Array(32 - processed_stack.length).fill(-1),
-
-    1, // Eichel Ober available
-    0, // Eichel Unter not available
-    1, // Eichel Ass available
-    ...restHandCards
-    ,
-]
-```
-
-# Weiterer Vorschlag 
-# + Sehr einfach zu implementieren aufgrund vorhandener funktionen
-# - Viele inputs sind 0 (Overhead)
-# - Spieler anordung fehlt noch
-
-[
-    # played cards (one hot, 32x)
-    0
-    1
-    0
-    0
-    ...
-    1
-    # is allied card (one hot, 32x)
-    0
-    1
-    0
-    0
-    ...
-    0
-    # hand cards (one hot, 32x)
-    0
-    1
-    0
-    0
-    ...
-    1
-]
+In the directory `models` are the models mentioned above. 
