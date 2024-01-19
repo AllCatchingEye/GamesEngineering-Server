@@ -13,7 +13,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     asyncio.run(
         start_training(
-            get_ai_controller=lambda net_layers, train: AiController_1It(train),
+            get_ai_controller=lambda net_layers, train, lr, prefix: AiController_1It(train),
             prefix="iter_01",
             net_combinations=[[256, 256, 256, 256]],
             num_epochs=50_000,
