@@ -79,7 +79,7 @@ class PolicyNN(nn.Module):
 class ModelIter02(ModelInterface):
     __logger = logging.getLogger("ModelIter02")
 
-    def __init__(self, layers: list[int], params_path_prefix: str = ""):
+    def __init__(self, layers: list[int], params_path_prefix: str = "", custom_model: str | None = None):
         self.params_path_prefix = params_path_prefix
         self.layers = layers
         self.model = PolicyNN(layers)
