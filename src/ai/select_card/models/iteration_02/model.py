@@ -79,7 +79,8 @@ class PolicyNN(nn.Module):
 class ModelIter02(ModelInterface):
     __logger = logging.getLogger("ModelIter02")
 
-    def __init__(self, layers: list[int]):
+    def __init__(self, layers: list[int], params_path_prefix: str = ""):
+        self.params_path_prefix = params_path_prefix
         self.layers = layers
         self.model = PolicyNN(layers)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -174,7 +175,8 @@ class ModelIter02(ModelInterface):
 
     def get_model_params_path(self, game_type: Gametype) -> str:
         from_here = os.path.dirname(os.path.abspath(__file__))
-        params_path = ["params", "x".join([str(it) for it in self.layers])]
+        params_str = "x".join([str(it) for it in self.layers])
+        params_path = ["params", "%s_%s" % (self.params_path_prefix, params_str)]
         folder_path = from_here
         for path_segment in params_path:
             folder_path = os.path.join(folder_path, path_segment)

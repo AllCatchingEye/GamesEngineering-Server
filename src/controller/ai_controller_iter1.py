@@ -1,12 +1,8 @@
 import os
 
 from ai.select_card.drl_agent import DRLAgent
-from ai.select_card.drl_agent_trainer import (
-    LR,
-    DRLAgentTrainer,
-    DRLAgentTrainerDefaultConfig,
-)
-from ai.select_card.models.iteration_02.model import ModelIter02
+from ai.select_card.drl_agent_trainer import DRLAgentTrainer
+from ai.select_card.models.iteration_01.model import ModelIter01
 from ai.select_game_type.two_layer_nn.two_layer_game_decision_agent import (
     NNAgentConfig,
     SelectGameAgent,
@@ -19,11 +15,8 @@ from state.player import PlayerId
 from state.stack import Stack
 from state.suits import Suit
 
-
-class AiController(PlayerController):
-    def __init__(
-        self, net_layers: list[int], train: bool = False, learning_rate: float = LR
-    ):
+class AiController_1It(PlayerController):
+    def __init__(self, train: bool = False):
         super().__init__()
         self.hand_cards: list[Card] | None
         self.player_id: PlayerId | None
@@ -54,14 +47,10 @@ class AiController(PlayerController):
         )
         self.select_game_agent = SelectGameAgent(nn_agent_config)
 
-        drl_agent = DRLAgent(ModelIter02(net_layers, "lr%s" % learning_rate ))
+        drl_agent = DRLAgent(ModelIter01())
         if train is True:
-            training_config = DRLAgentTrainerDefaultConfig
-            training_config.learning_rate = learning_rate
             self.play_game_agent = DRLAgentTrainer(
-                agent=drl_agent,
-                target_model=ModelIter02(net_layers, "lr%s" % learning_rate),
-                training_config=training_config,
+                agent=drl_agent, target_model=ModelIter01()
             )
         else:
             self.play_game_agent = drl_agent
