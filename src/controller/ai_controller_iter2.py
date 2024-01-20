@@ -54,7 +54,7 @@ class AiController_2It(PlayerController):
         
 
 
-        self.play_game_agent = DRLAgent(ModelIter02(layers=[512, 256, 256, 256], custom_prefix="v2"))
+        self.play_game_agent = DRLAgent(ModelIter02(layers=[512, 256, 256, 256], custom_prefix="v_02"))
 
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
