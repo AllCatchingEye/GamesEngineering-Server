@@ -6,14 +6,13 @@ from ai.nn_layout_helper import (
     compute_layers_combinations,
 )
 from controller.ai_controller import AiController
-from drl_training_base import start_training
+from drl_training_base import ALL_GAME_TYPES, start_training
 from state.gametypes import Gametype
 
 
 # Modify this array to train only certain game types.
-GAME_TYPES_TO_TRAIN: list[Gametype] = [Gametype.SAUSPIEL]  # ALL_GAME_TYPES
-
-NUM_EPOCHS = 15_000
+GAME_TYPES_TO_TRAIN: list[Gametype] = ALL_GAME_TYPES
+NUM_EPOCHS = 15000
 EPOCHS_UNTIL_APPLYING_TRAINING = 250
 DISPLAY_LOGS = False
 DISPLAY_PROGRESS = True

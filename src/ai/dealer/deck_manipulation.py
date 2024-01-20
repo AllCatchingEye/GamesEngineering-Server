@@ -1,3 +1,4 @@
+import random
 from typing import Callable
 
 from state.card import Card
@@ -51,7 +52,6 @@ def take_suit(deck: list[Card], suit: Suit) -> Card:
             return card
 
     raise ValueError(f"Suit {suit} not found in deck {deck}")
-
 
 def take_trumps(deck: list[Card], trumps: list[Card], n: int = 1) -> list[Card]:
     taken: list[Card] = []

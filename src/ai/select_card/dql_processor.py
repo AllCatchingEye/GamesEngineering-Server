@@ -5,7 +5,7 @@ import torch
 
 from state.gametypes import Gametype
 
-Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
+Transition = namedtuple("Transition", ("state", "action", "next_state", "reward", "is_final", "allowed_targets"))
 
 
 class ReplayMemory(object):
@@ -49,7 +49,7 @@ class DQLProcessor:
         self.target_model = target_model
         self.target_model.load_state_dict(policy_model.state_dict())
         self.__device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.__memory = ReplayMemory(1000)
+        self.__memory = ReplayMemory(10000)
 
     def memoize_state(
         self,
@@ -58,8 +58,10 @@ class DQLProcessor:
         action: torch.Tensor,
         reward: torch.Tensor,
         next_state: torch.Tensor,
+        is_final: torch.Tensor,
+        allowed_targets: torch.Tensor,
     ):
-        self.__memory.push(game_type, state, action, next_state, reward)
+        self.__memory.push(game_type, state, action, next_state, reward, is_final, allowed_targets)
 
     def optimize_model(self, game_type: Gametype):
         if self.__memory.length(game_type) < self.__batch_size:
@@ -74,12 +76,6 @@ class DQLProcessor:
         # create a batch of transitions
         batch = Transition(*zip(*transitions))
 
-        # create a boolean mask for each next_state if it is None (terminating) or not
-        non_final_mask = torch.tensor(
-            tuple(map(lambda s: s is not None, batch.next_state)),
-            device=self.__device,
-            dtype=torch.bool,
-        )
         # filter out elements where the next state is None (the element represents a terminating transition)
         non_final_next_states = torch.cat(
             [s for s in batch.next_state if s is not None]
@@ -88,6 +84,8 @@ class DQLProcessor:
         state_batch = torch.cat(batch.state)
         action_batch = torch.cat(batch.action)
         reward_batch = torch.cat(batch.reward)
+        is_final_batch = torch.cat(batch.is_final)
+        allowed_targets_batch = torch.cat(batch.allowed_targets)
 
         # Compute state action value (q-value) based on policy_net,
         # and gather the q-value of the action our agent did
@@ -103,9 +101,15 @@ class DQLProcessor:
         with torch.no_grad():
             # compute the optimal state value (v-value) by picking the reward of the action with the largest reward
             # v*(s) = max(q*(s, a)) where q*(s, a) is approximated by our target_net
-            next_state_values[non_final_mask] = torch.softmax(
+            target_values = torch.softmax(
                 self.target_model(non_final_next_states), dim=1
-            ).max(1)[0]
+            )
+            # set not allowed actions from target net to 0
+            target_values = torch.where(allowed_targets_batch == False, torch.tensor(0.0), target_values)
+            # get max action
+            next_state_values = target_values.max(1)[0]
+        # set final next state action values to one
+        next_state_values = torch.where(is_final_batch == 1.0, torch.tensor(1.0), next_state_values)
 
         # Compute expected optimal state action values (q-values) based on state values (v-value) of next state, gamma (discount rate) and the reward
         # q*(s, a) = reward + gamma * v*(s)
