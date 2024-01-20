@@ -104,8 +104,11 @@ class DQLProcessor:
             target_values = torch.softmax(
                 self.target_model(non_final_next_states), dim=1
             )
+            # set not allowed actions from target net to 0
             target_values = torch.where(allowed_targets_batch == False, torch.tensor(0.0), target_values)
+            # get max action
             next_state_values = target_values.max(1)[0]
+        # set final next state action values to one
         next_state_values = torch.where(is_final_batch == 1.0, torch.tensor(1.0), next_state_values)
 
         # Compute expected optimal state action values (q-values) based on state values (v-value) of next state, gamma (discount rate) and the reward
