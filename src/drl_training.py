@@ -44,7 +44,6 @@ TRAINING_CONFIG = {
 
 # Modify this array to train only certain game types.
 GAME_TYPES_TO_TRAIN: list[Gametype] = ALL_GAME_TYPES
-# test
 NUM_EPOCHS = 15000
 EPOCHS_UNTIL_APPLYING_TRAINING = 250
 DISPLAY_LOGS = False

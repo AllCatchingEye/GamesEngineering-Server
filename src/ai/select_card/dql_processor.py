@@ -76,12 +76,6 @@ class DQLProcessor:
         # create a batch of transitions
         batch = Transition(*zip(*transitions))
 
-        # create a boolean mask for each next_state if it is None (terminating) or not
-        non_final_mask = torch.tensor(
-            tuple(map(lambda s: s is not None, batch.next_state)),
-            device=self.__device,
-            dtype=torch.bool,
-        )
         # filter out elements where the next state is None (the element represents a terminating transition)
         non_final_next_states = torch.cat(
             [s for s in batch.next_state if s is not None]
@@ -92,8 +86,6 @@ class DQLProcessor:
         reward_batch = torch.cat(batch.reward)
         is_final_batch = torch.cat(batch.is_final)
         allowed_targets_batch = torch.cat(batch.allowed_targets)
-
-        
 
         # Compute state action value (q-value) based on policy_net,
         # and gather the q-value of the action our agent did
@@ -112,6 +104,7 @@ class DQLProcessor:
             target_values = torch.softmax(
                 self.target_model(non_final_next_states), dim=1
             )
+            target_values = torch.where(allowed_targets_batch == False, torch.tensor(0.0), target_values)
             next_state_values = target_values.max(1)[0]
         next_state_values = torch.where(is_final_batch == 1.0, torch.tensor(1.0), next_state_values)
 
