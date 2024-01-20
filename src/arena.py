@@ -16,6 +16,7 @@ from controller.handcrafted_controller import HandcraftedController
 from controller.passive_controller import PassiveController
 from controller.player_controller import PlayerController
 from controller.random_controller import RandomController
+from controller.ai_controller_iter3 import AiController_3It
 from logic.card_game import CardGame
 from logic.game import Game
 from state.card import Card
@@ -315,8 +316,8 @@ if __name__ == "__main__":
         )
 
     arena = Arena()
-    arena.add_bot(AiController_1It)
-    arena.add_bot(AiController_1It)
+    arena.add_bot(HandcraftedController)
+    arena.add_bot(AiController_3It)
     arena.add_bot(AiController_2It)
     arena.add_bot(AiController_2It)
     asyncio.run(arena.run())
