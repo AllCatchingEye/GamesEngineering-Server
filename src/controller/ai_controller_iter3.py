@@ -19,7 +19,7 @@ from state.stack import Stack
 from state.suits import Suit
 
 
-class AiController_2It(PlayerController):
+class AiController_3It(PlayerController):
     def __init__(self, train: bool = False):
         super().__init__()
         self.hand_cards: list[Card] | None
@@ -51,10 +51,7 @@ class AiController_2It(PlayerController):
         )
         self.select_game_agent = SelectGameAgent(nn_agent_config)
 
-        
-
-
-        self.play_game_agent = DRLAgent(ModelIter02(layers=[512, 256, 256, 256], custom_prefix="v2"))
+        self.play_game_agent = DRLAgent(ModelIter02(layers=[256, 256, 256, 256, 256, 256], custom_prefix="v3"))
 
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]
