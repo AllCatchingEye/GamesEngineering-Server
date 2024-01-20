@@ -1,6 +1,6 @@
 import random
 from ai.dealer.dealer import Dealer
-from ai.dealer.deck_manipulation import take, take_random_good_cards, take_rank, take_suit, take_trumps
+from ai.dealer.deck_manipulation import take, take_matching, take_rank, take_trumps
 from logic.gamemodes.gamemode_wenz import GameModeWenz
 from state.card import Card
 from state.deck import DECK
@@ -31,7 +31,9 @@ class DealerWenz(Dealer):
         else:
             good_cards.extend( [take_rank(deck, Rank.UNTER)]*num_trumps)
 
-        other_good_cards = take_random_good_cards(deck, num_other_good_cards)
+        other_good_cards = take_matching(
+                deck, lambda c: c.rank in [Rank.ASS, Rank.KOENIG, Rank.ZEHN], num_other_good_cards
+            )
         good_cards.extend(other_good_cards)
             
         good_cards.extend(take(deck, 8 - len(good_cards)))

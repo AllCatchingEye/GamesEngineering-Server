@@ -53,22 +53,6 @@ def take_suit(deck: list[Card], suit: Suit) -> Card:
 
     raise ValueError(f"Suit {suit} not found in deck {deck}")
 
-
-
-def take_random_good_cards(deck: list[Card], n: int = 1) -> list[Card]:
-    good_ranks = [Rank.ASS, Rank.OBER, Rank.UNTER, Rank.KOENIG]
-    taken: list[Card] = []
-    
-    for _ in range(n):
-        card_rank = good_ranks[random.randint(0, len(good_ranks) - 1)]
-        try:
-            card = take_rank(deck, card_rank)
-            taken.append(card)
-        except ValueError as _:
-            continue
-
-    return taken
-
 def take_trumps(deck: list[Card], trumps: list[Card], n: int = 1) -> list[Card]:
     taken: list[Card] = []
 

@@ -1,5 +1,5 @@
 from ai.dealer.dealer import Dealer
-from ai.dealer.deck_manipulation import take, take_random_good_cards, take_trumps
+from ai.dealer.deck_manipulation import take, take_trumps
 from logic.gamemodes.gamemode_solo import GameModeSolo
 from state.card import Card
 from state.deck import DECK
