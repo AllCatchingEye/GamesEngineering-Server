@@ -46,7 +46,7 @@ def compute_layers_combinations(
     auto_encoder_neurons_range: tuple[int, int],
     auto_encoder_neurons_increment: Callable[[int], int],
 ):
-    combinations: Sequence[Sequence[int]] = deque()
+    combinations: Sequence[list[int]] = deque()
 
     layers = layers_range[0]
     while layers <= layers_range[1]:

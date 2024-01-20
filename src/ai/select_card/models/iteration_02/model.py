@@ -79,10 +79,12 @@ class PolicyNN(nn.Module):
 class ModelIter02(ModelInterface):
     __logger = logging.getLogger("ModelIter02")
 
-    def __init__(self, layers: list[int]):
+    def __init__(self, layers: list[int], params_path_prefix: str = "", custom_prefix: str | None = None):
+        self.params_path_prefix = params_path_prefix
         self.layers = layers
         self.model = PolicyNN(layers)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.custom_prefix = custom_prefix
 
     def get_raw_model(self):
         return self.model
@@ -173,8 +175,16 @@ class ModelIter02(ModelInterface):
         return result
 
     def get_model_params_path(self, game_type: Gametype) -> str:
+        if self.custom_prefix is None:
+            return self.get_generated_model_path(game_type)
+        else:
+            return self.get_custom_prefix_path(self.custom_prefix, game_type)
+        
+
+    def get_generated_model_path(self, game_type: Gametype) -> str:
         from_here = os.path.dirname(os.path.abspath(__file__))
-        params_path = ["params", "x".join([str(it) for it in self.layers])]
+        params_str = "x".join([str(it) for it in self.layers])
+        params_path = ["params", "%s_%s" % (self.params_path_prefix, params_str)]
         folder_path = from_here
         for path_segment in params_path:
             folder_path = os.path.join(folder_path, path_segment)
@@ -182,6 +192,11 @@ class ModelIter02(ModelInterface):
                 self.__logger.debug("Create directory %s", folder_path)
                 os.mkdir(folder_path)
         return os.path.join(folder_path, as_params_file(game_type.name.lower()))
+
+
+    def get_custom_prefix_path(self, custom_prefix: str, game_type: Gametype):
+        from_here = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(from_here, "params", "custom", custom_prefix, as_params_file(game_type.name.lower()))
 
     def init_params(self, game_type: Gametype):
         path = self.get_model_params_path(game_type)

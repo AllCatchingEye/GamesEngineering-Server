@@ -2,7 +2,6 @@ import os
 
 from ai.select_card.drl_agent import DRLAgent
 from ai.select_card.drl_agent_trainer import (
-    LR,
     DRLAgentTrainer,
     DRLAgentTrainerDefaultConfig,
 )
@@ -20,10 +19,8 @@ from state.stack import Stack
 from state.suits import Suit
 
 
-class AiController(PlayerController):
-    def __init__(
-        self, net_layers: list[int], train: bool = False, learning_rate: float = LR
-    ):
+class AiController_2It(PlayerController):
+    def __init__(self, train: bool = False):
         super().__init__()
         self.hand_cards: list[Card] | None
         self.player_id: PlayerId | None
@@ -54,17 +51,7 @@ class AiController(PlayerController):
         )
         self.select_game_agent = SelectGameAgent(nn_agent_config)
 
-        drl_agent = DRLAgent(ModelIter02(net_layers, "lr%s" % learning_rate ))
-        if train is True:
-            training_config = DRLAgentTrainerDefaultConfig
-            training_config.learning_rate = learning_rate
-            self.play_game_agent = DRLAgentTrainer(
-                agent=drl_agent,
-                target_model=ModelIter02(net_layers, "lr%s" % learning_rate),
-                training_config=training_config,
-            )
-        else:
-            self.play_game_agent = drl_agent
+        self.play_game_agent = DRLAgent(ModelIter02(layers=[256, 256, 256, 256, 256, 256], custom_prefix="v2"))
 
     async def select_gametype(
         self, choosable_gametypes: list[tuple[Gametype, Suit | None]]

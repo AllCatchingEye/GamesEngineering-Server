@@ -9,6 +9,8 @@ from tqdm import tqdm
 
 from ai.dealer.dealer_factory import DealerFactory
 from controller.ai_controller import AiController
+from controller.ai_controller_iter1 import AiController_1It
+from controller.ai_controller_iter2 import AiController_2It
 from controller.combi_contoller import CombiController
 from controller.handcrafted_controller import HandcraftedController
 from controller.passive_controller import PassiveController
@@ -57,7 +59,7 @@ def increment_money(dictionary: dict[T, Money], key: T, value: Money) -> None:
 
 @dataclass
 class ArenaConfig:
-    games: int = 5000
+    games: int = 1000
     rounds_per_game: int = 10
     rng_seed: int | None = None
 
@@ -309,14 +311,14 @@ if __name__ == "__main__":
 
     def combi_creator() -> PlayerController:
         return CombiController(
-            HandcraftedController(), get_ai_ctrl_256_256_256_256_256()
+            AiController_2It(), PassiveController()
         )
 
     arena = Arena()
-    arena.add_bot(HandcraftedController)
-    arena.add_bot(combi_creator)
-    arena.add_bot(get_ai_ctrl_256_256_256_256_256)
-    arena.add_bot(PassiveController)
+    arena.add_bot(AiController_1It)
+    arena.add_bot(AiController_1It)
+    arena.add_bot(AiController_2It)
+    arena.add_bot(AiController_2It)
     asyncio.run(arena.run())
 
     print("Overview")

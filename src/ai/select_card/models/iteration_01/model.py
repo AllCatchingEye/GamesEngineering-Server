@@ -119,9 +119,10 @@ class ModelIter01(ModelInterface):
         return os.path.join(from_here, "params", as_params_file(game_type.name.lower()))
 
     def init_params(self, game_type: Gametype):
-        load_and_apply_parameters_to_model(
-            self.model, self.get_model_params_path(game_type), self.device
-        )
+        if os.path.exists(self.get_model_params_path(game_type)):
+            load_and_apply_parameters_to_model(
+                self.model, self.get_model_params_path(game_type), self.device
+            )
 
     def persist_parameters(self, game_type: Gametype):
         persist_model_parameters(self.model, self.get_model_params_path(game_type))
