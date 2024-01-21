@@ -4,7 +4,6 @@ import logging
 
 from controller.ai_controller import AiController
 from drl_training_base import start_training
-from state.gametypes import Gametype
 
 
 
@@ -19,6 +18,5 @@ if __name__ == "__main__":
             num_epochs=50_000,
             epochs_until_applying_training=250,
             epochs_until_arena_evaluation=500,
-            game_types_to_train=[Gametype.SAUSPIEL, Gametype.SOLO]
         )
     )

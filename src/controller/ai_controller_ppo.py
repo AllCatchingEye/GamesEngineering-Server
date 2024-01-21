@@ -1,13 +1,15 @@
 import os
 
-from ai.select_card.dql_agent import DQLAgent
-from ai.select_card.dql_agent_trainer import DQLAgentTrainer
-from ai.select_card.models.dql.iteration_01.model import ModelIter01
+from ai.select_card.dql_agent_trainer import LR, DQLAgentTrainer
 from ai.select_game_type.two_layer_nn.two_layer_game_decision_agent import (
     NNAgentConfig,
     SelectGameAgent,
 )
 from controller.player_controller import PlayerController
+from ai.select_card.models.ppo.iteration_01.actor import PpoActorIter01
+from ai.select_card.models.ppo.iteration_01.critic import PpoCriticIter01
+from ai.select_card.ppo_agent import PpoAgent
+from ai.select_card.ppo_agent_trainer import PpoAgentTrainer
 from state.card import Card
 from state.event import Event, GameStartUpdate
 from state.gametypes import GameGroup, Gametype
@@ -15,8 +17,11 @@ from state.player import PlayerId
 from state.stack import Stack
 from state.suits import Suit
 
-class AiController_1It(PlayerController):
-    def __init__(self, train: bool = False):
+
+class AiControllerPpo(PlayerController):
+    def __init__(
+        self, net_layers: list[int], train: bool = False, learning_rate: float = LR
+    ):
         super().__init__()
         self.hand_cards: list[Card] | None
         self.player_id: PlayerId | None
@@ -47,10 +52,11 @@ class AiController_1It(PlayerController):
         )
         self.select_game_agent = SelectGameAgent(nn_agent_config)
 
-        drl_agent = DQLAgent(ModelIter01())
+        drl_agent = PpoAgent(PpoActorIter01(net_layers))
         if train is True:
-            self.play_game_agent = DQLAgentTrainer(
-                agent=drl_agent, target_model=ModelIter01()
+            self.play_game_agent = PpoAgentTrainer(
+                agent=drl_agent,
+                critic=PpoCriticIter01(net_layers)
             )
         else:
             self.play_game_agent = drl_agent
@@ -118,9 +124,17 @@ class AiController_1It(PlayerController):
         return self.select_game_agent.choose_game_group(available_groups)
 
     def persist_training_results(self):
-        if not isinstance(self.play_game_agent, DQLAgentTrainer):
+        if not isinstance(self.play_game_agent, PpoAgentTrainer):
             raise ValueError(
                 "The controller doesn't get trained so the parameters can't be persisted."
             )
 
         self.play_game_agent.persist_agent()
+
+    def apply_training(self):
+        if not isinstance(self.play_game_agent, PpoAgentTrainer):
+            raise ValueError(
+                "Manually applying training is only allowed for PPO agent trainers"
+            )
+
+        self.play_game_agent.apply_training()

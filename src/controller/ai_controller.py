@@ -1,12 +1,8 @@
 import os
+from ai.select_card.dql_agent import DQLAgent
 
-from ai.select_card.drl_agent import DRLAgent
-from ai.select_card.drl_agent_trainer import (
-    LR,
-    DRLAgentTrainer,
-    DRLAgentTrainerDefaultConfig,
-)
-from ai.select_card.models.iteration_02.model import ModelIter02
+from ai.select_card.dql_agent_trainer import LR, DQLAgentTrainer, DQLAgentTrainerDefaultConfig
+from ai.select_card.models.dql.iteration_02.model import ModelIter02
 from ai.select_game_type.two_layer_nn.two_layer_game_decision_agent import (
     NNAgentConfig,
     SelectGameAgent,
@@ -54,11 +50,11 @@ class AiController(PlayerController):
         )
         self.select_game_agent = SelectGameAgent(nn_agent_config)
 
-        drl_agent = DRLAgent(ModelIter02(net_layers, "lr%s" % learning_rate ))
+        drl_agent = DQLAgent(ModelIter02(net_layers, "lr%s" % learning_rate ))
         if train is True:
-            training_config = DRLAgentTrainerDefaultConfig
+            training_config = DQLAgentTrainerDefaultConfig
             training_config.learning_rate = learning_rate
-            self.play_game_agent = DRLAgentTrainer(
+            self.play_game_agent = DQLAgentTrainer(
                 agent=drl_agent,
                 target_model=ModelIter02(net_layers, "lr%s" % learning_rate),
                 training_config=training_config,
@@ -129,9 +125,9 @@ class AiController(PlayerController):
         return self.select_game_agent.choose_game_group(available_groups)
 
     def persist_training_results(self):
-        if not isinstance(self.play_game_agent, DRLAgentTrainer):
+        if not isinstance(self.play_game_agent, DQLAgentTrainer):
             raise ValueError(
                 "The controller doesn't get trained so the parameters can't be persisted."
             )
 
-        self.play_game_agent.persist_trained_policy()
+        self.play_game_agent.persist_agent()

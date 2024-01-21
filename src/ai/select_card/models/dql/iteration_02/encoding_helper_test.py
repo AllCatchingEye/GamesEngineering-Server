@@ -1,6 +1,6 @@
 import unittest
+from ai.select_card.models.dql.iteration_02.encoding_helper import encode_stack
 
-from ai.select_card.models.iteration_02.encoding_helper import encode_stack
 from state.card import Card
 from state.player import PlayerId
 from state.ranks import Rank

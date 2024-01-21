@@ -1,63 +1,59 @@
+import asyncio
 import logging
 import os
 import random
-from typing import Callable, Sequence
+from typing import Sequence
 
 from tqdm import tqdm
 
 from ai.dealer.dealer_factory import DealerFactory
 from ai.nn_layout_helper import (
+    compute_layers_combinations,
     get_combination_details,
     print_combinations,
 )
 from ai.nn_meta_training_helper import store_winrates_money_in_csv
-from ai.select_card.dql_agent_trainer import LR, DQLAgentTrainer
+from ai.select_card.dql_agent_trainer import DQLAgentTrainer
 from arena import Arena
 from controller.ai_controller import AiController
 from controller.passive_controller import PassiveController
 from controller.player_controller import PlayerController
 from logic.card_game import CardGame
+from drl_training_base import ALL_GAME_TYPES, TRAINING_CONFIG
 from state.gametypes import Gametype
 from state.suits import Suit
 
 ALL_SUITS = [Suit.EICHEL, Suit.GRAS, Suit.HERZ, Suit.SCHELLEN]
-ALL_GAME_TYPES = [
-    Gametype.SAUSPIEL,
-    Gametype.RAMSCH,
-    Gametype.SOLO,
-    Gametype.WENZ,
-    Gametype.FARBWENZ,
-    Gametype.GEIER,
-    Gametype.FARBGEIER,
-]
-TRAINING_CONFIG = {
-    Gametype.SAUSPIEL.name: [Suit.EICHEL, Suit.GRAS, Suit.SCHELLEN],
-    Gametype.RAMSCH.name: None,
-    Gametype.SOLO.name: ALL_SUITS,
-    Gametype.WENZ.name: None,
-    Gametype.FARBWENZ.name: ALL_SUITS,
-    Gametype.GEIER.name: None,
-    Gametype.FARBGEIER.name: ALL_SUITS,
-}
 
-
-NUM_EPOCHS = 15_000
+# Modify this array to train only certain game types.
+GAME_TYPES_TO_TRAIN: list[Gametype] = ALL_GAME_TYPES
+NUM_EPOCHS = 15000
 EPOCHS_UNTIL_APPLYING_TRAINING = 250
 DISPLAY_LOGS = False
 DISPLAY_PROGRESS = True
 UPDATE_PROGRESS_INTERVAL_MS = 0.1
-EPOCHS_UNTIL_ARENA_EVALUATION = 500
+EPOCHS_UNTIL_ARENA_EVALUATION = 1_000
+
+
+# NET_COMBINATIONS = compute_layers(neurons=256, layers=5)
+NET_COMBINATIONS = compute_layers_combinations(
+    neurons_range=(256, 256),
+    neurons_increment=lambda x: x * 2,
+    layers_range=(4, 20),
+    layers_increment=lambda x: x + 5,
+    auto_encoder_threshold=8,
+    auto_encoder_neurons_range=(10, 40),
+    auto_encoder_neurons_increment=lambda x: x + 30,
+)
 
 logger = logging.getLogger("DRL-Trainings-Loop")
 
 
 async def get_new_game(
-    get_ai_controller: Callable[[list[int], bool, float], PlayerController],
     game_type: Gametype,
     is_player: bool,
     playable_suits: list[Suit] | None,
     net_layers: list[int],
-    learning_rate: float,
     reused_controllers: tuple[AiController, list[PlayerController]] | None = None,
 ):
     suit = None if playable_suits is None else random.sample(playable_suits, 1)[0]
@@ -72,12 +68,12 @@ async def get_new_game(
         card_game.game.controllers = [reused_controllers[0]] + reused_controllers[1]
         trained_controller = reused_controllers[0]
     else:
-        trained_controller = get_ai_controller(net_layers, True, learning_rate)
+        trained_controller = AiController(net_layers, True)
         new_controllers: list[PlayerController] = [
             trained_controller,
-            get_ai_controller(net_layers, False, learning_rate),
-            get_ai_controller(net_layers, False, learning_rate),
-            get_ai_controller(net_layers, False, learning_rate),
+            AiController(net_layers, False),
+            AiController(net_layers, False),
+            AiController(net_layers, False),
         ]
         card_game.game.controllers = new_controllers
 
@@ -89,29 +85,18 @@ async def get_new_game(
     return (card_game.game, trained_controller, card_game.game.controllers[1:])
 
 
-async def start_training(
-    get_ai_controller: Callable[[list[int], bool, float], PlayerController],
-    net_combinations: list[list[int]],
-    prefix: str = "",
-    game_types_to_train: list[Gametype] = ALL_GAME_TYPES.copy(),
-    display_progress: bool = DISPLAY_PROGRESS,
-    training_config: dict[str, list[Suit] | None] = TRAINING_CONFIG.copy(),
-    num_epochs: int = NUM_EPOCHS,
-    epochs_until_applying_training: int = EPOCHS_UNTIL_APPLYING_TRAINING,
-    epochs_until_arena_evaluation: int = EPOCHS_UNTIL_ARENA_EVALUATION,
-    learning_rate: float = LR,
-):
-    if not display_progress:
+async def main():
+    if not DISPLAY_PROGRESS:
         logging.basicConfig(level=logging.DEBUG)
 
     logger.info("Training started.")
-    logger.info("Trained game types: %s", game_types_to_train)
+    logger.info("Trained game types: %s", GAME_TYPES_TO_TRAIN)
     logger.info("Trained combinations:")
-    print_combinations(net_combinations, logger)
+    print_combinations(NET_COMBINATIONS, logger)
 
-    for net_layers in net_combinations:
-        for game_type in game_types_to_train:
-            playable_suits = training_config[game_type.name]
+    for net_layers in NET_COMBINATIONS:
+        for game_type in GAME_TYPES_TO_TRAIN:
+            playable_suits = TRAINING_CONFIG[game_type.name]
             last_controllers: tuple[AiController, list[PlayerController]] | None = None
 
             logger.info("Performing training for one combination.")
@@ -119,7 +104,7 @@ async def start_training(
             print_combinations([net_layers], logger)
 
             for epoch in tqdm(
-                range(num_epochs),
+                range(NUM_EPOCHS),
                 "%s | %ix%i%s"
                 % (
                     str(game_type).replace("Gametype.", ""),
@@ -131,28 +116,24 @@ async def start_training(
             ):
                 is_player = bool(random.getrandbits(1))
                 if (
-                    epoch % epochs_until_applying_training == 0
+                    epoch % EPOCHS_UNTIL_APPLYING_TRAINING == 0
                     or last_controllers is None
                 ):
                     if last_controllers is not None:
                         last_controllers[0].persist_training_results()
                     game, trained_ai_controller, other_controllers = await get_new_game(
-                        get_ai_controller,
                         game_type,
                         is_player,
                         playable_suits,
                         list(net_layers),
-                        learning_rate,
                         last_controllers,
                     )
                 else:
                     game, trained_ai_controller, other_controllers = await get_new_game(
-                        get_ai_controller,
                         game_type,
                         is_player,
                         playable_suits,
                         list(net_layers),
-                        learning_rate,
                         last_controllers,
                     )
 
@@ -165,20 +146,13 @@ async def start_training(
 
                 trained_ai_controller.play_game_agent.reset()
 
-                if epoch % epochs_until_arena_evaluation == 0:
+                if epoch % EPOCHS_UNTIL_ARENA_EVALUATION == 0:
                     if isinstance(agent, DQLAgentTrainer):
                         logger.debug(
                             "EPS_DECAY: %i", agent.get_eps_threshold(agent.steps_done)
                         )
 
-                    await run_arena(
-                        get_ai_controller,
-                        game_type,
-                        net_layers,
-                        epoch,
-                        prefix,
-                        learning_rate,
-                    )
+                    await run_arena(game_type, net_layers, epoch)
 
                 if epoch % 1_000 == 0:
                     if isinstance(agent, DQLAgentTrainer):
@@ -196,16 +170,9 @@ async def start_training(
     logger.info("Training complete.")
 
 
-async def run_arena(
-    get_ai_controller: Callable[[list[int], bool, float], PlayerController],
-    game_type: Gametype,
-    layers: Sequence[int],
-    epoch: int,
-    prefix: str,
-    learning_rate: float,
-):
-    def get_ai_ctrl() -> PlayerController:
-        return get_ai_controller(list(layers), False, learning_rate)
+async def run_arena(game_type: Gametype, layers: Sequence[int], epoch: int):
+    def get_ai_ctrl() -> AiController:
+        return AiController(list(layers))
 
     logger.info("Arena Evaluation: ")
     arena = Arena()
@@ -224,11 +191,7 @@ async def run_arena(
 
     from_here = os.path.dirname(os.path.abspath(__file__))
     store_winrates_money_in_csv(
-        os.path.join(
-            from_here,
-            "meta_logs_%s_LR%s_%s_%s.csv"
-            % (prefix, learning_rate, net_combination, game_type),
-        ),
+        os.path.join(from_here, "meta_logs_%s_%s.csv" % (net_combination, game_type)),
         epoch,
         str(winrates[0]),
         str(money[0]),
@@ -240,3 +203,9 @@ async def run_arena(
         winrates[0],
         money[0],
     )
+
+
+if __name__ == "__main__":
+    # logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())

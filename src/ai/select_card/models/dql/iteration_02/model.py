@@ -6,7 +6,7 @@ import torch
 from torch import Tensor, nn
 
 from ai.nn_helper import NUM_CARDS, NUM_ROUNDS, NUM_STACK_CARDS, one_hot_encode_cards
-from ai.select_card.models.iteration_02.encoding_helper import encode_stack
+from ai.select_card.models.dql.iteration_02.encoding_helper import encode_stack
 from ai.select_card.models.model_interface import ModelInterface
 from ai.select_card.models.shared.encoding import pick_highest_valid_card
 from ai.select_card.models.shared.nn_state import (
