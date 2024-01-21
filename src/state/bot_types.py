@@ -10,6 +10,7 @@ class BotType(Enum):
     AI_ITER_01 = 3
     AI_ITER_02 = 4
     AI_ITER_03 = 5
+    AI_ITER_04 = 6
 
 
 def bot_type_to_controller(bot_type: BotType) -> "_.PlayerController":
@@ -33,4 +34,8 @@ def bot_type_to_controller(bot_type: BotType) -> "_.PlayerController":
         case BotType.AI_ITER_03:
             from controller.ai_controller_iter3 import AiController_3It
             return AiController_3It()
+        case BotType.AI_ITER_04:
+            from controller.ai_controller_iter4 import AiController_4It
+            return AiController_4It()
+
             
