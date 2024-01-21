@@ -9,7 +9,7 @@ from ai.select_card.models.shared.encoding import get_action_from_card, pick_hig
 from state.card import Card
 
 # Detect anomalies like "inf" tensor values
-# torch.autograd.set_detect_anomaly(True)
+torch.autograd.set_detect_anomaly(True)
 
 class Agent(torch.nn.Module):
     def __init__(self, actor: torch.nn.Module, critic: torch.nn.Module ):
