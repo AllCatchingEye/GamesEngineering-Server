@@ -7,7 +7,7 @@ import torch
 
 from ai.nn_helper import NUM_ROUNDS, get_one_hot_encoding_index_from_card, one_hot_encode_cards
 from ai.select_card.dql_processor import DQLProcessor
-from ai.select_card.drl_agent import DRLAgent
+from ai.select_card.dql_agent import DQLAgent
 from ai.select_card.models.model_interface import ModelInterface
 from ai.select_card.rl_agent_trainer import RLBaseAgentTrainer
 from state.card import Card
@@ -38,7 +38,7 @@ LR = 1e-6
 
 
 @dataclass
-class DRLAgentTrainerConfig:
+class DQLAgentTrainerConfig:
     batch_size: int
     discount_factor: float
     exploration_rate_start: float
@@ -48,7 +48,7 @@ class DRLAgentTrainerConfig:
     learning_rate: float
 
 
-DRLAgentTrainerDefaultConfig = DRLAgentTrainerConfig(
+DQLAgentTrainerDefaultConfig = DQLAgentTrainerConfig(
     batch_size=BATCH_SIZE,
     discount_factor=GAMMA,
     exploration_rate_start=EPS_START,
@@ -59,14 +59,14 @@ DRLAgentTrainerDefaultConfig = DRLAgentTrainerConfig(
 )
 
 
-class DRLAgentTrainer(RLBaseAgentTrainer):
-    __logger = logging.getLogger("DRLAgentTrainer")
+class DQLAgentTrainer(RLBaseAgentTrainer):
+    __logger = logging.getLogger("DQLAgentTrainer")
 
     def __init__(
         self,
-        agent: DRLAgent,
+        agent: DQLAgent,
         target_model: ModelInterface,
-        training_config: DRLAgentTrainerConfig = DRLAgentTrainerDefaultConfig,
+        training_config: DQLAgentTrainerConfig = DQLAgentTrainerDefaultConfig,
     ):
         super().__init__(agent)
         self.agent = agent
@@ -88,7 +88,7 @@ class DRLAgentTrainer(RLBaseAgentTrainer):
         self._allowed_next_states: torch.Tensor | None
 
 
-    def persist_trained_policy(self):
+    def persist_agent(self):
         self.agent.model.persist_parameters(self.agent.get_game_type_safe())
 
     def get_eps_threshold(self, steps_done: int) -> float:

@@ -18,12 +18,6 @@ class ReplayMemory(object):
     def push(self, game_type: Gametype, *args: Transition):
         self.memory[game_type].append(Transition(*args))
 
-    def get(self, game_type: Gametype, index: int):
-        return self.memory[game_type][index]
-
-    def update(self, game_type: Gametype, index: int, *args: Transition):
-        self.memory[game_type][index] = Transition(*args)
-
     def sample(self, game_type: Gametype, batch_size: int):
         return random.sample(self.memory[game_type], batch_size)
 

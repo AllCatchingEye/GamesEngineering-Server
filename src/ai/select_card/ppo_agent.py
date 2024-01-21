@@ -1,7 +1,7 @@
+
 import logging
 
 import torch
-
 from ai.select_card.models.model_interface import ModelInterface
 from ai.select_card.rl_agent import RLBaseAgent
 from state.card import Card
@@ -11,25 +11,20 @@ from state.player import PlayerId
 from state.stack import Stack
 
 
-class DRLAgent(RLBaseAgent):
-    __logger = logging.getLogger("DRLAgent")
-
-    def __init__(self, policy_model: ModelInterface):
+class PpoAgent(RLBaseAgent):
+    __logger = logging.getLogger("PpoAgent")
+    
+    def __init__(self, actor: ModelInterface):
         super().__init__()
-        self.model = policy_model
-        self._device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.actor = actor
         self.game_type: Gametype | None = None
-
+        
     def get_game_type_safe(self):
         if self.game_type is None:
             raise ValueError("game_type is not defined, yet.")
-
+        
         return self.game_type
-
-    def initialize_model(self):
-        self.model.init_params(self.get_game_type_safe())
-        self.model.eval()
-
+    
     def encode_state(
         self,
         player_id: PlayerId,
@@ -39,7 +34,7 @@ class DRLAgent(RLBaseAgent):
         allies: list[PlayerId],
         playable_cards: list[Card],
     ) -> torch.Tensor:
-        return self.model.encode_input(
+        return self.actor.encode_input(
             player_id,
             play_order,
             current_stack,
@@ -48,8 +43,9 @@ class DRLAgent(RLBaseAgent):
             playable_cards,
         )
 
-    def decode_card(self, output: torch.Tensor, playable_cards: list[Card]) -> Card:
-        return self.model.decode_output(output, playable_cards)
+    def initialize_model(self):
+        self.actor.init_params(self.get_game_type_safe())
+        self.actor.eval()
 
     def _compute_best_card(
         self, player_id: PlayerId, stack: Stack, playable_cards: list[Card]
@@ -58,7 +54,7 @@ class DRLAgent(RLBaseAgent):
             transformed_state = [
                 (card.card, card.player) for card in stack.played_cards
             ]
-            return self.model.forward(
+            return self.actor.forward(
                 player_id,
                 self.get_play_order_safe(),
                 transformed_state,
@@ -73,7 +69,7 @@ class DRLAgent(RLBaseAgent):
         best_card = self._compute_best_card(player_id, stack, playable_cards)
         self.__logger.debug("🃏 Selected card %s", best_card)
         return best_card
-
+    
     def __handle_model_initialization_on_demand(self, event: Event):
         if isinstance(event, GametypeDeterminedUpdate):
             self.__logger.debug("🎯 Announced Game Type: %s", event.gametype)
@@ -84,7 +80,7 @@ class DRLAgent(RLBaseAgent):
                     event.gametype.name,
                 )
                 try:
-                    self.model.init_params(event.gametype)
+                    self.actor.init_params(event.gametype)
                     self.__logger.debug(
                         "🤖 Use existing model parameters for policy model"
                     )

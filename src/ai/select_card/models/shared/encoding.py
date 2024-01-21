@@ -9,6 +9,11 @@ def get_card_from_one_hot_encoding_index(index: int) -> Card:
     rank_code = index % NUM_RANKS
     return Card(SUITS[suit_code], list(RANK_VALUES.keys())[rank_code])
 
+def get_action_from_card(card: Card):
+    suit_index = SUITS.index(card.get_suit())
+    rank_index = list(RANK_VALUES.keys()).index(card.get_rank())
+
+    return suit_index * NUM_RANKS + rank_index
 
 def pick_highest_valid_card(output: Tensor, playable_cards: list[Card]):
     best_card = None
