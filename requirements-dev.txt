@@ -6,3 +6,4 @@ coverage==7.3.2
 vulture==2.10
 matplotlib==3.8.1
 tqdm==4.66.1
+pyinstaller==6.3.0

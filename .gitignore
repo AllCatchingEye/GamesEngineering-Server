@@ -11,3 +11,7 @@ htmlcov
 
 **/.DS_Store
 meta_logs_*.csv
+
+**/build
+**/dist
+**/*.exe.spec
